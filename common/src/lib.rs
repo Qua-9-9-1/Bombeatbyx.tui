@@ -1,16 +1,51 @@
-// common/src/lib.rs
-pub struct Player {
-    pub x: u16,
-    pub y: u16,
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Cell {
+    Empty,
+    Wall,
+    Brick,
+    Bomb { owner_id: u32, ticks_left: u8 },
+    Explosion { ticks_left: u8 },
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Player {
+    pub id: u32,
+    pub x: usize,
+    pub y: usize,
+    pub is_alive: bool,
+    pub max_bombs: u8,
+    pub active_bombs: u8,
+    pub bomb_range: usize,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameState {
-    pub player: Player,
+    pub width: usize,
+    pub height: usize,
+    pub grid: Vec<Cell>, 
+    pub players: Vec<Player>,
 }
 
 impl GameState {
-    pub fn move_player(&mut self, dx: i16, dy: i16) {
-        self.player.x = (self.player.x as i16 + dx) as u16;
-        self.player.y = (self.player.y as i16 + dy) as u16;
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
+            width,
+            height,
+            grid: vec![Cell::Empty; width * height],
+            players: Vec::new(),
+        }
+    }
+
+    pub fn get_index(&self, x: usize, y: usize) -> usize {
+        y * self.width + x
+    }
+
+    pub fn get_cell(&self, x: usize, y: usize) -> Option<&Cell> {
+        if x >= self.width || y >= self.height {
+            return None;
+        }
+        Some(&self.grid[self.get_index(x, y)])
     }
 }
