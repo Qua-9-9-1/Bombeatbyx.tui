@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -12,8 +12,8 @@ pub enum Cell {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub id: u32,
-    pub x: usize,
-    pub y: usize,
+    pub sub_x: i32,
+    pub sub_y: i32,
     pub is_alive: bool,
     pub max_bombs: u8,
     pub active_bombs: u8,
@@ -30,22 +30,21 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(width: usize, height: usize) -> Self {
-        Self {
-            width,
-            height,
-            grid: vec![Cell::Empty; width * height],
-            players: Vec::new(),
+        let mut grid = vec![Cell::Empty; width * height];
+        for y in 0..height {
+            for x in 0..width {
+                if x == 0 || x == width - 1 || y == 0 || y == height - 1 || (x % 2 == 0 && y % 2 == 0) {
+                    grid[y * width + x] = Cell::Wall;
+                }
+            }
         }
+        Self { width, height, grid, players: Vec::new() }
     }
 
-    pub fn get_index(&self, x: usize, y: usize) -> usize {
-        y * self.width + x
-    }
-
-    pub fn get_cell(&self, x: usize, y: usize) -> Option<&Cell> {
-        if x >= self.width || y >= self.height {
-            return None;
+    pub fn get_cell(&self, x: i32, y: i32) -> Cell {
+        if x < 0 || x >= self.width as i32 || y < 0 || y >= self.height as i32 {
+            return Cell::Wall;
         }
-        Some(&self.grid[self.get_index(x, y)])
+        self.grid[(y as usize) * self.width + (x as usize)]
     }
 }

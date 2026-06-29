@@ -5,6 +5,8 @@ pub enum Action {
     MoveDown,
     MoveLeft,
     MoveRight,
+    Abutton,
+    Bbutton,
     Quit,
     None,
 }
@@ -16,6 +18,8 @@ pub fn handle_key(key: KeyEvent) -> Action {
         KeyCode::Down | KeyCode::Char('s') => Action::MoveDown,
         KeyCode::Left | KeyCode::Char('q') => Action::MoveLeft,
         KeyCode::Right | KeyCode::Char('d') => Action::MoveRight,
+        KeyCode::Char(' ') => Action::Abutton,
+        KeyCode::Enter => Action::Bbutton,
         _ => Action::None,
     }
 }
