@@ -1,9 +1,9 @@
-mod tui;
 mod game;
+mod tui;
 
-use std::io;
-use crate::tui::Tui;
 use crate::game::app::App;
+use crate::tui::Tui;
+use std::io;
 
 fn main() -> io::Result<()> {
     let mut tui = Tui::new()?;

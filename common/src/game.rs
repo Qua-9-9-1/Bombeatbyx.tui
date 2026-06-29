@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -24,7 +24,7 @@ pub struct Player {
 pub struct GameState {
     pub width: usize,
     pub height: usize,
-    pub grid: Vec<Cell>, 
+    pub grid: Vec<Cell>,
     pub players: Vec<Player>,
 }
 

@@ -1,6 +1,6 @@
-use std::io::{self, Stdout};
 use crossterm::{execute, terminal::*};
 use ratatui::prelude::*;
+use std::io::{self, Stdout};
 
 pub struct Tui {
     terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -15,7 +15,7 @@ impl Tui {
     pub fn init(&mut self) -> io::Result<()> {
         execute!(io::stdout(), EnterAlternateScreen)?;
         enable_raw_mode()?;
-        
+
         let panic_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |panic_info| {
             let _ = execute!(io::stdout(), LeaveAlternateScreen);
