@@ -1,6 +1,10 @@
-use crossterm::{execute, terminal::*};
 use ratatui::prelude::*;
 use std::io::{self, Stdout};
+use crossterm::{
+    event::{KeyboardEnhancementFlags, PushKeyboardEnhancementFlags},
+    execute,
+    terminal::{enable_raw_mode, disable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
 
 pub struct Tui {
     terminal: Terminal<CrosstermBackend<Stdout>>,
@@ -12,9 +16,16 @@ impl Tui {
         Ok(Self { terminal })
     }
 
-    pub fn init(&mut self) -> io::Result<()> {
-        execute!(io::stdout(), EnterAlternateScreen)?;
+    pub fn init(&mut self) -> io::Result<bool> {
+        let mut stdout = io::stdout();
         enable_raw_mode()?;
+
+        execute!(stdout, EnterAlternateScreen)?;
+
+        let enhanced_active = execute!(
+            stdout,
+            PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::REPORT_EVENT_TYPES)
+        ).is_ok();
 
         let panic_hook = std::panic::take_hook();
         std::panic::set_hook(Box::new(move |panic_info| {
@@ -24,7 +35,7 @@ impl Tui {
         }));
 
         self.terminal.clear()?;
-        Ok(())
+        Ok(enhanced_active)
     }
 
     pub fn draw<F>(&mut self, f: F) -> io::Result<()>

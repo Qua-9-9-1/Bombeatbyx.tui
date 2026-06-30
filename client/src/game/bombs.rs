@@ -1,20 +1,16 @@
 use common::game::{GameState, Cell};
-use crate::game::app::{CELL_H, CELL_W};
 
 pub fn try_place_bomb(game_state: &mut GameState) {
     let player = &game_state.players[0];
     if !player.is_alive { return; }
 
     if player.active_bombs < player.max_bombs {
-        let grid_x = ((player.sub_x + 1) / CELL_W) as usize;
-        let grid_y = (player.sub_y / CELL_H) as usize;
+        let grid_x = ((player.sub_x + 2) / 4) as usize;
+        let grid_y = ((player.sub_y + 1) / 2) as usize;
         let idx = grid_y * game_state.width + grid_x;
 
         if game_state.grid[idx] == Cell::Empty {
-            game_state.grid[idx] = Cell::Bomb {
-                owner_id: player.id,
-                ticks_left: 150,
-            };
+            game_state.grid[idx] = Cell::Bomb { owner_id: player.id, ticks_left: 150 };
             game_state.players[0].active_bombs += 1;
         }
     }
@@ -89,7 +85,7 @@ pub fn check_deaths(game_state: &mut GameState) {
     for i in 0..game_state.players.len() {
         let (cx, cy, is_alive) = {
             let player = &game_state.players[i];
-            ((player.sub_x + 1) / CELL_W, player.sub_y / CELL_H, player.is_alive)
+            ((player.sub_x + 2) / 4, (player.sub_y + 1) / 2, player.is_alive)
         };
 
         if !is_alive { continue; }
