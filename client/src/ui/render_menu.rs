@@ -1,11 +1,11 @@
+use crate::local::app::App;
+use crate::local::controls::ControlMode;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::{Color, Style},
     widgets::{Block, Borders, Paragraph, Widget},
 };
-use crate::game::app::App;
-use crate::game::controls::ControlMode;
 
 pub fn draw_pause_menu(buffer: &mut Buffer, app: &App, tui_area: Rect) {
     if app.controls.mode != ControlMode::Menu {
@@ -26,7 +26,7 @@ pub fn draw_pause_menu(buffer: &mut Buffer, app: &App, tui_area: Rect) {
 
     let mut menu_content = String::new();
     let items = ["  Continue  ", "  Config  ", "  Quit  "];
-    
+
     for (idx, item) in items.iter().enumerate() {
         if idx == app.controls.menu_cursor {
             menu_content.push_str(&format!("► 📦 {} ◄\n", item.trim()));

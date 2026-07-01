@@ -1,11 +1,11 @@
+use crate::local::app::App;
+use crate::local::settings::{ClientSettings, GaugeSkin};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
-    style::{Color, Style, Modifier},
+    style::{Color, Modifier, Style},
     widgets::{Paragraph, Widget},
 };
-use crate::game::app::App;
-use crate::game::rhythm::GaugeSkin;
 
 pub fn draw_feedback(buffer: &mut Buffer, app: &App, area: Rect) {
     let feedback_color = match app.last_feedback {
@@ -18,15 +18,19 @@ pub fn draw_feedback(buffer: &mut Buffer, app: &App, area: Rect) {
 
     Paragraph::new(app.last_feedback)
         .alignment(Alignment::Center)
-        .style(Style::default().fg(feedback_color).add_modifier(Modifier::BOLD))
+        .style(
+            Style::default()
+                .fg(feedback_color)
+                .add_modifier(Modifier::BOLD),
+        )
         .render(area, buffer);
 }
 
 pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
     let progress = app.rhythm.progress();
-    let width = 28_usize; 
-    
-    let gauge_text = match app.rhythm.skin {
+    let width = 28_usize;
+
+    let gauge_text = match app.settings.gauge_skin {
         GaugeSkin::NecroDancer => format_necrodancer_skin(progress, width),
         GaugeSkin::Undertale => format_undertale_skin(progress, width),
     };
@@ -46,27 +50,27 @@ pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
 fn format_necrodancer_skin(progress: f64, width: usize) -> String {
     let center = width / 2;
     let distance = ((1.0 - progress) * (center as f64)).round() as usize;
-    
+
     let mut bar = vec![' '; width];
-    bar[center] = 'O'; 
-    
+    bar[center] = 'O';
+
     let left_pos = center.saturating_sub(distance);
     let right_pos = (center + distance).min(width - 1);
-    
+
     if distance > 0 {
         bar[left_pos] = '>';
         bar[right_pos] = '<';
     } else {
-        bar[center] = 'X'; 
+        bar[center] = 'X';
     }
     format!(" [{}] ", bar.iter().collect::<String>())
 }
 
 fn format_undertale_skin(progress: f64, width: usize) -> String {
     let mut bar = vec!['-'; width];
-    let target_pos = width / 2; 
-    bar[target_pos] = '|'; 
-    
+    let target_pos = width / 2;
+    bar[target_pos] = '|';
+
     let cursor_pos = ((progress * (width as f64)).round() as usize).clamp(0, width - 1);
     if cursor_pos == target_pos {
         bar[cursor_pos] = 'X';

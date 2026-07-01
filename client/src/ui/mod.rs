@@ -1,14 +1,14 @@
 pub mod render_map;
-pub mod render_rhythm;
 pub mod render_menu;
+pub mod render_rhythm;
 
+use crate::local::app::{App, CELL_H, CELL_W};
 use ratatui::{
+    Frame,
     layout::{Alignment, Rect},
     style::{Color, Style},
     widgets::{Paragraph, Widget},
-    Frame,
 };
-use crate::game::app::{App, CELL_H, CELL_W};
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let tui_area = frame.area();

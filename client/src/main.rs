@@ -1,7 +1,8 @@
-mod game;
+mod local;
 mod tui;
+mod ui;
 
-use crate::game::app::App;
+use crate::local::app::App;
 use crate::tui::Tui;
 use std::io;
 

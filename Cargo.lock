@@ -291,6 +291,7 @@ dependencies = [
  "crossterm",
  "futures-util",
  "ratatui",
+ "serde",
  "tokio",
  "tokio-tungstenite",
 ]
