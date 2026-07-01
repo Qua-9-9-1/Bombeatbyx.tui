@@ -34,6 +34,7 @@ pub struct RhythmEngine {
     pub beat_interval: Duration,
     pub last_beat_time: Instant,
     pub next_beat_time: Instant,
+    pub beat_count: u64,
 }
 
 impl RhythmEngine {
@@ -45,6 +46,7 @@ impl RhythmEngine {
             beat_interval: interval,
             last_beat_time: now,
             next_beat_time: now + interval,
+            beat_count: 0,
         }
     }
 
@@ -63,6 +65,7 @@ impl RhythmEngine {
         if now >= self.next_beat_time {
             self.last_beat_time = self.next_beat_time;
             self.next_beat_time += self.beat_interval;
+            self.beat_count += 1;
             true
         } else {
             false

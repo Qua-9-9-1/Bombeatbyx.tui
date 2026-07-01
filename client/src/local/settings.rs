@@ -14,4 +14,5 @@ pub struct ClientSettings {
 pub enum GaugeSkin {
     NecroDancer,
     Undertale,
+    Simple,
 }

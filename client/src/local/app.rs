@@ -49,7 +49,7 @@ impl App {
                 key_down: 's',
                 key_left: 'q',
                 key_right: 'd',
-                gauge_skin: GaugeSkin::NecroDancer,
+                gauge_skin: GaugeSkin::Undertale,
             },
         }
     }

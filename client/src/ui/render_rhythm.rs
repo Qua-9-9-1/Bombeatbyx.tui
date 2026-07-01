@@ -32,7 +32,8 @@ pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
 
     let gauge_text = match app.settings.gauge_skin {
         GaugeSkin::NecroDancer => format_necrodancer_skin(progress, width),
-        GaugeSkin::Undertale => format_undertale_skin(progress, width),
+        GaugeSkin::Undertale => format_undertale_skin(app, progress, width),
+        GaugeSkin::Simple => format_simple_skin(progress, width / 2),
     };
 
     let color = if progress > 0.85 || progress < 0.15 {
@@ -66,13 +67,35 @@ fn format_necrodancer_skin(progress: f64, width: usize) -> String {
     format!(" [{}] ", bar.iter().collect::<String>())
 }
 
-fn format_undertale_skin(progress: f64, width: usize) -> String {
+fn format_undertale_skin(app: &App, progress: f64, width: usize) -> String {
     let mut bar = vec!['-'; width];
     let target_pos = width / 2;
     bar[target_pos] = '|';
 
-    let cursor_pos = ((progress * (width as f64)).round() as usize).clamp(0, width - 1);
+    let progress = app.rhythm.progress();
+    let cycle_segment = (app.rhythm.beat_count % 4) as f64;
+
+    let visual_position = match cycle_segment as i64 {
+        0 => progress * 0.5,
+        1 => 0.5 + (progress * 0.5),
+        2 => 1.0 - (progress * 0.5),
+        _ => 0.5 - (progress * 0.5),
+    };
+
+    let cursor_pos = (visual_position * (width - 1) as f64).round() as usize;
     if cursor_pos == target_pos {
+        bar[cursor_pos] = 'X';
+    } else {
+        bar[cursor_pos] = '█';
+    }
+    format!(" [{}] ", bar.iter().collect::<String>())
+}
+
+fn format_simple_skin(progress: f64, width: usize) -> String {
+    let mut bar = vec!['-'; width];
+
+    let cursor_pos = ((progress * (width as f64)).round() as usize).clamp(0, width - 1);
+    if cursor_pos == width - 1 {
         bar[cursor_pos] = 'X';
     } else {
         bar[cursor_pos] = '█';
