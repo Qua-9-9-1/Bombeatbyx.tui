@@ -39,7 +39,7 @@ impl App {
             game_run: true,
             controls: ControlsManager::new(),
             consumed_this_beat: false,
-            last_feedback: "ATTENTE",
+            last_feedback: "WAITING...",
         }
     }
 
