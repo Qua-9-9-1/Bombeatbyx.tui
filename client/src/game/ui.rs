@@ -1,20 +1,23 @@
-use ratatui::{
-    layout::{Alignment, Rect},
-    style::{Color, Style},
-    widgets::{Block, Borders, Paragraph, Widget},
-    Frame,
-};
-use common::game::Cell;
 use crate::game::app::{App, CELL_H, CELL_W};
+use crate::game::rhythm::GaugeSkin;
+use common::game::Cell;
+use ratatui::{
+    Frame,
+    buffer::Buffer,
+    layout::{Alignment, Rect},
+    style::{Color, Modifier, Style},
+    widgets::{Block, Borders, Paragraph, Widget},
+};
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let tui_area = frame.area();
     let buffer = frame.buffer_mut();
 
-    let map_w = (app.game_state.width as i32 * CELL_W) + 2;
-    let map_height = (app.game_state.height as i32 * CELL_H) + 2;
+    let map_w = (app.game_state.width as u16 * CELL_W) + 2;
+    let map_height = (app.game_state.height as u16 * CELL_H) + 2;
+    let total_needed_height = map_height + 3;
 
-    if tui_area.width < map_w as u16 || tui_area.height < map_height as u16 {
+    if tui_area.width < map_w || tui_area.height < total_needed_height {
         let msg = Paragraph::new("Agrandissez le terminal pour jouer !")
             .alignment(Alignment::Center)
             .style(Style::default().fg(Color::Red));
@@ -22,14 +25,14 @@ pub fn draw(frame: &mut Frame, app: &App) {
         return;
     }
 
-    let start_x = (tui_area.width - map_w as u16) / 2;
-    let start_y = (tui_area.height - map_height as u16) / 2;
+    let start_x = (tui_area.width - map_w) / 2;
+    let start_y = (tui_area.height - total_needed_height) / 2;
 
     let map_box = Block::default()
         .title(" BOMBOMBYX ")
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL);
-    let map_rect = Rect::new(start_x, start_y, map_w as u16, map_height as u16);
+    let map_rect = Rect::new(start_x, start_y, map_w, map_height);
     map_box.render(map_rect, buffer);
 
     let play_zone_x = start_x + 1;
@@ -38,11 +41,11 @@ pub fn draw(frame: &mut Frame, app: &App) {
     for y in 0..app.game_state.height {
         for x in 0..app.game_state.width {
             let cell = app.game_state.grid[y * app.game_state.width + x];
-            
+
             let player = &app.game_state.players[0];
-            let p_grid_x = ((player.sub_x + 2) / CELL_W) as usize;
-            let p_grid_y = ((player.sub_y + 1) / CELL_H) as usize;
-            
+            let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
+            let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
+
             let player_is_here = player.is_alive && x == p_grid_x && y == p_grid_y;
             let is_bomb = matches!(cell, Cell::Bomb { .. });
 
@@ -55,38 +58,47 @@ pub fn draw(frame: &mut Frame, app: &App) {
                     Cell::Brick => Color::Rgb(139, 69, 19),
                     Cell::Explosion { .. } => Color::Rgb(255, 69, 0),
                     Cell::Bomb { ticks_left, .. } => {
-                        if ticks_left < 60 && (ticks_left / 10) % 2 == 0 { Color::Red } else { Color::Indexed(234) }
+                        if ticks_left <= 1 {
+                            Color::Red
+                        } else {
+                            Color::Indexed(234)
+                        }
                     }
                 }
             };
 
-            let out_x = play_zone_x + (x as u16 * CELL_W as u16);
-            let out_y = play_zone_y + (y as u16 * CELL_H as u16);
-            
-            for bh in 0..2 {
-                for bw in 0..4 {
-                    buffer[(out_x + bw, out_y + bh)]
-                        .set_symbol(" ")
-                        .set_style(Style::default().bg(bg_color));
-                }
-            }
+            let out_x = play_zone_x + (x as u16 * CELL_W);
+            let out_y = play_zone_y + (y as u16 * CELL_H);
+
+            buffer[(out_x, out_y)]
+                .set_symbol(" ")
+                .set_style(Style::default().bg(bg_color));
+            buffer[(out_x + 1, out_y)]
+                .set_symbol(" ")
+                .set_style(Style::default().bg(bg_color));
 
             if is_bomb {
-                buffer.set_string(out_x + 1, out_y, "💣", Style::default().bg(bg_color));
-                buffer.set_string(out_x, out_y + 1, " ( )", Style::default().bg(bg_color).fg(Color::White));
+                buffer.set_string(out_x, out_y, "💣", Style::default().bg(bg_color));
             } else {
                 match cell {
                     Cell::Wall => {
-                        buffer.set_string(out_x, out_y, "████", Style::default().bg(bg_color).fg(Color::Indexed(248)));
-                        buffer.set_string(out_x, out_y + 1, "████", Style::default().bg(bg_color).fg(Color::Indexed(248)));
+                        buffer.set_string(
+                            out_x,
+                            out_y,
+                            "██",
+                            Style::default().bg(bg_color).fg(Color::Indexed(248)),
+                        );
                     }
                     Cell::Brick => {
-                        buffer.set_string(out_x, out_y, "░▀▀░", Style::default().bg(bg_color).fg(Color::Rgb(205, 133, 63)));
-                        buffer.set_string(out_x, out_y + 1, "░▄▄░", Style::default().bg(bg_color).fg(Color::Rgb(205, 133, 63)));
+                        buffer.set_string(
+                            out_x,
+                            out_y,
+                            "░░",
+                            Style::default().bg(bg_color).fg(Color::Rgb(205, 133, 63)),
+                        );
                     }
                     Cell::Explosion { .. } => {
-                        buffer.set_string(out_x + 1, out_y, "💥", Style::default().bg(bg_color));
-                        buffer.set_string(out_x + 1, out_y + 1, "💥", Style::default().bg(bg_color));
+                        buffer.set_string(out_x, out_y, "💥", Style::default().bg(bg_color));
                     }
                     _ => {}
                 }
@@ -95,12 +107,14 @@ pub fn draw(frame: &mut Frame, app: &App) {
     }
 
     for player in &app.game_state.players {
-        let p_grid_x = ((player.sub_x + 2) / CELL_W) as usize;
-        let p_grid_y = ((player.sub_y + 1) / CELL_H) as usize;
+        let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
+        let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
         let idx = p_grid_y * app.game_state.width + p_grid_x;
 
         if let Cell::Bomb { .. } = app.game_state.grid[idx] {
-            if player.is_alive { continue; } 
+            if player.is_alive {
+                continue;
+            }
         }
 
         let p_screen_x = play_zone_x + player.sub_x as u16;
@@ -108,13 +122,14 @@ pub fn draw(frame: &mut Frame, app: &App) {
         let bg = Style::default().bg(Color::Indexed(234));
 
         if player.is_alive {
-            buffer.set_string(p_screen_x, p_screen_y, "[🤖]", bg);
-            buffer.set_string(p_screen_x, p_screen_y + 1, " / \\", bg.fg(Color::Cyan));
+            buffer.set_string(p_screen_x, p_screen_y, "🤖", bg.fg(Color::Cyan));
         } else {
-            buffer.set_string(p_screen_x, p_screen_y, "[💀]", bg);
-            buffer.set_string(p_screen_x, p_screen_y + 1, "_/\\_", bg.fg(Color::Red));
+            buffer.set_string(p_screen_x, p_screen_y, "💀", bg.fg(Color::Red));
         }
     }
+
+    let gauge_area = Rect::new(start_x, start_y + map_height + 1, map_w, 1);
+    draw_rhythm_gauge(buffer, app, gauge_area);
 
     if app.controls.mode == crate::game::controls::ControlMode::Menu {
         let menu_w = 30;
@@ -130,8 +145,12 @@ pub fn draw(frame: &mut Frame, app: &App) {
             .style(Style::default().bg(Color::Black).fg(Color::Yellow));
 
         let mut menu_content = String::new();
-        let items = ["  Continuer la partie  ", "  Configuration Audio  ", "  Quitter vers le Bureau  "];
-        
+        let items = [
+            "  Continuer la partie  ",
+            "  Configuration Audio  ",
+            "  Quitter vers le Bureau  ",
+        ];
+
         for (idx, item) in items.iter().enumerate() {
             if idx == app.controls.menu_cursor {
                 menu_content.push_str(&format!("► 📦 {} ◄\n", item.trim()));
@@ -143,7 +162,58 @@ pub fn draw(frame: &mut Frame, app: &App) {
         let p_menu = Paragraph::new(menu_content)
             .block(menu_block)
             .alignment(Alignment::Center);
-            
+
         p_menu.render(menu_rect, buffer);
     }
+}
+
+pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
+    let progress = app.rhythm.progress();
+    let width = 28_usize;
+
+    let gauge_text = match app.rhythm.skin {
+        GaugeSkin::NecroDancer => {
+            let center = width / 2;
+            let distance = ((1.0 - progress) * (center as f64)).round() as usize;
+
+            let mut bar = vec![' '; width];
+            bar[center] = 'O';
+
+            let left_pos = center.saturating_sub(distance);
+            let right_pos = (center + distance).min(width - 1);
+
+            if distance > 0 {
+                bar[left_pos] = '>';
+                bar[right_pos] = '<';
+            } else {
+                bar[center] = 'X';
+            }
+            format!(" [{}] ", bar.iter().collect::<String>())
+        }
+        GaugeSkin::Undertale => {
+            let mut bar = vec!['-'; width];
+            let target_pos = width / 2;
+            bar[target_pos] = '|';
+
+            let cursor_pos = ((progress * (width as f64)).round() as usize).clamp(0, width - 1);
+            if cursor_pos == target_pos {
+                bar[cursor_pos] = 'X';
+            } else {
+                bar[cursor_pos] = '█';
+            }
+            format!(" [{}] ", bar.iter().collect::<String>())
+        }
+    };
+
+    let color = if progress > 0.85 || progress < 0.15 {
+        Color::Green
+    } else {
+        Color::DarkGray
+    };
+
+    let paragraph = Paragraph::new(gauge_text)
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(color).add_modifier(Modifier::BOLD));
+
+    paragraph.render(area, buffer);
 }

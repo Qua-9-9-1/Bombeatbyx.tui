@@ -1,5 +1,6 @@
 pub mod app;
-pub mod controls;
-pub mod ui;
-pub mod physics;
 pub mod bombs;
+pub mod controls;
+pub mod physics;
+pub mod rhythm;
+pub mod ui;

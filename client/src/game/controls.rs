@@ -13,7 +13,7 @@ pub struct InputState {
     pub left: bool,
     pub right: bool,
     pub space_pressed: bool,
-    
+
     pub timer_up: u8,
     pub timer_down: u8,
     pub timer_left: u8,
@@ -65,7 +65,7 @@ impl ControlsManager {
         }
 
         let is_release = key.kind == KeyEventKind::Release;
-        let active_frames = 8; 
+        let active_frames = 8;
 
         match key.code {
             KeyCode::Up | KeyCode::Char('z') => {
@@ -130,10 +130,24 @@ impl ControlsManager {
             return;
         }
         match key.code {
-            KeyCode::Esc | KeyCode::Char('m') => { self.mode = ControlMode::Game; }
-            KeyCode::Up | KeyCode::Char('z') => { if self.menu_cursor > 0 { self.menu_cursor -= 1; } }
-            KeyCode::Down | KeyCode::Char('s') => { if self.menu_cursor < self.max_menu_items - 1 { self.menu_cursor += 1; } }
-            KeyCode::Enter => { if self.menu_cursor == 0 { self.mode = ControlMode::Game; } }
+            KeyCode::Esc | KeyCode::Char('m') => {
+                self.mode = ControlMode::Game;
+            }
+            KeyCode::Up | KeyCode::Char('z') => {
+                if self.menu_cursor > 0 {
+                    self.menu_cursor -= 1;
+                }
+            }
+            KeyCode::Down | KeyCode::Char('s') => {
+                if self.menu_cursor < self.max_menu_items - 1 {
+                    self.menu_cursor += 1;
+                }
+            }
+            KeyCode::Enter => {
+                if self.menu_cursor == 0 {
+                    self.mode = ControlMode::Game;
+                }
+            }
             _ => {}
         }
     }
@@ -161,19 +175,27 @@ impl ControlsManager {
 
         if self.state.timer_up > 0 {
             self.state.timer_up -= 1;
-            if self.state.timer_up == 0 { self.state.up = false; }
+            if self.state.timer_up == 0 {
+                self.state.up = false;
+            }
         }
         if self.state.timer_down > 0 {
             self.state.timer_down -= 1;
-            if self.state.timer_down == 0 { self.state.down = false; }
+            if self.state.timer_down == 0 {
+                self.state.down = false;
+            }
         }
         if self.state.timer_left > 0 {
             self.state.timer_left -= 1;
-            if self.state.timer_left == 0 { self.state.left = false; }
+            if self.state.timer_left == 0 {
+                self.state.left = false;
+            }
         }
         if self.state.timer_right > 0 {
             self.state.timer_right -= 1;
-            if self.state.timer_right == 0 { self.state.right = false; }
+            if self.state.timer_right == 0 {
+                self.state.right = false;
+            }
         }
     }
 }
