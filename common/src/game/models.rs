@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::time::Instant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -15,8 +16,13 @@ pub struct Player {
     pub sub_x: i32,
     pub sub_y: i32,
     pub is_alive: bool,
+    pub score: u32,
     pub max_bombs: u8,
     pub active_bombs: u8,
     pub bomb_range: usize,
-    pub score: u32,
+    pub last_acted_beat: Option<u64>,
+    #[serde(skip)]
+    pub last_action_time: Option<Instant>,
+    #[serde(skip)]
+    pub spam_lockout_until: Option<Instant>,
 }

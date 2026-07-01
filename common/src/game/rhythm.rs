@@ -7,6 +7,7 @@ pub enum BeatAccuracy {
     Great,
     Ok,
     Miss,
+    Waiting,
 }
 
 impl BeatAccuracy {
@@ -16,6 +17,7 @@ impl BeatAccuracy {
             Self::Great => "GREAT!",
             Self::Ok => "OKAY!",
             Self::Miss => "MISS!",
+            Self::Waiting => "WAITING...",
         }
     }
 
@@ -25,6 +27,7 @@ impl BeatAccuracy {
             Self::Great => 20,
             Self::Ok => 5,
             Self::Miss => 0,
+            Self::Waiting => 0,
         }
     }
 }
@@ -79,7 +82,7 @@ impl RhythmEngine {
         } else {
             progress
         };
-
+    
         if distance <= 0.04 {
             BeatAccuracy::Perfect
         } else if distance <= 0.09 {

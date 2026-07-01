@@ -1,7 +1,6 @@
-use crate::local::{
-    controls::{ControlMode, ControlsManager},
-    settings::{ClientSettings, GaugeSkin},
-};
+use crate::local::
+    settings::{ClientSettings, GaugeSkin};
+
 use crate::tui::Tui;
 use crate::ui;
 use common::game::{BeatAccuracy, GameAction, GameState, RhythmEngine};
@@ -15,10 +14,12 @@ pub struct App {
     pub game_state: GameState,
     pub rhythm: RhythmEngine,
     pub game_run: bool,
-    pub controls: ControlsManager,
+    pub is_paused: bool,
     pub consumed_this_beat: bool,
     pub last_feedback: &'static str,
     pub settings: ClientSettings,
+    pub last_physical_input: Instant,
+    pub spam_lockout_until: Instant,
 }
 
 impl App {
@@ -34,13 +35,16 @@ impl App {
             active_bombs: 0,
             bomb_range: 2,
             score: 0,
+            last_acted_beat: None,
+            last_action_time: None,
+            spam_lockout_until: None,
         });
 
         Self {
             game_state,
             rhythm: RhythmEngine::new(80.0),
             game_run: true,
-            controls: ControlsManager::new(),
+            is_paused: false,
             consumed_this_beat: false,
             last_feedback: "WAITING...",
             settings: ClientSettings {
@@ -51,8 +55,9 @@ impl App {
                 key_right: 'd',
                 gauge_skin: GaugeSkin::Undertale,
             },
-        }
-    }
+            last_physical_input: Instant::now() - Duration::from_secs(10),
+            spam_lockout_until: Instant::now() - Duration::from_secs(10),
+        }   }
 
     pub fn run(&mut self, tui: &mut Tui) -> std::io::Result<()> {
         let _ = tui.init();
@@ -75,18 +80,25 @@ impl App {
     }
 
     fn handle_inputs(&mut self) -> std::io::Result<()> {
-        while event::poll(Duration::ZERO)? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Release {
-                    continue;
-                }
+            while event::poll(Duration::ZERO)? {
+                if let Event::Key(key) = event::read()? {
+                    
+                    if key.kind == KeyEventKind::Release {
+                        continue;
+                    }
 
-                if self.controls.mode == ControlMode::Menu {
-                    self.controls.handle_event(key);
-                    continue;
-                }
+                    let now = Instant::now();
+                    let delay = now.duration_since(self.last_physical_input);
+                    self.last_physical_input = now;
 
-                if self.controls.mode == ControlMode::Game {
+                    if delay < Duration::from_millis(100) {
+                        self.spam_lockout_until = now + Duration::from_millis(300);
+                    }
+
+                    if now < self.spam_lockout_until {
+                        continue;
+                    }
+
                     if key.code == KeyCode::Esc {
                         self.game_run = false;
                         return Ok(());
@@ -97,9 +109,8 @@ impl App {
                     }
                 }
             }
+            Ok(())
         }
-        Ok(())
-    }
 
     fn map_key_to_action(&self, code: KeyCode) -> Option<GameAction> {
         match code {
@@ -114,13 +125,18 @@ impl App {
     }
 
     fn process_game_action(&mut self, action: GameAction) {
-        let accuracy = self.rhythm.evaluate_accuracy();
+        let accuracy = self.rhythm.evaluate_accuracy(); 
+        
+        let current_beat = self.rhythm.beat_count; 
 
+        self.game_state.handle_action(1, action, accuracy.clone(), current_beat);
+        
         if accuracy != BeatAccuracy::Miss {
-            if !self.consumed_this_beat {
-                self.game_state.handle_action(1, action, accuracy.clone());
-                self.consumed_this_beat = true;
-                self.last_feedback = accuracy.as_str();
+            if let Some(player) = self.game_state.players.iter().find(|p| p.id == 1) {
+                if player.last_acted_beat == Some(current_beat) && !self.consumed_this_beat {
+                    self.last_feedback = accuracy.as_str();
+                    self.consumed_this_beat = true;
+                }
             }
         } else {
             self.last_feedback = "MISS!";

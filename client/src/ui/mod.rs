@@ -34,8 +34,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     let gauge_area = Rect::new(start_x, start_y + map_height + 2, map_w, 1);
     render_rhythm::draw_rhythm_gauge(buffer, app, gauge_area);
-
-    render_menu::draw_pause_menu(buffer, app, tui_area);
+    if app.is_paused {
+        render_menu::draw_pause_menu(buffer, tui_area);
+    }
 }
 
 fn enlarge_terminal_message(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect) {

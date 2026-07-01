@@ -1,5 +1,5 @@
 use crate::local::app::App;
-use crate::local::settings::{ClientSettings, GaugeSkin};
+use crate::local::settings::{GaugeSkin};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -32,7 +32,7 @@ pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
 
     let gauge_text = match app.settings.gauge_skin {
         GaugeSkin::NecroDancer => format_necrodancer_skin(progress, width),
-        GaugeSkin::Undertale => format_undertale_skin(app, progress, width),
+        GaugeSkin::Undertale => format_undertale_skin(app, width),
         GaugeSkin::Simple => format_simple_skin(progress, width / 2),
     };
 
@@ -67,7 +67,7 @@ fn format_necrodancer_skin(progress: f64, width: usize) -> String {
     format!(" [{}] ", bar.iter().collect::<String>())
 }
 
-fn format_undertale_skin(app: &App, progress: f64, width: usize) -> String {
+fn format_undertale_skin(app: &App, width: usize) -> String {
     let mut bar = vec!['-'; width];
     let target_pos = width / 2;
     bar[target_pos] = '|';
