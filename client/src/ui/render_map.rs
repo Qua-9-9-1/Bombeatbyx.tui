@@ -23,11 +23,10 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
         for x in 0..ctx.state.width {
             let cell = ctx.state.grid[y * ctx.state.width + x];
 
-            let player = &ctx.state.players[0];
-            let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
-            let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
-
-            let player_is_here = player.is_alive && x == p_grid_x && y == p_grid_y;
+            let player_is_here = ctx.state.players.iter()
+                .find(|p| p.id == _app.current_player_id)
+                .map(|p| p.is_alive && x == (p.sub_x / CELL_W as i32) as usize && y == (p.sub_y / CELL_H as i32) as usize)
+                .unwrap_or(false);
             let is_bomb = matches!(cell, Cell::Bomb { .. });
 
             draw_cell(
@@ -137,9 +136,10 @@ fn draw_player(
     let bg = Style::default().bg(Color::Indexed(234));
 
     let sym = get_player_symbol(&player.skin, player.is_alive, ascii);
+    let fg = get_color_from_str(&player.color);
 
     if player.is_alive {
-        buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Cyan));
+        buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(fg));
     } else {
         buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Red));
     }
@@ -160,5 +160,18 @@ fn get_player_symbol(skin: &str, is_alive: bool, ascii: bool) -> &str {
         }
     } else {
         skin
+    }
+}
+
+fn get_color_from_str(color_str: &str) -> Color {
+    match color_str.to_lowercase().as_str() {
+        "cyan" => Color::Cyan,
+        "magenta" => Color::Magenta,
+        "yellow" => Color::Yellow,
+        "red" => Color::Red,
+        "green" => Color::Green,
+        "blue" => Color::Blue,
+        "white" => Color::White,
+        _ => Color::White,
     }
 }
