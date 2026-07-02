@@ -46,7 +46,7 @@ pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
     let gauge_text = match app.profile.gauge_skin {
         GaugeSkin::NecroDancer => format_necrodancer_skin(progress, width),
         GaugeSkin::Undertale => format_undertale_skin(ctx, width),
-        GaugeSkin::Simple => format_simple_skin(progress, width / 2),
+        GaugeSkin::Simple => format_simple_skin(progress, width),
     };
 
     let color = if progress > 0.85 || progress < 0.15 {
@@ -106,12 +106,15 @@ fn format_undertale_skin(ctx: &common::game::GameContext, width: usize) -> Strin
 
 fn format_simple_skin(progress: f64, width: usize) -> String {
     let mut bar = vec!['-'; width];
+    let divided_width: usize = width / 2;
 
-    let cursor_pos = ((progress * (width as f64)).round() as usize).clamp(0, width - 1);
-    if cursor_pos == width - 1 {
+    let cursor_pos = ((progress * (divided_width as f64)).round() as usize).clamp(0, divided_width - 1);
+    if cursor_pos == divided_width - 1 {
         bar[cursor_pos] = 'X';
+        bar[cursor_pos + divided_width] = 'X';
     } else {
         bar[cursor_pos] = '█';
+        bar[cursor_pos + divided_width] = '█';
     }
     format!(" [{}] ", bar.iter().collect::<String>())
 }
