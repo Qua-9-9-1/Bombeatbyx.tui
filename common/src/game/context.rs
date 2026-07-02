@@ -16,6 +16,8 @@ impl GameContext {
     }
 
     pub fn tick_game_logic(&mut self) -> bool {
+        self.state.tick_respawns();
+
         if self.rhythm.tick_logic() {
             self.state.tick_bombs_and_explosions();
             self.state.check_deaths();

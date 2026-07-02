@@ -6,7 +6,14 @@ use std::time::Duration;
 impl App {
     pub(crate) fn start_game(&mut self) {
         if let Some(ref mut ctx) = self.game_ctx {
-            let players = ctx.state.players.clone();
+            let mut players = ctx.state.players.clone();
+            for p in &mut players {
+                p.lives = self.room_settings.lives;
+                p.is_alive = true;
+                p.death_pos = None;
+                p.respawn_timer = None;
+                p.active_bombs = 0;
+            }
 
             let mut new_state = common::game::GameState::new(
                 self.room_settings.width,

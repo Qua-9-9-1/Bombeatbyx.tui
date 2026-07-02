@@ -205,6 +205,7 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         if is_host { format!("BPM (Tempo)   : < {:.0} >", rs.bpm) } else { format!("BPM (Tempo)   : {:.0}", rs.bpm) },
         if is_host { format!("Sudden Death  : < {} >", if rs.sudden_death { "ON" } else { "OFF" }) } else { format!("Sudden Death  : {}", if rs.sudden_death { "ON" } else { "OFF" }) },
         if is_host { format!("Bonus Spawn   : < Every {} beats >", rs.bonus_every) } else { format!("Bonus Spawn   : Every {} beats", rs.bonus_every) },
+        if is_host { format!("Player Lives  : < {} >", rs.lives) } else { format!("Player Lives  : {}", rs.lives) },
         format!("Your Skin     : < {} >", skin_name),
         " [ START GAME ] ".to_string(),
     ];
@@ -223,10 +224,10 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     let arrow_r = if ascii { " <= " } else { " ◄" };
 
     for (idx, item) in items.iter().enumerate() {
-        if idx == 6 && !is_host { continue; }
+        if idx == 7 && !is_host { continue; }
 
         if idx == cursor {
-            if idx == 6 {
+            if idx == 7 {
                 let text = if ascii { format!(" =>> {} <<=", item) } else { format!(" ► 🔥 {} 🔥 ◄", item) };
                 center_lines.push(Line::from(Span::styled(text, Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))));
             } else {
@@ -237,7 +238,7 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 ]));
             }
         } else {
-            if idx == 6 {
+            if idx == 7 {
                 center_lines.push(Line::from(Span::styled(format!("     {}", item), Style::default().fg(Color::LightGreen))));
             } else {
                 center_lines.push(Line::from(format!("   {}   ", item)));

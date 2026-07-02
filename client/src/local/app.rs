@@ -69,6 +69,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 2,
@@ -90,6 +93,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 3,
@@ -111,6 +117,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 4,
@@ -132,6 +141,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 5,
@@ -153,6 +165,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 6,
@@ -174,6 +189,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 7,
@@ -195,6 +213,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
             Player {
                 id: 8,
@@ -216,6 +237,9 @@ impl App {
                 spam_lockout_until: None,
                 active_emote: None,
                 emote_until: None,
+                lives: room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
             },
         ];
 

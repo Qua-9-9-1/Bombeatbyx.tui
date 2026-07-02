@@ -125,12 +125,19 @@ impl GameState {
                 continue;
             }
 
+            if self.players[i].respawn_timer.is_some() {
+                continue;
+            }
+
             let cx = self.players[i].sub_x / 2;
             let cy = self.players[i].sub_y / 1;
             let cell = self.get_cell(cx, cy);
 
             if let Cell::Explosion { .. } = cell {
                 self.players[i].is_alive = false;
+                self.players[i].lives = self.players[i].lives.saturating_sub(1);
+                self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
+                self.players[i].respawn_timer = Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
             }
         }
     }

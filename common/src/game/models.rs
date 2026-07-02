@@ -35,6 +35,10 @@ pub struct Player {
     pub active_emote: Option<String>,
     #[serde(skip)]
     pub emote_until: Option<Instant>,
+    pub lives: u8,
+    pub death_pos: Option<(i32, i32)>,
+    #[serde(skip)]
+    pub respawn_timer: Option<Instant>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,6 +48,7 @@ pub struct RoomSettings {
     pub bpm: f64,
     pub sudden_death: bool,
     pub bonus_every: u32,
+    pub lives: u8,
 }
 
 impl Default for RoomSettings {
@@ -54,6 +59,7 @@ impl Default for RoomSettings {
             bpm: 60.0,
             sudden_death: false,
             bonus_every: 10,
+            lives: 3,
         }
     }
 }

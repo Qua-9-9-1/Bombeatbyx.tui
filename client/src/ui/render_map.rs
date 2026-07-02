@@ -131,12 +131,13 @@ fn draw_player(
     play_zone_y: u16,
     ascii: bool,
 ) {
-    let p_screen_x = play_zone_x + player.sub_x as u16;
-    let p_screen_y = play_zone_y + player.sub_y as u16;
     let bg = Style::default().bg(Color::Indexed(234));
+    let fg = get_color_from_str(&player.color);
 
-    let mut sym = get_player_symbol(&player.skin, player.is_alive, ascii);
     if player.is_alive {
+        let p_screen_x = play_zone_x + player.sub_x as u16;
+        let p_screen_y = play_zone_y + player.sub_y as u16;
+        let mut sym = get_player_symbol(&player.skin, player.is_alive, ascii);
         if let Some(ref emote) = player.active_emote {
             if let Some(until) = player.emote_until {
                 if std::time::Instant::now() < until {
@@ -144,14 +145,24 @@ fn draw_player(
                 }
             }
         }
-    }
-
-    let fg = get_color_from_str(&player.color);
-
-    if player.is_alive {
         buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(fg));
     } else {
-        buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Red));
+        if let (Some((dx, dy)), Some(timer)) = (player.death_pos, player.respawn_timer) {
+            let now = std::time::Instant::now();
+            if now < timer {
+                let time_remaining = timer.duration_since(now);
+                let time_elapsed = std::time::Duration::from_secs(3).saturating_sub(time_remaining);
+
+                let anim = crate::ui::animation::Animation::player_death(ascii);
+                let frame = anim.get_frame(time_elapsed);
+
+                if frame.symbol != "  " {
+                    let p_screen_x = play_zone_x + dx as u16;
+                    let p_screen_y = play_zone_y + dy as u16;
+                    buffer.set_string(p_screen_x, p_screen_y, &frame.symbol, bg.fg(frame.fg_color));
+                }
+            }
+        }
     }
 }
 

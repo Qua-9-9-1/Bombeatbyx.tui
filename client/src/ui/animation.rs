@@ -128,4 +128,27 @@ impl Animation {
             loop_animation: false,
         }
     }
+
+    pub fn player_death(ascii: bool) -> Self {
+        let sym = if ascii { "XX" } else { "💀" };
+        let mut frames_: Vec<AnimationFrame> = Vec::new();
+        frames_.push(AnimationFrame {
+            symbol: sym.to_string(),
+            fg_color: Color::Red,
+            bg_color: Color::Indexed(234),
+            duration: Duration::from_millis(1500),
+        });
+        for i in 0..10 {
+            frames_.push(AnimationFrame {
+                symbol: if i % 2 == 0 { "  ".to_string() } else { sym.to_string() },
+                fg_color: if i % 2 == 0 { Color::Reset } else { Color::Red },
+                bg_color: Color::Indexed(234),
+                duration: Duration::from_millis(150),
+            });
+        }
+        Self {
+            frames: frames_,
+            loop_animation: false,
+        }
+    }
 }
