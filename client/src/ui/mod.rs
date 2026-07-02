@@ -14,6 +14,13 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let tui_area = frame.area();
     let buffer = frame.buffer_mut();
 
+    let min_w = 102;
+    let min_h = 20;
+    if tui_area.width < min_w || tui_area.height < min_h {
+        enlarge_terminal_message(buffer, tui_area);
+        return;
+    }
+
     match app.state {
         AppState::MainMenu => {
             render_menu::draw_main_menu(buffer, tui_area, app);

@@ -31,6 +31,7 @@ pub struct App {
 
     pub pause_cursor: usize,
     pub settings_cursor: usize,
+    pub editing_name: bool,
 }
 
 impl App {
@@ -50,6 +51,7 @@ impl App {
             room_settings,
             pause_cursor: 0,
             settings_cursor: 0,
+            editing_name: false,
         }
     }
 
@@ -163,49 +165,58 @@ impl App {
                         }
                     }
                     AppState::SettingsMenu => {
-                        match key.code {
-                            KeyCode::Up | KeyCode::Char('z') => self.settings_cursor = self.settings_cursor.saturating_sub(1),
-                            KeyCode::Down | KeyCode::Char('s') => self.settings_cursor = (self.settings_cursor + 1).min(2),
-                            KeyCode::Left | KeyCode::Char('q') => {
-                                match self.settings_cursor {
-                                    0 => {
-                                        self.profile.gauge_skin = match self.profile.gauge_skin {
-                                            GaugeSkin::NecroDancer => GaugeSkin::Simple,
-                                            GaugeSkin::Undertale => GaugeSkin::NecroDancer,
-                                            GaugeSkin::Simple => GaugeSkin::Undertale,
-                                        };
-                                    }
-                                    1 => {
-                                        let names = vec!["Bomber", "Beast", "ProPlayer", "Newbie", "RhythmGod"];
-                                        let curr = names.iter().position(|&n| n == self.profile.name).unwrap_or(0);
-                                        let next = (curr + names.len() - 1) % names.len();
-                                        self.profile.name = names[next].to_string();
-                                    }
-                                    _ => {}
+                        if self.editing_name {
+                            match key.code {
+                                KeyCode::Enter | KeyCode::Esc => {
+                                    self.editing_name = false;
                                 }
-                            }
-                            KeyCode::Right | KeyCode::Char('d') => {
-                                match self.settings_cursor {
-                                    0 => {
-                                        self.profile.gauge_skin = match self.profile.gauge_skin {
-                                            GaugeSkin::NecroDancer => GaugeSkin::Undertale,
-                                            GaugeSkin::Undertale => GaugeSkin::Simple,
-                                            GaugeSkin::Simple => GaugeSkin::NecroDancer,
-                                        };
-                                    }
-                                    1 => {
-                                        let names = vec!["Bomber", "Beast", "ProPlayer", "Newbie", "RhythmGod"];
-                                        let curr = names.iter().position(|&n| n == self.profile.name).unwrap_or(0);
-                                        let next = (curr + 1) % names.len();
-                                        self.profile.name = names[next].to_string();
-                                    }
-                                    _ => {}
+                                KeyCode::Backspace => {
+                                    self.profile.name.pop();
                                 }
+                                KeyCode::Char(c) => {
+                                    if self.profile.name.len() < 12 {
+                                        self.profile.name.push(c);
+                                    }
+                                }
+                                _ => {}
                             }
-                            KeyCode::Enter => {
-                                self.state = AppState::MainMenu;
+                        } else {
+                            match key.code {
+                                KeyCode::Up | KeyCode::Char('z') => self.settings_cursor = self.settings_cursor.saturating_sub(1),
+                                KeyCode::Down | KeyCode::Char('s') => self.settings_cursor = (self.settings_cursor + 1).min(2),
+                                KeyCode::Left | KeyCode::Char('q') => {
+                                    match self.settings_cursor {
+                                        0 => {
+                                            self.profile.gauge_skin = match self.profile.gauge_skin {
+                                                GaugeSkin::NecroDancer => GaugeSkin::Simple,
+                                                GaugeSkin::Undertale => GaugeSkin::NecroDancer,
+                                                GaugeSkin::Simple => GaugeSkin::Undertale,
+                                            };
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                KeyCode::Right | KeyCode::Char('d') => {
+                                    match self.settings_cursor {
+                                        0 => {
+                                            self.profile.gauge_skin = match self.profile.gauge_skin {
+                                                GaugeSkin::NecroDancer => GaugeSkin::Undertale,
+                                                GaugeSkin::Undertale => GaugeSkin::Simple,
+                                                GaugeSkin::Simple => GaugeSkin::NecroDancer,
+                                            };
+                                        }
+                                        _ => {}
+                                    }
+                                }
+                                KeyCode::Enter => {
+                                    if self.settings_cursor == 1 {
+                                        self.editing_name = true;
+                                    } else {
+                                        self.state = AppState::MainMenu;
+                                    }
+                                }
+                                _ => {}
                             }
-                            _ => {}
                         }
                     }
                 }
