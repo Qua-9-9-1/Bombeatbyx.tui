@@ -138,7 +138,9 @@ fn format_bpm_info(bpm: f64) -> Vec<Line<'static>> {
     let beat_duration_ms = (60.0 / bpm * 1000.0) as u128;
     let progress = (elapsed_ms % beat_duration_ms) as f64 / beat_duration_ms as f64;
     
-    let heart_symbol = if progress < 0.25 { "❤️  [BOOM]" } else { "🖤  [tick]" };
+    let anim = crate::ui::animation::Animation::heart_beating(bpm);
+    let frame = anim.get_frame(std::time::Duration::from_millis(elapsed_ms as u64));
+    
     let gauge_width = 18;
     let cursor_pos = (progress * gauge_width as f64) as usize;
     let mut bar = vec!['-'; gauge_width];
@@ -150,7 +152,7 @@ fn format_bpm_info(bpm: f64) -> Vec<Line<'static>> {
     vec![
         Line::from(vec![
             Span::styled("Pulse: ", Style::default()),
-            Span::styled(heart_symbol, Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::styled(frame.symbol.clone(), Style::default().fg(frame.fg_color).add_modifier(Modifier::BOLD)),
         ]),
         Line::from(Span::styled(format!(" [{}]", pulse_bar), Style::default().fg(Color::LightRed))),
     ]

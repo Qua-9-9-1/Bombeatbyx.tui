@@ -64,22 +64,30 @@ fn draw_cell(
     play_zone_y: u16,
     player_under_bomb: bool,
 ) {
+    let elapsed = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or(std::time::Duration::ZERO);
+
+    let (symbol, fg_color, bg_color) = match cell {
+        Cell::Empty => ("  ".to_string(), Color::Reset, Color::Indexed(234)),
+        Cell::Wall => ("██".to_string(), Color::Indexed(248), Color::Indexed(243)),
+        Cell::Brick => ("░░".to_string(), Color::Rgb(205, 133, 63), Color::Rgb(139, 69, 19)),
+        Cell::Bomb { .. } => {
+            let anim = crate::ui::animation::Animation::bomb_pulsing();
+            let frame = anim.get_frame(elapsed);
+            (frame.symbol.clone(), frame.fg_color, frame.bg_color)
+        }
+        Cell::Explosion { .. } => {
+            let anim = crate::ui::animation::Animation::explosion_expanding();
+            let frame = anim.get_frame(elapsed);
+            (frame.symbol.clone(), frame.fg_color, frame.bg_color)
+        }
+    };
+
     let bg_color = if player_under_bomb {
         Color::Yellow
     } else {
-        match cell {
-            Cell::Empty => Color::Indexed(234),
-            Cell::Wall => Color::Indexed(243),
-            Cell::Brick => Color::Rgb(139, 69, 19),
-            Cell::Explosion { .. } => Color::Rgb(255, 69, 0),
-            Cell::Bomb { ticks_left, .. } => {
-                if ticks_left <= 1 {
-                    Color::Red
-                } else {
-                    Color::Indexed(234)
-                }
-            }
-        }
+        bg_color
     };
 
     let out_x = play_zone_x + (x as u16 * CELL_W);
@@ -92,32 +100,7 @@ fn draw_cell(
         .set_symbol(" ")
         .set_style(Style::default().bg(bg_color));
 
-    if let Cell::Bomb { .. } = cell {
-        buffer.set_string(out_x, out_y, "💣", Style::default().bg(bg_color));
-    } else {
-        match cell {
-            Cell::Wall => {
-                buffer.set_string(
-                    out_x,
-                    out_y,
-                    "██",
-                    Style::default().bg(bg_color).fg(Color::Indexed(248)),
-                );
-            }
-            Cell::Brick => {
-                buffer.set_string(
-                    out_x,
-                    out_y,
-                    "░░",
-                    Style::default().bg(bg_color).fg(Color::Rgb(205, 133, 63)),
-                );
-            }
-            Cell::Explosion { .. } => {
-                buffer.set_string(out_x, out_y, "💥", Style::default().bg(bg_color));
-            }
-            _ => {}
-        }
-    }
+    buffer.set_string(out_x, out_y, &symbol, Style::default().bg(bg_color).fg(fg_color));
 }
 
 fn draw_player(

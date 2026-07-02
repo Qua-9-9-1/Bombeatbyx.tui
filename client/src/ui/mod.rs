@@ -1,3 +1,4 @@
+pub mod animation;
 pub mod render_lobby;
 pub mod render_map;
 pub mod render_menu;
