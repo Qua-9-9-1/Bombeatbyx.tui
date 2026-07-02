@@ -12,11 +12,7 @@ pub fn draw_feedback(buffer: &mut Buffer, app: &App, ctx: &common::game::GameCon
         .iter()
         .find(|p| p.id == app.current_player_id)
     {
-        if player.last_acted_beat == Some(ctx.rhythm.beat_count) {
-            (player.last_accuracy.as_str(), player.combo)
-        } else {
-            ("WAITING...", player.combo)
-        }
+        (player.last_accuracy.as_str(), player.combo)
     } else {
         ("WAITING...", 0)
     };

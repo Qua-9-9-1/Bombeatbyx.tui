@@ -27,6 +27,7 @@ impl App {
 
             ctx.state = new_state;
             ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
+            ctx.last_closed_window_beat = None;
         }
 
         self.state = crate::local::app::AppState::InGame;
@@ -42,10 +43,7 @@ impl App {
     pub(crate) fn get_feedback_and_combo(&self) -> (&'static str, u32) {
         if let Some(ref ctx) = self.game_ctx {
             if let Some(player) = ctx.state.players.iter().find(|p| p.id == 1) {
-                if player.last_acted_beat == Some(ctx.rhythm.beat_count) {
-                    return (player.last_accuracy.as_str(), player.combo);
-                }
-                return ("WAITING...", player.combo);
+                return (player.last_accuracy.as_str(), player.combo);
             }
         }
         ("WAITING...", 0)

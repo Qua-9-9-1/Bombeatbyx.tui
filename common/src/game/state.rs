@@ -91,6 +91,7 @@ impl GameState {
             }
 
             player.last_acted_beat = Some(current_beat);
+            player.last_accuracy = accuracy.clone();
 
             if matches!(accuracy, BeatAccuracy::Miss) {
                 return;
