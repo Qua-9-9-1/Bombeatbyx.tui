@@ -9,6 +9,7 @@ pub struct ClientSettings {
     pub key_down: char,
     pub key_left: char,
     pub key_right: char,
+    pub ascii_mode: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
@@ -28,6 +29,7 @@ impl Default for ClientSettings {
             key_left: 'q',
             key_right: 'd',
             gauge_skin: GaugeSkin::Simple,
+            ascii_mode: false,
         }
     }
 }

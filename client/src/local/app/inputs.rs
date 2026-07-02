@@ -86,8 +86,8 @@ impl App {
         } else {
             match code {
                 KeyCode::Up | KeyCode::Char('z') => self.settings_cursor = self.settings_cursor.saturating_sub(1),
-                KeyCode::Down | KeyCode::Char('s') => self.settings_cursor = (self.settings_cursor + 1).min(2),
-                KeyCode::Left | KeyCode::Char('q') => {
+                KeyCode::Down | KeyCode::Char('s') => self.settings_cursor = (self.settings_cursor + 1).min(3),
+                KeyCode::Left | KeyCode::Char('q') | KeyCode::Right | KeyCode::Char('d') => {
                     match self.settings_cursor {
                         0 => {
                             self.profile.gauge_skin = match self.profile.gauge_skin {
@@ -96,26 +96,18 @@ impl App {
                                 GaugeSkin::Simple => GaugeSkin::Undertale,
                             };
                         }
-                        _ => {}
-                    }
-                }
-                KeyCode::Right | KeyCode::Char('d') => {
-                    match self.settings_cursor {
-                        0 => {
-                            self.profile.gauge_skin = match self.profile.gauge_skin {
-                                GaugeSkin::NecroDancer => GaugeSkin::Undertale,
-                                GaugeSkin::Undertale => GaugeSkin::Simple,
-                                GaugeSkin::Simple => GaugeSkin::NecroDancer,
-                            };
+                        2 => {
+                            self.profile.ascii_mode = !self.profile.ascii_mode;
                         }
                         _ => {}
                     }
                 }
                 KeyCode::Enter => {
-                    if self.settings_cursor == 1 {
-                        self.editing_name = true;
-                    } else {
-                        self.state = AppState::MainMenu;
+                    match self.settings_cursor {
+                        1 => self.editing_name = true,
+                        2 => self.profile.ascii_mode = !self.profile.ascii_mode,
+                        3 => self.state = AppState::MainMenu,
+                        _ => {}
                     }
                 }
                 _ => {}

@@ -8,8 +8,10 @@ use ratatui::{
 };
 
 pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext, rect: Rect) {
+    let ascii = _app.profile.ascii_mode;
+    let title = if ascii { " [ BOMBOMBYX ] " } else { " BOMBOMBYX " };
     let map_box = Block::default()
-        .title(" BOMBOMBYX ")
+        .title(title)
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL);
     map_box.render(rect, buffer);
@@ -36,6 +38,7 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
                 play_zone_x,
                 play_zone_y,
                 player_is_here && is_bomb,
+                ascii,
             );
         }
     }
@@ -51,7 +54,7 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
             }
         }
 
-        draw_player(buffer, player, play_zone_x, play_zone_y);
+        draw_player(buffer, player, play_zone_x, play_zone_y, ascii);
     }
 }
 
@@ -63,6 +66,7 @@ fn draw_cell(
     play_zone_x: u16,
     play_zone_y: u16,
     player_under_bomb: bool,
+    ascii: bool,
 ) {
     let elapsed = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -70,17 +74,35 @@ fn draw_cell(
 
     let (symbol, fg_color, bg_color) = match cell {
         Cell::Empty => ("  ".to_string(), Color::Reset, Color::Indexed(234)),
-        Cell::Wall => ("██".to_string(), Color::Indexed(248), Color::Indexed(243)),
-        Cell::Brick => ("░░".to_string(), Color::Rgb(205, 133, 63), Color::Rgb(139, 69, 19)),
+        Cell::Wall => {
+            let sym = if ascii { "##" } else { "██" };
+            (sym.to_string(), Color::Indexed(248), Color::Indexed(243))
+        }
+        Cell::Brick => {
+            let sym = if ascii { "[]" } else { "░░" };
+            (sym.to_string(), Color::Rgb(205, 133, 63), Color::Rgb(139, 69, 19))
+        }
         Cell::Bomb { .. } => {
             let anim = crate::ui::animation::Animation::bomb_pulsing();
             let frame = anim.get_frame(elapsed);
-            (frame.symbol.clone(), frame.fg_color, frame.bg_color)
+            let sym = if ascii { "()".to_string() } else { frame.symbol.clone() };
+            (sym, frame.fg_color, frame.bg_color)
         }
         Cell::Explosion { .. } => {
             let anim = crate::ui::animation::Animation::explosion_expanding();
             let frame = anim.get_frame(elapsed);
-            (frame.symbol.clone(), frame.fg_color, frame.bg_color)
+            let sym = if ascii {
+                if frame.symbol == "💥" {
+                    "##".to_string()
+                } else if frame.symbol == "🔥" {
+                    "**".to_string()
+                } else {
+                    "::".to_string()
+                }
+            } else {
+                frame.symbol.clone()
+            };
+            (sym, frame.fg_color, frame.bg_color)
         }
     };
 
@@ -108,14 +130,35 @@ fn draw_player(
     player: &common::game::Player,
     play_zone_x: u16,
     play_zone_y: u16,
+    ascii: bool,
 ) {
     let p_screen_x = play_zone_x + player.sub_x as u16;
     let p_screen_y = play_zone_y + player.sub_y as u16;
     let bg = Style::default().bg(Color::Indexed(234));
 
+    let sym = get_player_symbol(&player.skin, player.is_alive, ascii);
+
     if player.is_alive {
-        buffer.set_string(p_screen_x, p_screen_y, "🤖", bg.fg(Color::Cyan));
+        buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Cyan));
     } else {
-        buffer.set_string(p_screen_x, p_screen_y, "💀", bg.fg(Color::Red));
+        buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Red));
+    }
+}
+
+fn get_player_symbol(skin: &str, is_alive: bool, ascii: bool) -> &str {
+    if !is_alive {
+        return if ascii { "XX" } else { "💀" };
+    }
+    if ascii {
+        match skin {
+            "🤖" => "RO",
+            "🐱" => "CA",
+            "🐸" => "FR",
+            "🦊" => "FO",
+            "🐧" => "PE",
+            _ => "PL",
+        }
+    } else {
+        skin
     }
 }
