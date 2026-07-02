@@ -59,10 +59,12 @@ impl App {
             spam_lockout_until: Instant::now() - Duration::from_secs(10),
         }   }
 
-    pub fn run(&mut self, tui: &mut Tui) -> std::io::Result<()> {
+pub fn run(&mut self, tui: &mut Tui) -> std::io::Result<()> {
         let _ = tui.init();
         let mut last_time = Instant::now();
+        let mut last_render = Instant::now();
         let tick_rate = Duration::from_millis(16);
+        let render_rate = Duration::from_millis(16);
         let mut lag = Duration::ZERO;
 
         while self.game_run {
@@ -73,7 +75,11 @@ impl App {
             self.handle_inputs()?;
             self.update_physics(tick_rate, &mut lag);
 
-            tui.draw(|frame| ui::draw(frame, self))?;
+            if current_time.duration_since(last_render) >= render_rate {
+                tui.draw(|frame| ui::draw(frame, self))?;
+                last_render = current_time;
+            }
+
             std::thread::sleep(Duration::from_millis(1));
         }
         Ok(())
