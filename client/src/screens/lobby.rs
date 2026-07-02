@@ -1,4 +1,3 @@
-// client/src/screens/lobby.rs
 use crossterm::event::KeyCode;
 use common::game::models::RoomSettings;
 

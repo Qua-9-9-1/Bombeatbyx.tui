@@ -1,3 +1,4 @@
+pub mod render_lobby;
 pub mod render_map;
 pub mod render_menu;
 pub mod render_rhythm;
@@ -26,7 +27,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             render_menu::draw_main_menu(buffer, tui_area, app);
         }
         AppState::Lobby => {
-            render_menu::draw_lobby(buffer, tui_area, app);
+            render_lobby::draw_lobby(buffer, tui_area, app);
         }
         AppState::SettingsMenu => {
             render_menu::draw_settings_menu(buffer, tui_area, app);
