@@ -57,6 +57,11 @@ impl GameState {
         accuracy: BeatAccuracy,
         current_beat: u64,
     ) {
+        if let GameAction::Emote(index) = action {
+            self.trigger_emote(player_id, index);
+            return;
+        }
+
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             let now = Instant::now();
 
@@ -99,6 +104,7 @@ impl GameState {
                 GameAction::MoveDown => self.move_player(player_id, 0, 1),
                 GameAction::PlaceBomb => self.try_place_bomb(player_id, accuracy),
                 GameAction::TriggerSpell => self.trigger_action_2(player_id),
+                GameAction::Emote(_) => {}
             }
         }
     }
@@ -108,6 +114,20 @@ impl GameState {
             if player.is_alive && player.bomb_range < 6 {
                 player.bomb_range += 1;
             }
+        }
+    }
+
+    pub fn trigger_emote(&mut self, player_id: u32, index: u8) {
+        if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
+            let emote = match index {
+                1 => "👋",
+                2 => "✌️",
+                3 => "🖕",
+                4 => "👍",
+                _ => return,
+            };
+            player.active_emote = Some(emote.to_string());
+            player.emote_until = Some(std::time::Instant::now() + std::time::Duration::from_millis(1500));
         }
     }
 

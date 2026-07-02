@@ -67,6 +67,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 2,
@@ -86,6 +88,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 3,
@@ -105,6 +109,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 4,
@@ -124,6 +130,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 5,
@@ -143,6 +151,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 6,
@@ -162,6 +172,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 7,
@@ -181,6 +193,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
             Player {
                 id: 8,
@@ -200,6 +214,8 @@ impl App {
                 bomb_range: 1,
                 last_action_time: None,
                 spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
             },
         ];
 

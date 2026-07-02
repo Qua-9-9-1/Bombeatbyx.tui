@@ -32,6 +32,9 @@ pub struct Player {
     pub last_action_time: Option<Instant>,
     #[serde(skip)]
     pub spam_lockout_until: Option<Instant>,
+    pub active_emote: Option<String>,
+    #[serde(skip)]
+    pub emote_until: Option<Instant>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

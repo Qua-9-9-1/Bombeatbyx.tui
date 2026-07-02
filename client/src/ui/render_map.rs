@@ -135,13 +135,37 @@ fn draw_player(
     let p_screen_y = play_zone_y + player.sub_y as u16;
     let bg = Style::default().bg(Color::Indexed(234));
 
-    let sym = get_player_symbol(&player.skin, player.is_alive, ascii);
+    let mut sym = get_player_symbol(&player.skin, player.is_alive, ascii);
+    if player.is_alive {
+        if let Some(ref emote) = player.active_emote {
+            if let Some(until) = player.emote_until {
+                if std::time::Instant::now() < until {
+                    sym = get_emote_symbol(emote, ascii);
+                }
+            }
+        }
+    }
+
     let fg = get_color_from_str(&player.color);
 
     if player.is_alive {
         buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(fg));
     } else {
         buffer.set_string(p_screen_x, p_screen_y, sym, bg.fg(Color::Red));
+    }
+}
+
+fn get_emote_symbol(emote: &str, ascii: bool) -> &str {
+    if ascii {
+        match emote {
+            "👋" => "HI",
+            "✌" | "✌️" => "VI",
+            "🖕" => "FU",
+            "👍" => "OK",
+            _ => emote,
+        }
+    } else {
+        emote
     }
 }
 

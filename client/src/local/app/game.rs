@@ -74,6 +74,14 @@ impl App {
             Some(GameAction::PlaceBomb)
         } else if code == KeyCode::Char('e') {
             Some(GameAction::TriggerSpell)
+        } else if code == KeyCode::Char('1') {
+            Some(GameAction::Emote(1))
+        } else if code == KeyCode::Char('2') {
+            Some(GameAction::Emote(2))
+        } else if code == KeyCode::Char('3') {
+            Some(GameAction::Emote(3))
+        } else if code == KeyCode::Char('4') {
+            Some(GameAction::Emote(4))
         } else {
             None
         }

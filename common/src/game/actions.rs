@@ -8,4 +8,5 @@ pub enum GameAction {
     MoveDown,
     PlaceBomb,
     TriggerSpell,
+    Emote(u8),
 }
