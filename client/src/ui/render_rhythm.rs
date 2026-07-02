@@ -7,14 +7,12 @@ use ratatui::{
     widgets::{Paragraph, Widget},
 };
 
-pub fn draw_feedback(buffer: &mut Buffer, app: &App, area: Rect) {
-    // 1. On récupère dynamiquement NOTRE joueur depuis l'état du jeu
-    let (feedback_text, _combo) = if let Some(player) = app.game_ctx.state.players
+pub fn draw_feedback(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
+    let (feedback_text, _combo) = if let Some(player) = ctx.state.players
         .iter()
-        .find(|p| p.id == app.current_player_id) 
+        .find(|p| p.id == app.current_player_id)
     {
-        // Si le joueur a déjà fait une action sur le beat en cours, on affiche sa précision
-        if player.last_acted_beat == Some(app.game_ctx.rhythm.beat_count) {
+        if player.last_acted_beat == Some(ctx.rhythm.beat_count) {
             (player.last_accuracy.as_str(), player.combo)
         } else {
             ("WAITING...", player.combo)
@@ -23,16 +21,14 @@ pub fn draw_feedback(buffer: &mut Buffer, app: &App, area: Rect) {
         ("WAITING...", 0)
     };
 
-    // 2. Attribution de la couleur selon le texte récupéré du joueur
     let feedback_color = match feedback_text {
         "PERFECT!" => Color::Green,
         "GREAT!" => Color::Blue,
         "OKAY!" => Color::Yellow,
         "MISS!" => Color::Red,
-        _ => Color::DarkGray, // Pour "WAITING..."
+        _ => Color::DarkGray,
     };
 
-    // 3. Rendu du paragraphe
     Paragraph::new(feedback_text)
         .alignment(Alignment::Center)
         .style(
@@ -43,13 +39,13 @@ pub fn draw_feedback(buffer: &mut Buffer, app: &App, area: Rect) {
         .render(area, buffer);
 }
 
-pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, area: Rect) {
-    let progress = app.game_ctx.rhythm.progress();
+pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
+    let progress = ctx.rhythm.progress();
     let width = 28_usize;
 
-    let gauge_text = match app.settings.gauge_skin {
+    let gauge_text = match app.profile.gauge_skin {
         GaugeSkin::NecroDancer => format_necrodancer_skin(progress, width),
-        GaugeSkin::Undertale => format_undertale_skin(app, width),
+        GaugeSkin::Undertale => format_undertale_skin(ctx, width),
         GaugeSkin::Simple => format_simple_skin(progress, width / 2),
     };
 
@@ -84,13 +80,13 @@ fn format_necrodancer_skin(progress: f64, width: usize) -> String {
     format!(" [{}] ", bar.iter().collect::<String>())
 }
 
-fn format_undertale_skin(app: &App, width: usize) -> String {
+fn format_undertale_skin(ctx: &common::game::GameContext, width: usize) -> String {
     let mut bar = vec!['-'; width];
     let target_pos = width / 2;
     bar[target_pos] = '|';
 
-    let progress = app.game_ctx.rhythm.progress();
-    let cycle_segment = (app.game_ctx.rhythm.beat_count % 4) as f64;
+    let progress = ctx.rhythm.progress();
+    let cycle_segment = (ctx.rhythm.beat_count % 4) as f64;
 
     let visual_position = match cycle_segment as i64 {
         0 => progress * 0.5,

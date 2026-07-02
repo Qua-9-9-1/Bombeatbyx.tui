@@ -1,4 +1,5 @@
 mod local;
+mod screens;
 mod tui;
 mod ui;
 

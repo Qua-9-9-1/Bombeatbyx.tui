@@ -3,7 +3,7 @@ use crate::game::models::Cell;
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
-    pub fn try_place_bomb(&mut self, player_id: u32, accuracy: BeatAccuracy) {
+    pub fn try_place_bomb(&mut self, player_id: u32, _accuracy: BeatAccuracy) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             if !player.is_alive {
                 return;

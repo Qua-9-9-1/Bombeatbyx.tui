@@ -14,6 +14,10 @@ pub enum Cell {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub id: u32,
+    pub is_host: bool,
+    pub name: String,
+    pub skin: String,
+    pub color: String,
     pub sub_x: i32,
     pub sub_y: i32,
     pub is_alive: bool,
@@ -28,4 +32,25 @@ pub struct Player {
     pub last_action_time: Option<Instant>,
     #[serde(skip)]
     pub spam_lockout_until: Option<Instant>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoomSettings {
+    pub width: usize,
+    pub height: usize,
+    pub bpm: f64,
+    pub sudden_death: bool,
+    pub bonus_every: u32,
+}
+
+impl Default for RoomSettings {
+    fn default() -> Self {
+        Self {
+            width: 15,
+            height: 15,
+            bpm: 60.0,
+            sudden_death: false,
+            bonus_every: 10,
+        }
+    }
 }

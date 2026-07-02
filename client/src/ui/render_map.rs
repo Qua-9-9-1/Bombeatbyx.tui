@@ -7,7 +7,7 @@ use ratatui::{
     widgets::{Block, Borders, Widget},
 };
 
-pub fn draw_map(buffer: &mut Buffer, app: &App, rect: Rect) {
+pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext, rect: Rect) {
     let map_box = Block::default()
         .title(" BOMBOMBYX ")
         .title_alignment(Alignment::Center)
@@ -17,11 +17,11 @@ pub fn draw_map(buffer: &mut Buffer, app: &App, rect: Rect) {
     let play_zone_x = rect.x + 1;
     let play_zone_y = rect.y + 1;
 
-    for y in 0..app.game_ctx.state.height {
-        for x in 0..app.game_ctx.state.width {
-            let cell = app.game_ctx.state.grid[y * app.game_ctx.state.width + x];
+    for y in 0..ctx.state.height {
+        for x in 0..ctx.state.width {
+            let cell = ctx.state.grid[y * ctx.state.width + x];
 
-            let player = &app.game_ctx.state.players[0];
+            let player = &ctx.state.players[0];
             let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
             let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
 
@@ -40,12 +40,12 @@ pub fn draw_map(buffer: &mut Buffer, app: &App, rect: Rect) {
         }
     }
 
-    for player in &app.game_ctx.state.players {
+    for player in &ctx.state.players {
         let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
         let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
-        let idx = p_grid_y * app.game_ctx.state.width + p_grid_x;
+        let idx = p_grid_y * ctx.state.width + p_grid_x;
 
-        if let Cell::Bomb { .. } = app.game_ctx.state.grid[idx] {
+        if let Cell::Bomb { .. } = ctx.state.grid[idx] {
             if player.is_alive {
                 continue;
             }

@@ -8,6 +8,6 @@ pub mod state;
 
 pub use actions::GameAction;
 pub use context::GameContext;
-pub use models::{Cell, Player};
+pub use models::{Cell, Player, RoomSettings};
 pub use rhythm::{BeatAccuracy, RhythmEngine};
 pub use state::GameState;
