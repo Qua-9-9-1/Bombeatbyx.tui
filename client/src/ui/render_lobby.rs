@@ -261,32 +261,54 @@ fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
     let mut right_lines = vec![Line::from("")];
 
-    let player_skin = get_player_skin_cell(&app.profile.skin, ascii);
-    let host_tag = if ascii { " (Host)" } else { " 👑" };
+    let players = if let Some(ref ctx) = app.game_ctx {
+        &ctx.state.players
+    } else {
+        return;
+    };
 
-    right_lines.push(Line::from(vec![
-        Span::styled(player_skin, Style::default()),
-        Span::styled(app.profile.name.as_str(), Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
-        Span::styled(host_tag, Style::default().fg(Color::Yellow)),
-    ]));
-    right_lines.push(Line::from(""));
+    for player in players.iter().take(8) {
+        let mut display_name = player.name.clone();
+        let mut display_skin = player.skin.clone();
 
-    let p2_skin = get_player_skin_cell("🐱", ascii);
-    right_lines.push(Line::from(vec![
-        Span::styled(p2_skin, Style::default()),
-        Span::styled("GigaPlayer", Style::default().fg(Color::Magenta)),
-    ]));
-    right_lines.push(Line::from(""));
+        if player.id == app.current_player_id {
+            display_name = app.profile.name.clone();
+            display_skin = app.profile.skin.clone();
+        }
 
-    let p3_skin = get_player_skin_cell("🐸", ascii);
-    right_lines.push(Line::from(vec![
-        Span::styled(p3_skin, Style::default()),
-        Span::styled("Ribbit", Style::default().fg(Color::Yellow)),
-    ]));
+        let skin_cell = get_player_skin_cell(&display_skin, ascii);
+        let fg_color = get_color_from_str(&player.color);
+
+        let mut spans = vec![
+            Span::styled(skin_cell, Style::default()),
+            Span::styled(display_name, Style::default().fg(fg_color).add_modifier(Modifier::BOLD)),
+        ];
+
+        if player.is_host {
+            let host_tag = if ascii { " (Host)" } else { " 👑" };
+            spans.push(Span::styled(host_tag, Style::default().fg(Color::Yellow)));
+        }
+
+        right_lines.push(Line::from(spans));
+        right_lines.push(Line::from(""));
+    }
 
     Paragraph::new(right_lines)
         .block(right_block)
         .render(area, buffer);
+}
+
+fn get_color_from_str(color_str: &str) -> Color {
+    match color_str.to_lowercase().as_str() {
+        "cyan" => Color::Cyan,
+        "magenta" => Color::Magenta,
+        "yellow" => Color::Yellow,
+        "red" => Color::Red,
+        "green" => Color::Green,
+        "blue" => Color::Blue,
+        "white" => Color::White,
+        _ => Color::White,
+    }
 }
 
 fn get_skin_label(skin: &str, ascii: bool) -> String {

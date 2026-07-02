@@ -46,6 +46,8 @@ impl App {
             code
         ) {
             self.start_game();
+        } else {
+            self.sync_lobby_skin();
         }
     }
 
@@ -75,10 +77,12 @@ impl App {
                 }
                 KeyCode::Backspace => {
                     self.profile.name.pop();
+                    self.sync_lobby_name();
                 }
                 KeyCode::Char(c) => {
                     if self.profile.name.len() < 12 {
                         self.profile.name.push(c);
+                        self.sync_lobby_name();
                     }
                 }
                 _ => {}
@@ -121,6 +125,22 @@ impl App {
             AppState::PauseMenu => self.state = AppState::InGame,
             AppState::SettingsMenu => self.state = AppState::MainMenu,
             AppState::MainMenu => self.game_run = false,
+        }
+    }
+
+    fn sync_lobby_name(&mut self) {
+        if let Some(ref mut ctx) = self.game_ctx {
+            if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+                p.name = self.profile.name.clone();
+            }
+        }
+    }
+
+    fn sync_lobby_skin(&mut self) {
+        if let Some(ref mut ctx) = self.game_ctx {
+            if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+                p.skin = self.profile.skin.clone();
+            }
         }
     }
 }
