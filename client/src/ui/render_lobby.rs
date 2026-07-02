@@ -42,6 +42,7 @@ fn draw_info_panel(buffer: &mut Buffer, area: Rect, cursor: usize, rs: &RoomSett
     let header_bpm = if ascii { " [ BPM / TEMPO ] " } else { "⚡ BPM / TEMPO" };
     let header_sudden = if ascii { " [ SUDDEN DEATH ] " } else { "💀 SUDDEN DEATH" };
     let header_bonus = if ascii { " [ BONUS SPAWN ] " } else { "🎁 BONUS SPAWN" };
+    let header_lives = if ascii { " [ PLAYER LIVES ] " } else { "❤️ PLAYER LIVES" };
     let header_skin = if ascii { " [ CHARACTER SKIN ] " } else { "🎭 CHARACTER SKIN" };
     let header_start = if ascii { " [ START MATCH ] " } else { "🚀 START MATCH" };
 
@@ -113,6 +114,18 @@ fn draw_info_panel(buffer: &mut Buffer, area: Rect, cursor: usize, rs: &RoomSett
             info_lines.push(Line::from(Span::styled("10: Spawns every 10 beats.", Style::default().fg(Color::DarkGray))));
         }
         5 => {
+            info_lines.push(Line::from(Span::styled(header_lives, Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan))));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Specifies the number of lives"));
+            info_lines.push(Line::from("each player has in the game."));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from(Span::styled("Lives:", Style::default().add_modifier(Modifier::UNDERLINED))));
+            info_lines.push(Line::from(format!("Each player starts with {} lives.", rs.lives)));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from(Span::styled("Example:", Style::default().fg(Color::DarkGray))));
+            info_lines.push(Line::from(Span::styled(format!("You can die {} time(s).", rs.lives), Style::default().fg(Color::DarkGray))));
+        }
+        6 => {
             info_lines.push(Line::from(Span::styled(header_skin, Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan))));
             info_lines.push(Line::from(""));
             info_lines.push(Line::from(if ascii { "Select your character skin." } else { "Select your emoji skin." }));
@@ -128,7 +141,7 @@ fn draw_info_panel(buffer: &mut Buffer, area: Rect, cursor: usize, rs: &RoomSett
                 info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
             }
         }
-        6 => {
+        7 => {
             info_lines.push(Line::from(Span::styled(header_start, Style::default().add_modifier(Modifier::BOLD).fg(Color::Green))));
             info_lines.push(Line::from(""));
             info_lines.push(Line::from("Launches the local match."));
