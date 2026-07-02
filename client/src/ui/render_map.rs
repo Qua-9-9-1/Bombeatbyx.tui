@@ -17,11 +17,11 @@ pub fn draw_map(buffer: &mut Buffer, app: &App, rect: Rect) {
     let play_zone_x = rect.x + 1;
     let play_zone_y = rect.y + 1;
 
-    for y in 0..app.game_state.height {
-        for x in 0..app.game_state.width {
-            let cell = app.game_state.grid[y * app.game_state.width + x];
+    for y in 0..app.game_ctx.state.height {
+        for x in 0..app.game_ctx.state.width {
+            let cell = app.game_ctx.state.grid[y * app.game_ctx.state.width + x];
 
-            let player = &app.game_state.players[0];
+            let player = &app.game_ctx.state.players[0];
             let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
             let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
 
@@ -40,12 +40,12 @@ pub fn draw_map(buffer: &mut Buffer, app: &App, rect: Rect) {
         }
     }
 
-    for player in &app.game_state.players {
+    for player in &app.game_ctx.state.players {
         let p_grid_x = (player.sub_x / CELL_W as i32) as usize;
         let p_grid_y = (player.sub_y / CELL_H as i32) as usize;
-        let idx = p_grid_y * app.game_state.width + p_grid_x;
+        let idx = p_grid_y * app.game_ctx.state.width + p_grid_x;
 
-        if let Cell::Bomb { .. } = app.game_state.grid[idx] {
+        if let Cell::Bomb { .. } = app.game_ctx.state.grid[idx] {
             if player.is_alive {
                 continue;
             }

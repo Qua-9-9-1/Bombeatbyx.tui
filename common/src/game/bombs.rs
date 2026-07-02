@@ -1,6 +1,6 @@
+use crate::game::state::GameState;
 use crate::game::models::Cell;
 use crate::game::rhythm::BeatAccuracy;
-use crate::game::state::GameState;
 
 impl GameState {
     pub fn try_place_bomb(&mut self, player_id: u32, accuracy: BeatAccuracy) {

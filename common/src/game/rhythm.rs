@@ -82,7 +82,7 @@ impl RhythmEngine {
         } else {
             progress
         };
-    
+
         if distance <= 0.04 {
             BeatAccuracy::Perfect
         } else if distance <= 0.09 {

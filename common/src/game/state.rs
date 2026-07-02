@@ -8,6 +8,10 @@ use std::time::{Duration, Instant};
 pub struct GameState {
     pub width: usize,
     pub height: usize,
+    pub host_player_id: Option<u32>,
+    pub bpm: f64,
+    pub sudden_death: bool,
+    pub bonus_every: u32,
     pub grid: Vec<Cell>,
     pub players: Vec<Player>,
 }
@@ -30,6 +34,10 @@ impl GameState {
         Self {
             width,
             height,
+            host_player_id: None,
+            bpm:60.0,
+            sudden_death: false,
+            bonus_every: 10,
             grid,
             players: Vec::new(),
         }
@@ -43,11 +51,11 @@ impl GameState {
     }
 
     pub fn handle_action(
-        &mut self, 
-        player_id: u32, 
-        action: GameAction, 
-        accuracy: BeatAccuracy, 
-        current_beat: u64
+        &mut self,
+        player_id: u32,
+        action: GameAction,
+        accuracy: BeatAccuracy,
+        current_beat: u64,
     ) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             let now = Instant::now();
@@ -61,7 +69,7 @@ impl GameState {
 
             if let Some(last_time) = player.last_action_time {
                 let delay = now.duration_since(last_time);
-                
+
                 if delay < Duration::from_millis(100) {
                     player.spam_lockout_until = Some(now + Duration::from_millis(300));
                     player.last_action_time = Some(now);
@@ -85,16 +93,16 @@ impl GameState {
 
             player.score += accuracy.bonus_points();
             match action {
-                GameAction::MoveLeft  => self.move_player(player_id, -2, 0),
+                GameAction::MoveLeft => self.move_player(player_id, -2, 0),
                 GameAction::MoveRight => self.move_player(player_id, 2, 0),
-                GameAction::MoveUp    => self.move_player(player_id, 0, -1),
-                GameAction::MoveDown  => self.move_player(player_id, 0, 1),
+                GameAction::MoveUp => self.move_player(player_id, 0, -1),
+                GameAction::MoveDown => self.move_player(player_id, 0, 1),
                 GameAction::PlaceBomb => self.try_place_bomb(player_id, accuracy),
                 GameAction::TriggerSpell => self.trigger_action_2(player_id),
             }
         }
     }
-    
+
     pub fn trigger_action_2(&mut self, player_id: u32) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             if player.is_alive && player.bomb_range < 6 {

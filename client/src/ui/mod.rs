@@ -14,8 +14,8 @@ pub fn draw(frame: &mut Frame, app: &App) {
     let tui_area = frame.area();
     let buffer = frame.buffer_mut();
 
-    let map_w = (app.game_state.width as u16 * CELL_W) + 2;
-    let map_height = (app.game_state.height as u16 * CELL_H) + 2;
+    let map_w = (app.game_ctx.state.width as u16 * CELL_W) + 2;
+    let map_height = (app.game_ctx.state.height as u16 * CELL_H) + 2;
     let total_needed_height = map_height + 4;
 
     if tui_area.width < map_w || tui_area.height < total_needed_height {
@@ -34,7 +34,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     let gauge_area = Rect::new(start_x, start_y + map_height + 2, map_w, 1);
     render_rhythm::draw_rhythm_gauge(buffer, app, gauge_area);
-    if app.is_paused {
+    if app.game_run {
         render_menu::draw_pause_menu(buffer, tui_area);
     }
 }

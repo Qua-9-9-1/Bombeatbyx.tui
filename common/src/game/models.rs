@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
+use crate::game::rhythm::BeatAccuracy;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -17,10 +18,12 @@ pub struct Player {
     pub sub_y: i32,
     pub is_alive: bool,
     pub score: u32,
+    pub combo: u32,
     pub max_bombs: u8,
     pub active_bombs: u8,
     pub bomb_range: usize,
     pub last_acted_beat: Option<u64>,
+    pub last_accuracy: BeatAccuracy,
     #[serde(skip)]
     pub last_action_time: Option<Instant>,
     #[serde(skip)]

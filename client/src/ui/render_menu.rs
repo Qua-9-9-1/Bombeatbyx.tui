@@ -25,7 +25,7 @@ pub fn draw_pause_menu(buffer: &mut Buffer, tui_area: Rect) {
         // if idx == app.controls.menu_cursor {
         //     menu_content.push_str(&format!("► 📦 {} ◄\n", item.trim()));
         // } else {
-            menu_content.push_str(&format!("   {}   \n", item.trim()));
+        menu_content.push_str(&format!("   {}   \n", item.trim()));
         // }
     }
 
