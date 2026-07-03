@@ -21,8 +21,16 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
         .borders(Borders::ALL);
     map_box.render(rect, buffer);
 
-    let play_zone_x = rect.x + 1;
-    let play_zone_y = rect.y + 1;
+    let arena_w = ctx.state.width as u16 * CELL_W;
+    let arena_h = ctx.state.height as u16 * CELL_H;
+    let inner_w = rect.width.saturating_sub(2);
+    let inner_h = rect.height.saturating_sub(2);
+
+    let offset_x = if inner_w > arena_w { (inner_w - arena_w) / 2 } else { 0 };
+    let offset_y = if inner_h > arena_h { (inner_h - arena_h) / 2 } else { 0 };
+
+    let play_zone_x = rect.x + 1 + offset_x;
+    let play_zone_y = rect.y + 1 + offset_y;
 
     for y in 0..ctx.state.height {
         for x in 0..ctx.state.width {

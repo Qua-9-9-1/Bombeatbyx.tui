@@ -35,12 +35,18 @@ pub fn draw(frame: &mut Frame, app: &App) {
         }
         AppState::InGame | AppState::PauseMenu => {
             if let Some(ref ctx) = app.game_ctx {
-                let map_w = (ctx.state.width as u16 * CELL_W) + 2;
-                let map_height = (ctx.state.height as u16 * CELL_H) + 2;
+                let min_display_w = 36_u16;
+                let min_layout_h = 42_u16;
+                let map_content_w = ctx.state.width as u16 * CELL_W;
+                let map_content_h = ctx.state.height as u16 * CELL_H;
+
+                let display_w = map_content_w.max(min_display_w) + 2;
+                let map_height = map_content_h + 2;
                 let sidebar_w = 26_u16;
                 let spacing = 2_u16;
-                let total_needed_width = map_w + spacing + sidebar_w;
-                let total_needed_height = map_height + 8;
+                let total_needed_width = display_w + spacing + sidebar_w;
+                let total_needed_height = (map_height + 8).max(min_layout_h);
+                let map_box_h = total_needed_height - 8;
 
                 if tui_area.width < total_needed_width || tui_area.height < total_needed_height {
                     enlarge_terminal_message(buffer, tui_area);
@@ -50,27 +56,22 @@ pub fn draw(frame: &mut Frame, app: &App) {
                 let start_x = (tui_area.width - total_needed_width) / 2;
                 let start_y = (tui_area.height - total_needed_height) / 2;
 
-                let map_rect = Rect::new(start_x, start_y, map_w, map_height);
+                let map_rect = Rect::new(start_x, start_y, display_w, map_box_h);
                 game_screen::draw_map(buffer, app, ctx, map_rect);
 
-                let feedback_area = Rect::new(start_x, start_y + map_height, map_w, 1);
+                let feedback_area = Rect::new(start_x, start_y + map_box_h, display_w, 1);
                 render_rhythm::draw_feedback(buffer, app, ctx, feedback_area);
 
-                let gauge_area = Rect::new(start_x, start_y + map_height + 1, map_w, 1);
+                let gauge_area = Rect::new(start_x, start_y + map_box_h + 1, display_w, 1);
                 render_rhythm::draw_rhythm_gauge(buffer, app, ctx, gauge_area);
 
-                let combo_area = Rect::new(start_x, start_y + map_height + 2, map_w, 1);
+                let combo_area = Rect::new(start_x, start_y + map_box_h + 2, display_w, 1);
                 render_rhythm::draw_local_combo(buffer, app, ctx, combo_area);
 
-                let stats_area = Rect::new(start_x, start_y + map_height + 3, map_w, 5);
+                let stats_area = Rect::new(start_x, start_y + map_box_h + 3, display_w, 5);
                 game_screen::draw_local_player_stats(buffer, app, ctx, stats_area);
 
-                let sidebar_area = Rect::new(
-                    start_x + map_w + spacing,
-                    start_y,
-                    sidebar_w,
-                    total_needed_height,
-                );
+                let sidebar_area = Rect::new(start_x + display_w + spacing, start_y, sidebar_w, total_needed_height);
                 game_screen::draw_game_sidebar(buffer, app, ctx, sidebar_area);
             }
 
