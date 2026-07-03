@@ -62,7 +62,10 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
         }
     }
 
-    for player in &ctx.state.players {
+    let mut sorted_players = ctx.state.players.clone();
+    sorted_players.sort_by_key(|p| p.is_alive);
+
+    for player in &sorted_players {
         if player.is_spectator {
             continue;
         }

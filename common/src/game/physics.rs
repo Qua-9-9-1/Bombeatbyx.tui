@@ -69,6 +69,16 @@ impl GameState {
             return false;
         }
 
+        for other in &self.players {
+            if other.id != player_id && other.is_alive && !other.is_spectator {
+                let other_grid_x = other.sub_x / 2;
+                let other_grid_y = other.sub_y / 1;
+                if cell_x == other_grid_x && cell_y == other_grid_y {
+                    return false;
+                }
+            }
+        }
+
         true
     }
 }
