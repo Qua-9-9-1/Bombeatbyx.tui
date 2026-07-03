@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
-use std::time::Instant;
 use crate::game::rhythm::BeatAccuracy;
+use serde::{Deserialize, Serialize};
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameMode {
@@ -62,6 +62,32 @@ pub struct Player {
     pub is_spectator: bool,
     pub second_item: Option<SecondItem>,
     pub shield_until_beat: Option<u64>,
+}
+
+impl Player {
+    pub fn try_consume_action_lockout(&mut self) -> bool {
+        let now = Instant::now();
+
+        if let Some(lockout) = self.spam_lockout_until {
+            if now < lockout {
+                self.spam_lockout_until = Some(now + Duration::from_millis(300));
+                return false;
+            }
+        }
+
+        if let Some(last_time) = self.last_action_time {
+            let delay = now.duration_since(last_time);
+
+            if delay < Duration::from_millis(100) {
+                self.spam_lockout_until = Some(now + Duration::from_millis(300));
+                self.last_action_time = Some(now);
+                return false;
+            }
+        }
+
+        self.last_action_time = Some(now);
+        true
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -140,7 +140,11 @@ impl Animation {
         });
         for i in 0..10 {
             frames_.push(AnimationFrame {
-                symbol: if i % 2 == 0 { "  ".to_string() } else { sym.to_string() },
+                symbol: if i % 2 == 0 {
+                    "  ".to_string()
+                } else {
+                    sym.to_string()
+                },
                 fg_color: if i % 2 == 0 { Color::Reset } else { Color::Red },
                 bg_color: Color::Indexed(234),
                 duration: Duration::from_millis(150),

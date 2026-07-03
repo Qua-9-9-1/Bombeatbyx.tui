@@ -1,12 +1,12 @@
-mod inputs;
 mod game;
+mod inputs;
 
 use crate::local::settings::ClientSettings;
+use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
 use crate::tui::Tui;
 use crate::ui;
-use common::game::{GameContext, RoomSettings, Player, BeatAccuracy};
+use common::game::{BeatAccuracy, GameContext, Player, RoomSettings};
 use std::time::{Duration, Instant};
-use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
 
 pub const CELL_W: u16 = 2;
 pub const CELL_H: u16 = 1;
@@ -42,11 +42,8 @@ impl App {
         let profile = ClientSettings::default();
         let room_settings = RoomSettings::default();
 
-        let mut ctx = GameContext::new(
-            room_settings.width,
-            room_settings.height,
-            room_settings.bpm,
-        );
+        let mut ctx =
+            GameContext::new(room_settings.width, room_settings.height, room_settings.bpm);
 
         ctx.state.players = vec![
             Player {

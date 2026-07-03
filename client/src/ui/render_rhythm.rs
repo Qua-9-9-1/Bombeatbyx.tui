@@ -8,7 +8,9 @@ use ratatui::{
 };
 
 pub fn draw_feedback(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
-    let (feedback_text, _combo) = if let Some(player) = ctx.state.players
+    let (feedback_text, _combo) = if let Some(player) = ctx
+        .state
+        .players
         .iter()
         .find(|p| p.id == app.current_player_id)
     {
@@ -35,7 +37,12 @@ pub fn draw_feedback(buffer: &mut Buffer, app: &App, ctx: &common::game::GameCon
         .render(area, buffer);
 }
 
-pub fn draw_rhythm_gauge(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
+pub fn draw_rhythm_gauge(
+    buffer: &mut Buffer,
+    app: &App,
+    ctx: &common::game::GameContext,
+    area: Rect,
+) {
     let progress = ctx.rhythm.progress();
     let width = 28_usize;
 
@@ -104,7 +111,8 @@ fn format_simple_skin(progress: f64, width: usize) -> String {
     let mut bar = vec!['-'; width];
     let divided_width: usize = width / 2;
 
-    let cursor_pos = ((progress * (divided_width as f64)).round() as usize).clamp(0, divided_width - 1);
+    let cursor_pos =
+        ((progress * (divided_width as f64)).round() as usize).clamp(0, divided_width - 1);
     if cursor_pos == divided_width - 1 {
         bar[cursor_pos] = 'X';
         bar[cursor_pos + divided_width] = 'X';
@@ -115,9 +123,19 @@ fn format_simple_skin(progress: f64, width: usize) -> String {
     format!(" [{}] ", bar.iter().collect::<String>())
 }
 
-pub fn draw_local_combo(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
+pub fn draw_local_combo(
+    buffer: &mut Buffer,
+    app: &App,
+    ctx: &common::game::GameContext,
+    area: Rect,
+) {
     let ascii = app.profile.ascii_mode;
-    if let Some(player) = ctx.state.players.iter().find(|p| p.id == app.current_player_id) {
+    if let Some(player) = ctx
+        .state
+        .players
+        .iter()
+        .find(|p| p.id == app.current_player_id)
+    {
         let value = player.combo;
         if value > 0 {
             let emoji = if value == 0 {
@@ -133,11 +151,15 @@ pub fn draw_local_combo(buffer: &mut Buffer, app: &App, ctx: &common::game::Game
             } else {
                 if ascii { "" } else { "🚿" }
             };
-            
+
             let text = format!("Combo: {} {}", value, emoji);
             Paragraph::new(text)
                 .alignment(Alignment::Center)
-                .style(Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD))
+                .style(
+                    Style::default()
+                        .fg(Color::LightRed)
+                        .add_modifier(Modifier::BOLD),
+                )
                 .render(area, buffer);
         }
     }

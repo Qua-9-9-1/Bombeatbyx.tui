@@ -1,6 +1,6 @@
-use crate::game::state::GameState;
 use crate::game::models::Cell;
 use crate::game::rhythm::BeatAccuracy;
+use crate::game::state::GameState;
 
 impl GameState {
     pub fn try_place_bomb(&mut self, player_id: u32, _accuracy: BeatAccuracy) {
@@ -140,7 +140,8 @@ impl GameState {
                 self.players[i].is_alive = false;
                 self.players[i].lives = self.players[i].lives.saturating_sub(1);
                 self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
-                self.players[i].respawn_timer = Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
+                self.players[i].respawn_timer =
+                    Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
             }
         }
     }

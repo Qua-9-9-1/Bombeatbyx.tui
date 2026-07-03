@@ -16,15 +16,17 @@ impl App {
                 p.max_bombs = 1;
                 p.bomb_range = 1;
                 p.collected_bonuses.clear();
-                p.second_item = if p.id == 2 { Some(common::game::models::SecondItem::Shield) } else { None };
+                p.second_item = if p.id == 2 {
+                    Some(common::game::models::SecondItem::Shield)
+                } else {
+                    None
+                };
                 p.shield_until_beat = None;
                 p.combo = 0;
             }
 
-            let mut new_state = common::game::GameState::new(
-                self.room_settings.width,
-                self.room_settings.height,
-            );
+            let mut new_state =
+                common::game::GameState::new(self.room_settings.width, self.room_settings.height);
             new_state.bpm = self.room_settings.bpm;
             new_state.sudden_death = self.room_settings.sudden_death;
             new_state.bonus_every = self.room_settings.bonus_every;
@@ -58,7 +60,12 @@ impl App {
 
     pub(crate) fn is_local_player_host(&self) -> bool {
         if let Some(ref ctx) = self.game_ctx {
-            if let Some(player) = ctx.state.players.iter().find(|p| p.id == self.current_player_id) {
+            if let Some(player) = ctx
+                .state
+                .players
+                .iter()
+                .find(|p| p.id == self.current_player_id)
+            {
                 return player.is_host;
             }
         }

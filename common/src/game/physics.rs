@@ -1,4 +1,4 @@
-use crate::game::models::{Cell, BonusType, SecondItem};
+use crate::game::models::{BonusType, Cell, SecondItem};
 use crate::game::state::GameState;
 
 impl GameState {

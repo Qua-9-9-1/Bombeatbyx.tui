@@ -4,6 +4,7 @@ pub mod context;
 pub mod models;
 pub mod physics;
 pub mod rhythm;
+pub mod spawns;
 pub mod state;
 
 pub use actions::GameAction;

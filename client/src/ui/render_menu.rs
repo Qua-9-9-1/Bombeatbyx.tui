@@ -1,12 +1,12 @@
+use crate::local::app::App;
+use crate::local::settings::GaugeSkin;
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph, Widget},
     text::{Line, Span},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
-use crate::local::app::App;
-use crate::local::settings::GaugeSkin;
 
 pub fn center_rect(area: Rect, width: u16, height: u16) -> Rect {
     let x = area.x + area.width.saturating_sub(width) / 2;
@@ -17,8 +17,12 @@ pub fn center_rect(area: Rect, width: u16, height: u16) -> Rect {
 pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     let menu_rect = center_rect(tui_area, 50, 14);
     let ascii = app.profile.ascii_mode;
-    
-    let title = if ascii { " [ MAIN MENU ] " } else { " 👾 MAIN MENU 👾 " };
+
+    let title = if ascii {
+        " [ MAIN MENU ] "
+    } else {
+        " 👾 MAIN MENU 👾 "
+    };
     let block = Block::default()
         .title(title)
         .title_alignment(Alignment::Center)
@@ -31,10 +35,19 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         vec!["🎮 Host Game", "🌐 Join Game", "⚙️  Settings", "❌ Quit"]
     };
 
-    let subtitle = if ascii { "=== Bombeatbyx ===" } else { "💣 Bombeatbyx 💣" };
+    let subtitle = if ascii {
+        "=== Bombeatbyx ==="
+    } else {
+        "💣 Bombeatbyx 💣"
+    };
     let mut lines = vec![
         Line::from(""),
-        Line::from(Span::styled(subtitle, Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD))),
+        Line::from(Span::styled(
+            subtitle,
+            Style::default()
+                .fg(Color::LightRed)
+                .add_modifier(Modifier::BOLD),
+        )),
         Line::from(""),
     ];
 
@@ -44,9 +57,24 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     for (idx, item) in items.iter().enumerate() {
         if idx == app.main_menu_screen.cursor {
             lines.push(Line::from(vec![
-                Span::styled(arrow_l, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(*item, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(arrow_r, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    arrow_l,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    *item,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    arrow_r,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
             ]));
         } else {
             lines.push(Line::from(format!("    {}    ", item)));
@@ -59,7 +87,10 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     } else {
         "Use Z/S or Up/Down to navigate, Enter to select"
     };
-    lines.push(Line::from(Span::styled(instruct, Style::default().fg(Color::DarkGray))));
+    lines.push(Line::from(Span::styled(
+        instruct,
+        Style::default().fg(Color::DarkGray),
+    )));
 
     Paragraph::new(lines)
         .block(block)
@@ -70,8 +101,12 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     let menu_rect = center_rect(tui_area, 50, 15);
     let ascii = app.profile.ascii_mode;
-    
-    let title = if ascii { " [ SETTINGS ] " } else { " ⚙️ SETTINGS ⚙️ " };
+
+    let title = if ascii {
+        " [ SETTINGS ] "
+    } else {
+        " ⚙️ SETTINGS ⚙️ "
+    };
     let block = Block::default()
         .title(title)
         .title_alignment(Alignment::Center)
@@ -101,7 +136,12 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     let mut lines = vec![
         Line::from(""),
-        Line::from(Span::styled("SETTINGS CONFIGURATION", Style::default().fg(Color::LightCyan).add_modifier(Modifier::BOLD))),
+        Line::from(Span::styled(
+            "SETTINGS CONFIGURATION",
+            Style::default()
+                .fg(Color::LightCyan)
+                .add_modifier(Modifier::BOLD),
+        )),
         Line::from(""),
     ];
 
@@ -110,11 +150,24 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     for (idx, item) in items.iter().enumerate() {
         if idx == app.settings_cursor {
-            let item_color = if idx == 1 && app.editing_name { Color::LightGreen } else { Color::Yellow };
+            let item_color = if idx == 1 && app.editing_name {
+                Color::LightGreen
+            } else {
+                Color::Yellow
+            };
             lines.push(Line::from(vec![
-                Span::styled(arrow_l, Style::default().fg(item_color).add_modifier(Modifier::BOLD)),
-                Span::styled(item.as_str(), Style::default().fg(item_color).add_modifier(Modifier::BOLD)),
-                Span::styled(arrow_r, Style::default().fg(item_color).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    arrow_l,
+                    Style::default().fg(item_color).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    item.as_str(),
+                    Style::default().fg(item_color).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    arrow_r,
+                    Style::default().fg(item_color).add_modifier(Modifier::BOLD),
+                ),
             ]));
         } else {
             lines.push(Line::from(format!("    {}    ", item)));
@@ -123,9 +176,17 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     lines.push(Line::from(""));
     if app.editing_name {
-        lines.push(Line::from(Span::styled("Type new name, Backspace to delete, Enter to save", Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD))));
+        lines.push(Line::from(Span::styled(
+            "Type new name, Backspace to delete, Enter to save",
+            Style::default()
+                .fg(Color::LightGreen)
+                .add_modifier(Modifier::BOLD),
+        )));
     } else {
-        lines.push(Line::from(Span::styled("Use Z/S (Up/Down) to navigate, Q/D (Left/Right) to adjust, Enter to edit/exit", Style::default().fg(Color::DarkGray))));
+        lines.push(Line::from(Span::styled(
+            "Use Z/S (Up/Down) to navigate, Q/D (Left/Right) to adjust, Enter to edit/exit",
+            Style::default().fg(Color::DarkGray),
+        )));
     }
 
     Paragraph::new(lines)
@@ -142,7 +203,11 @@ pub fn draw_pause_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     let menu_rect = Rect::new(menu_x, menu_y, menu_w, menu_h);
     let ascii = app.profile.ascii_mode;
 
-    let title = if ascii { " [ PAUSE MENU ] " } else { " 🛠️ PAUSE MENU 🛠️ " };
+    let title = if ascii {
+        " [ PAUSE MENU ] "
+    } else {
+        " 🛠️ PAUSE MENU 🛠️ "
+    };
     let menu_block = Block::default()
         .title(title)
         .title_alignment(Alignment::Center)
@@ -159,9 +224,24 @@ pub fn draw_pause_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     for (idx, item) in items.iter().enumerate() {
         if idx == app.pause_cursor {
             lines.push(Line::from(vec![
-                Span::styled(arrow_l, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(*item, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(arrow_r, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    arrow_l,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    *item,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    arrow_r,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
             ]));
         } else {
             lines.push(Line::from(format!("   {}   ", item)));

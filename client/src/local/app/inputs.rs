@@ -8,7 +8,9 @@ impl App {
     pub(crate) fn handle_inputs(&mut self) -> std::io::Result<()> {
         while event::poll(Duration::ZERO)? {
             if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Release { continue; }
+                if key.kind == KeyEventKind::Release {
+                    continue;
+                }
 
                 if key.code == KeyCode::Esc {
                     self.handle_esc();
@@ -43,7 +45,7 @@ impl App {
             &mut self.room_settings,
             &mut self.profile.skin,
             is_host,
-            code
+            code,
         ) {
             self.start_game();
         } else {
@@ -57,14 +59,18 @@ impl App {
 
     fn handle_pause_menu_input(&mut self, code: KeyCode) {
         match code {
-            KeyCode::Up | KeyCode::Char('z') => self.pause_cursor = self.pause_cursor.saturating_sub(1),
-            KeyCode::Down | KeyCode::Char('s') => self.pause_cursor = (self.pause_cursor + 1).min(2),
+            KeyCode::Up | KeyCode::Char('z') => {
+                self.pause_cursor = self.pause_cursor.saturating_sub(1)
+            }
+            KeyCode::Down | KeyCode::Char('s') => {
+                self.pause_cursor = (self.pause_cursor + 1).min(2)
+            }
             KeyCode::Enter => match self.pause_cursor {
                 0 => self.state = AppState::InGame,
                 1 => self.state = AppState::SettingsMenu,
                 2 => self.state = AppState::MainMenu,
                 _ => {}
-            }
+            },
             _ => {}
         }
     }
@@ -89,8 +95,12 @@ impl App {
             }
         } else {
             match code {
-                KeyCode::Up | KeyCode::Char('z') => self.settings_cursor = self.settings_cursor.saturating_sub(1),
-                KeyCode::Down | KeyCode::Char('s') => self.settings_cursor = (self.settings_cursor + 1).min(3),
+                KeyCode::Up | KeyCode::Char('z') => {
+                    self.settings_cursor = self.settings_cursor.saturating_sub(1)
+                }
+                KeyCode::Down | KeyCode::Char('s') => {
+                    self.settings_cursor = (self.settings_cursor + 1).min(3)
+                }
                 KeyCode::Left | KeyCode::Char('q') | KeyCode::Right | KeyCode::Char('d') => {
                     match self.settings_cursor {
                         0 => {
@@ -106,14 +116,12 @@ impl App {
                         _ => {}
                     }
                 }
-                KeyCode::Enter => {
-                    match self.settings_cursor {
-                        1 => self.editing_name = true,
-                        2 => self.profile.ascii_mode = !self.profile.ascii_mode,
-                        3 => self.state = AppState::MainMenu,
-                        _ => {}
-                    }
-                }
+                KeyCode::Enter => match self.settings_cursor {
+                    1 => self.editing_name = true,
+                    2 => self.profile.ascii_mode = !self.profile.ascii_mode,
+                    3 => self.state = AppState::MainMenu,
+                    _ => {}
+                },
                 _ => {}
             }
         }
@@ -130,7 +138,12 @@ impl App {
 
     fn sync_lobby_name(&mut self) {
         if let Some(ref mut ctx) = self.game_ctx {
-            if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+            if let Some(p) = ctx
+                .state
+                .players
+                .iter_mut()
+                .find(|p| p.id == self.current_player_id)
+            {
                 p.name = self.profile.name.clone();
             }
         }
@@ -138,7 +151,12 @@ impl App {
 
     fn sync_lobby_skin(&mut self) {
         if let Some(ref mut ctx) = self.game_ctx {
-            if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+            if let Some(p) = ctx
+                .state
+                .players
+                .iter_mut()
+                .find(|p| p.id == self.current_player_id)
+            {
                 p.skin = self.profile.skin.clone();
             }
         }
