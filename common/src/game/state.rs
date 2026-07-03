@@ -75,17 +75,22 @@ impl GameState {
                 }
             }
 
-            player.last_acted_beat = Some(current_beat);
-            player.last_accuracy = accuracy.clone();
-
             if matches!(accuracy, BeatAccuracy::Miss) {
+                player.last_acted_beat = Some(current_beat);
+                player.last_accuracy = BeatAccuracy::Miss;
                 player.combo = 0;
                 return;
             }
 
-            player.combo = (player.combo + 1).min(9999);
-            player.score += accuracy.bonus_points();
-            self.apply_player_action(player_id, action, accuracy, current_beat);
+            let success = self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
+            if success {
+                if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
+                    p.last_acted_beat = Some(current_beat);
+                    p.last_accuracy = accuracy.clone();
+                    p.combo = (p.combo + 1).min(9999);
+                    p.score += accuracy.bonus_points();
+                }
+            }
         }
     }
 
@@ -95,7 +100,7 @@ impl GameState {
         action: GameAction,
         accuracy: BeatAccuracy,
         current_beat: u64,
-    ) {
+    ) -> bool {
         match action {
             GameAction::MoveLeft => self.move_player(player_id, -2, 0),
             GameAction::MoveRight => self.move_player(player_id, 2, 0),
@@ -103,11 +108,11 @@ impl GameState {
             GameAction::MoveDown => self.move_player(player_id, 0, 1),
             GameAction::PlaceBomb => self.try_place_bomb(player_id, accuracy),
             GameAction::TriggerSpell => self.trigger_action_2(player_id, current_beat),
-            GameAction::Emote(_) => {}
+            GameAction::Emote(_) => false,
         }
     }
 
-    pub fn trigger_action_2(&mut self, player_id: u32, current_beat: u64) {
+    pub fn trigger_action_2(&mut self, player_id: u32, current_beat: u64) -> bool {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             if player.is_alive {
                 if let Some(item) = player.second_item {
@@ -115,11 +120,13 @@ impl GameState {
                         SecondItem::Shield => {
                             player.shield_until_beat = Some(current_beat);
                             player.second_item = None;
+                            return true;
                         }
                     }
                 }
             }
         }
+        false
     }
 
     pub fn trigger_emote(&mut self, player_id: u32, index: u8) {

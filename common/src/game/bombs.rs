@@ -3,10 +3,10 @@ use crate::game::rhythm::BeatAccuracy;
 use crate::game::state::GameState;
 
 impl GameState {
-    pub fn try_place_bomb(&mut self, player_id: u32, _accuracy: BeatAccuracy) {
+    pub fn try_place_bomb(&mut self, player_id: u32, _accuracy: BeatAccuracy) -> bool {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             if !player.is_alive {
-                return;
+                return false;
             }
 
             if player.active_bombs < player.max_bombs {
@@ -22,9 +22,11 @@ impl GameState {
                         ticks_left: ticks,
                     };
                     player.active_bombs += 1;
+                    return true;
                 }
             }
         }
+        false
     }
 
     pub fn tick_bombs_and_explosions(&mut self) {

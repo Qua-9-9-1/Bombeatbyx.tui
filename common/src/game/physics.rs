@@ -2,10 +2,10 @@ use crate::game::models::{BonusType, Cell, SecondItem};
 use crate::game::state::GameState;
 
 impl GameState {
-    pub fn move_player(&mut self, player_id: u32, move_x: i32, move_y: i32) {
+    pub fn move_player(&mut self, player_id: u32, move_x: i32, move_y: i32) -> bool {
         let target_pos = if let Some(player) = self.players.iter().find(|p| p.id == player_id) {
             if !player.is_alive {
-                return;
+                return false;
             }
             Some((player.sub_x + move_x, player.sub_y + move_y))
         } else {
@@ -37,9 +37,11 @@ impl GameState {
                         }
                         self.grid[idx] = Cell::Empty;
                     }
+                    return true;
                 }
             }
         }
+        false
     }
 
     fn is_position_valid(&self, player_id: u32, sx: i32, sy: i32) -> bool {
