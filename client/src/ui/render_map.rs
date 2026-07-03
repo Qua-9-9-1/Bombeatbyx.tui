@@ -275,7 +275,7 @@ pub fn draw_game_sidebar(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
             if ascii { "EY ".to_string() } else { "👀 ".to_string() }
         } else if !player.is_alive {
             if player.lives == 0 {
-                if ascii { "oo ".to_string() } else { "∞  ".to_string() }
+                if ascii { "XX ".to_string() } else { "🪦  ".to_string() }
             } else {
                 if ascii { "XX ".to_string() } else { "💀 ".to_string() }
             }
@@ -302,8 +302,8 @@ pub fn draw_game_sidebar(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
         };
 
         let second_item_case = match player.second_item {
-            Some(common::game::models::SecondItem::Shield) => if ascii { " {SH}" } else { " {🛡️}" },
-            None => " {  }",
+            Some(common::game::models::SecondItem::Shield) => if ascii { " [SH]" } else { " [🛡️]" },
+            None => " [  ]",
         };
 
         let spans = vec![
@@ -315,7 +315,6 @@ pub fn draw_game_sidebar(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
         lines.push(Line::from(spans));
 
         if player.is_alive && !player.is_spectator {
-            // Line 2: Lives / Score
             let mut line1_spans = vec![Span::raw("  ")];
             match mode {
                 common::game::models::GameMode::Deathmatch => {
@@ -329,7 +328,6 @@ pub fn draw_game_sidebar(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
             }
             lines.push(Line::from(line1_spans));
 
-            // Line 3: Combo (always shown even if 0)
             let mut line2_spans = vec![Span::raw("  ")];
             let combo_emoji = if player.combo == 0 {
                 "".to_string()
@@ -345,7 +343,6 @@ pub fn draw_game_sidebar(buffer: &mut Buffer, app: &App, ctx: &common::game::Gam
             line2_spans.push(Span::styled(format!("Combo: {}{}", player.combo, combo_emoji), Style::default().fg(Color::LightRed)));
             lines.push(Line::from(line2_spans));
 
-            // Line 4: Items/Bonus list
             let mut line3_spans = vec![Span::raw("  ")];
             let items_str = if player.collected_bonuses.is_empty() {
                 if ascii { "None".to_string() } else { "🚫 None".to_string() }
@@ -422,8 +419,8 @@ pub fn draw_local_player_stats(buffer: &mut Buffer, app: &App, ctx: &common::gam
         };
 
         let second_item_case = match player.second_item {
-            Some(common::game::models::SecondItem::Shield) => if ascii { "{SH}" } else { "{🛡️}" },
-            None => "{  }",
+            Some(common::game::models::SecondItem::Shield) => if ascii { "SH" } else { "🛡️" },
+            None => "",
         };
 
         let line2_spans = vec![
