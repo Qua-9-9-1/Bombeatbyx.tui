@@ -87,7 +87,9 @@ impl GameState {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
                     p.last_acted_beat = Some(current_beat);
                     p.last_accuracy = accuracy.clone();
-                    p.combo = (p.combo + 1).min(9999);
+                    if accuracy != BeatAccuracy::Ok {
+                        p.combo = (p.combo + 1).min(9999);
+                    }
                     p.score += accuracy.bonus_points();
                 }
             }
