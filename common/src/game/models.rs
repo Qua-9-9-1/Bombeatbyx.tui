@@ -3,12 +3,31 @@ use std::time::Instant;
 use crate::game::rhythm::BeatAccuracy;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum GameMode {
+    Deathmatch,
+    Score,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SecondItem {
+    Shield,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum BonusType {
+    BombQty,
+    BombRange,
+    Shield,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
     Empty,
     Wall,
     Brick,
     Bomb { owner_id: u32, ticks_left: u8 },
     Explosion { ticks_left: u8 },
+    Bonus(BonusType),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,6 +58,10 @@ pub struct Player {
     pub death_pos: Option<(i32, i32)>,
     #[serde(skip)]
     pub respawn_timer: Option<Instant>,
+    pub collected_bonuses: Vec<String>,
+    pub is_spectator: bool,
+    pub second_item: Option<SecondItem>,
+    pub shield_until_beat: Option<u64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -49,6 +72,7 @@ pub struct RoomSettings {
     pub sudden_death: bool,
     pub bonus_every: u32,
     pub lives: u8,
+    pub mode: GameMode,
 }
 
 impl Default for RoomSettings {
@@ -60,6 +84,7 @@ impl Default for RoomSettings {
             sudden_death: false,
             bonus_every: 10,
             lives: 3,
+            mode: GameMode::Deathmatch,
         }
     }
 }

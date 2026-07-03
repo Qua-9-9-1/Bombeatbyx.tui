@@ -37,8 +37,9 @@ impl GameContext {
         }
 
         if has_beat_ticked {
+            self.state.tick_beat(current_beat);
             self.state.tick_bombs_and_explosions();
-            self.state.check_deaths();
+            self.state.check_deaths(current_beat);
             true
         } else {
             false

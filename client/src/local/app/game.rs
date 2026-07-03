@@ -9,10 +9,16 @@ impl App {
             let mut players = ctx.state.players.clone();
             for p in &mut players {
                 p.lives = self.room_settings.lives;
-                p.is_alive = true;
+                p.is_alive = !p.is_spectator;
                 p.death_pos = None;
                 p.respawn_timer = None;
                 p.active_bombs = 0;
+                p.max_bombs = 1;
+                p.bomb_range = 1;
+                p.collected_bonuses.clear();
+                p.second_item = if p.id == 2 { Some(common::game::models::SecondItem::Shield) } else { None };
+                p.shield_until_beat = None;
+                p.combo = 0;
             }
 
             let mut new_state = common::game::GameState::new(
@@ -22,6 +28,7 @@ impl App {
             new_state.bpm = self.room_settings.bpm;
             new_state.sudden_death = self.room_settings.sudden_death;
             new_state.bonus_every = self.room_settings.bonus_every;
+            new_state.mode = self.room_settings.mode;
 
             new_state.spawn_players(players);
 

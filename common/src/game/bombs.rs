@@ -102,7 +102,7 @@ impl GameState {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
                         break;
                     }
-                    Cell::Empty | Cell::Explosion { .. } => {
+                    Cell::Empty | Cell::Explosion { .. } | Cell::Bonus(_) => {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
                     }
                     Cell::Bomb {
@@ -119,9 +119,9 @@ impl GameState {
         }
     }
 
-    pub fn check_deaths(&mut self) {
+    pub fn check_deaths(&mut self, current_beat: u64) {
         for i in 0..self.players.len() {
-            if !self.players[i].is_alive {
+            if !self.players[i].is_alive || self.players[i].is_spectator {
                 continue;
             }
 
@@ -134,6 +134,9 @@ impl GameState {
             let cell = self.get_cell(cx, cy);
 
             if let Cell::Explosion { .. } = cell {
+                if self.players[i].shield_until_beat == Some(current_beat) {
+                    continue;
+                }
                 self.players[i].is_alive = false;
                 self.players[i].lives = self.players[i].lives.saturating_sub(1);
                 self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));

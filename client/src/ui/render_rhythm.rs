@@ -114,3 +114,31 @@ fn format_simple_skin(progress: f64, width: usize) -> String {
     }
     format!(" [{}] ", bar.iter().collect::<String>())
 }
+
+pub fn draw_local_combo(buffer: &mut Buffer, app: &App, ctx: &common::game::GameContext, area: Rect) {
+    let ascii = app.profile.ascii_mode;
+    if let Some(player) = ctx.state.players.iter().find(|p| p.id == app.current_player_id) {
+        let value = player.combo;
+        if value > 0 {
+            let emoji = if value == 0 {
+                if ascii { "" } else { "💤" }
+            } else if value < 10 {
+                if ascii { "" } else { "⚡" }
+            } else if value < 20 {
+                if ascii { "" } else { "🔥" }
+            } else if value < 50 {
+                if ascii { "" } else { "💥" }
+            } else if value < 100 {
+                if ascii { "" } else { "👑" }
+            } else {
+                if ascii { "" } else { "🚿" }
+            };
+            
+            let text = format!("Combo: {} {}", value, emoji);
+            Paragraph::new(text)
+                .alignment(Alignment::Center)
+                .style(Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD))
+                .render(area, buffer);
+        }
+    }
+}

@@ -1,4 +1,4 @@
-use crate::game::models::Cell;
+use crate::game::models::{Cell, BonusType, SecondItem};
 use crate::game::state::GameState;
 
 impl GameState {
@@ -17,6 +17,26 @@ impl GameState {
                 if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
                     player.sub_x = next_x;
                     player.sub_y = next_y;
+
+                    let cell_x = (next_x / 2) as usize;
+                    let cell_y = next_y as usize;
+                    let idx = cell_y * self.width + cell_x;
+                    if let Cell::Bonus(b_type) = self.grid[idx] {
+                        match b_type {
+                            BonusType::BombQty => {
+                                player.max_bombs = player.max_bombs.saturating_add(1);
+                                player.collected_bonuses.push("💣".to_string());
+                            }
+                            BonusType::BombRange => {
+                                player.bomb_range = player.bomb_range.saturating_add(1);
+                                player.collected_bonuses.push("🔥".to_string());
+                            }
+                            BonusType::Shield => {
+                                player.second_item = Some(SecondItem::Shield);
+                            }
+                        }
+                        self.grid[idx] = Cell::Empty;
+                    }
                 }
             }
         }

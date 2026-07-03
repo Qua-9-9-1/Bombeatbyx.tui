@@ -126,6 +126,18 @@ fn draw_info_panel(buffer: &mut Buffer, area: Rect, cursor: usize, rs: &RoomSett
             info_lines.push(Line::from(Span::styled(format!("You can die {} time(s).", rs.lives), Style::default().fg(Color::DarkGray))));
         }
         6 => {
+            let header_mode = if ascii { " [ GAME MODE ] " } else { "🏆 GAME MODE" };
+            info_lines.push(Line::from(Span::styled(header_mode, Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan))));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Toggles the rules for"));
+            info_lines.push(Line::from("victory in the match."));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Deathmatch: Last player"));
+            info_lines.push(Line::from("standing with lives wins."));
+            info_lines.push(Line::from("Score: High score from"));
+            info_lines.push(Line::from("rhythm steps wins."));
+        }
+        7 => {
             info_lines.push(Line::from(Span::styled(header_skin, Style::default().add_modifier(Modifier::BOLD).fg(Color::Cyan))));
             info_lines.push(Line::from(""));
             info_lines.push(Line::from(if ascii { "Select your character skin." } else { "Select your emoji skin." }));
@@ -141,7 +153,7 @@ fn draw_info_panel(buffer: &mut Buffer, area: Rect, cursor: usize, rs: &RoomSett
                 info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
             }
         }
-        7 => {
+        8 => {
             info_lines.push(Line::from(Span::styled(header_start, Style::default().add_modifier(Modifier::BOLD).fg(Color::Green))));
             info_lines.push(Line::from(""));
             info_lines.push(Line::from("Launches the local match."));
@@ -219,6 +231,7 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         if is_host { format!("Sudden Death  : < {} >", if rs.sudden_death { "ON" } else { "OFF" }) } else { format!("Sudden Death  : {}", if rs.sudden_death { "ON" } else { "OFF" }) },
         if is_host { format!("Bonus Spawn   : < Every {} beats >", rs.bonus_every) } else { format!("Bonus Spawn   : Every {} beats", rs.bonus_every) },
         if is_host { format!("Player Lives  : < {} >", rs.lives) } else { format!("Player Lives  : {}", rs.lives) },
+        if is_host { format!("Game Mode     : < {:?} >", rs.mode) } else { format!("Game Mode     : {:?}", rs.mode) },
         format!("Your Skin     : < {} >", skin_name),
         " [ START GAME ] ".to_string(),
     ];
@@ -237,10 +250,10 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     let arrow_r = if ascii { " <= " } else { " ◄" };
 
     for (idx, item) in items.iter().enumerate() {
-        if idx == 7 && !is_host { continue; }
+        if idx == 8 && !is_host { continue; }
 
         if idx == cursor {
-            if idx == 7 {
+            if idx == 8 {
                 let text = if ascii { format!(" =>> {} <<=", item) } else { format!(" ► 🔥 {} 🔥 ◄", item) };
                 center_lines.push(Line::from(Span::styled(text, Style::default().fg(Color::Green).add_modifier(Modifier::BOLD))));
             } else {
@@ -251,7 +264,7 @@ fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 ]));
             }
         } else {
-            if idx == 7 {
+            if idx == 8 {
                 center_lines.push(Line::from(Span::styled(format!("     {}", item), Style::default().fg(Color::LightGreen))));
             } else {
                 center_lines.push(Line::from(format!("   {}   ", item)));

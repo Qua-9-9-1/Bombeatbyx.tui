@@ -22,24 +22,24 @@ impl LobbyScreen {
                 self.cursor = self.cursor.saturating_sub(1);
             }
             KeyCode::Down | KeyCode::Char('s') => {
-                let max_row = if is_host { 7 } else { 6 };
+                let max_row = if is_host { 8 } else { 7 };
                 self.cursor = (self.cursor + 1).min(max_row);
             }
             KeyCode::Left | KeyCode::Char('q') => {
-                if self.cursor == 6 {
+                if self.cursor == 7 {
                     self.modify_local_skin(profile_skin, false);
-                } else if is_host {
+                } else if is_host && self.cursor < 7 {
                     self.modify_room_setting(room_settings, false);
                 }
             }
             KeyCode::Right | KeyCode::Char('d') => {
-                if self.cursor == 6 {
+                if self.cursor == 7 {
                     self.modify_local_skin(profile_skin, true);
-                } else if is_host {
+                } else if is_host && self.cursor < 7 {
                     self.modify_room_setting(room_settings, true);
                 }
             }
-            KeyCode::Enter if self.cursor == 7 && is_host => {
+            KeyCode::Enter if self.cursor == 8 && is_host => {
                 return true;
             }
             _ => {}
@@ -56,6 +56,12 @@ impl LobbyScreen {
             3 => room_settings.sudden_death = !room_settings.sudden_death,
             4 => room_settings.bonus_every = ((room_settings.bonus_every as i32) + sign).clamp(1, 60) as u32,
             5 => room_settings.lives = ((room_settings.lives as i32) + sign).clamp(1, 9) as u8,
+            6 => {
+                room_settings.mode = match room_settings.mode {
+                    common::game::models::GameMode::Deathmatch => common::game::models::GameMode::Score,
+                    common::game::models::GameMode::Score => common::game::models::GameMode::Deathmatch,
+                };
+            }
             _ => {}
         }
     }

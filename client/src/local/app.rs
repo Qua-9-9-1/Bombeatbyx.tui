@@ -72,6 +72,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 2,
@@ -96,6 +100,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: Some(common::game::models::SecondItem::Shield),
+                shield_until_beat: None,
             },
             Player {
                 id: 3,
@@ -120,6 +128,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 4,
@@ -144,6 +156,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 5,
@@ -168,6 +184,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 6,
@@ -192,6 +212,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 7,
@@ -216,6 +240,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: false,
+                second_item: None,
+                shield_until_beat: None,
             },
             Player {
                 id: 8,
@@ -240,6 +268,10 @@ impl App {
                 lives: room_settings.lives,
                 death_pos: None,
                 respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: true,
+                second_item: None,
+                shield_until_beat: None,
             },
         ];
 

@@ -37,24 +37,36 @@ pub fn draw(frame: &mut Frame, app: &App) {
             if let Some(ref ctx) = app.game_ctx {
                 let map_w = (ctx.state.width as u16 * CELL_W) + 2;
                 let map_height = (ctx.state.height as u16 * CELL_H) + 2;
-                let total_needed_height = map_height + 4;
+                let sidebar_w = 26_u16;
+                let spacing = 2_u16;
+                let total_needed_width = map_w + spacing + sidebar_w;
+                let total_needed_height = map_height + 8;
 
-                if tui_area.width < map_w || tui_area.height < total_needed_height {
+                if tui_area.width < total_needed_width || tui_area.height < total_needed_height {
                     enlarge_terminal_message(buffer, tui_area);
                     return;
                 }
 
-                let start_x = (tui_area.width - map_w) / 2;
+                let start_x = (tui_area.width - total_needed_width) / 2;
                 let start_y = (tui_area.height - total_needed_height) / 2;
 
                 let map_rect = Rect::new(start_x, start_y, map_w, map_height);
                 render_map::draw_map(buffer, app, ctx, map_rect);
 
-                let feedback_area = Rect::new(start_x, start_y + map_height + 1, map_w, 1);
+                let feedback_area = Rect::new(start_x, start_y + map_height, map_w, 1);
                 render_rhythm::draw_feedback(buffer, app, ctx, feedback_area);
 
-                let gauge_area = Rect::new(start_x, start_y + map_height + 2, map_w, 1);
+                let gauge_area = Rect::new(start_x, start_y + map_height + 1, map_w, 1);
                 render_rhythm::draw_rhythm_gauge(buffer, app, ctx, gauge_area);
+
+                let combo_area = Rect::new(start_x, start_y + map_height + 2, map_w, 1);
+                render_rhythm::draw_local_combo(buffer, app, ctx, combo_area);
+
+                let stats_area = Rect::new(start_x, start_y + map_height + 3, map_w, 5);
+                render_map::draw_local_player_stats(buffer, app, ctx, stats_area);
+
+                let sidebar_area = Rect::new(start_x + map_w + spacing, start_y, sidebar_w, total_needed_height);
+                render_map::draw_game_sidebar(buffer, app, ctx, sidebar_area);
             }
 
             if app.state == AppState::PauseMenu {

@@ -1,5 +1,5 @@
 use super::actions::GameAction;
-use super::models::{Cell, Player};
+use super::models::{Cell, Player, GameMode, BonusType, SecondItem};
 use super::rhythm::BeatAccuracy;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
@@ -14,6 +14,7 @@ pub struct GameState {
     pub bonus_every: u32,
     pub grid: Vec<Cell>,
     pub players: Vec<Player>,
+    pub mode: GameMode,
 }
 
 impl GameState {
@@ -35,11 +36,12 @@ impl GameState {
             width,
             height,
             host_player_id: None,
-            bpm:60.0,
+            bpm: 60.0,
             sudden_death: false,
             bonus_every: 10,
             grid,
             players: Vec::new(),
+            mode: GameMode::Deathmatch,
         }
     }
 
@@ -94,9 +96,11 @@ impl GameState {
             player.last_accuracy = accuracy.clone();
 
             if matches!(accuracy, BeatAccuracy::Miss) {
+                player.combo = 0;
                 return;
             }
 
+            player.combo = (player.combo + 1).min(9999);
             player.score += accuracy.bonus_points();
             match action {
                 GameAction::MoveLeft => self.move_player(player_id, -2, 0),
@@ -104,16 +108,23 @@ impl GameState {
                 GameAction::MoveUp => self.move_player(player_id, 0, -1),
                 GameAction::MoveDown => self.move_player(player_id, 0, 1),
                 GameAction::PlaceBomb => self.try_place_bomb(player_id, accuracy),
-                GameAction::TriggerSpell => self.trigger_action_2(player_id),
+                GameAction::TriggerSpell => self.trigger_action_2(player_id, current_beat),
                 GameAction::Emote(_) => {}
             }
         }
     }
 
-    pub fn trigger_action_2(&mut self, player_id: u32) {
+    pub fn trigger_action_2(&mut self, player_id: u32, current_beat: u64) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
-            if player.is_alive && player.bomb_range < 6 {
-                player.bomb_range += 1;
+            if player.is_alive {
+                if let Some(item) = player.second_item {
+                    match item {
+                        SecondItem::Shield => {
+                            player.shield_until_beat = Some(current_beat);
+                            player.second_item = None;
+                        }
+                    }
+                }
             }
         }
     }
@@ -133,13 +144,29 @@ impl GameState {
     }
 
     pub fn spawn_players(&mut self, mut players: Vec<Player>) {
-        let spawns = get_spawn_points(self.width, self.height, players.len());
-        for (i, player) in players.iter_mut().enumerate() {
+        let active_players_indices: Vec<usize> = players.iter()
+            .enumerate()
+            .filter(|(_, p)| !p.is_spectator)
+            .map(|(i, _)| i)
+            .collect();
+
+        let spawns = get_spawn_points(self.width, self.height, active_players_indices.len());
+        for (i, &idx) in active_players_indices.iter().enumerate() {
             if i < spawns.len() {
-                player.sub_x = (spawns[i].0 * 2) as i32;
-                player.sub_y = spawns[i].1 as i32;
+                players[idx].sub_x = (spawns[i].0 * 2) as i32;
+                players[idx].sub_y = spawns[i].1 as i32;
+                players[idx].is_alive = true;
             }
         }
+
+        for p in &mut players {
+            if p.is_spectator {
+                p.is_alive = false;
+                p.sub_x = -100;
+                p.sub_y = -100;
+            }
+        }
+
         self.players = players;
     }
 
@@ -244,6 +271,39 @@ impl GameState {
         }
 
         Some(best_candidate)
+    }
+
+    pub fn tick_beat(&mut self, beat_count: u64) {
+        if self.bonus_every > 0 && beat_count > 0 && beat_count % (self.bonus_every as u64) == 0 {
+            self.spawn_random_bonus();
+        }
+    }
+
+    pub fn spawn_random_bonus(&mut self) {
+        let mut empty_cells = Vec::new();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = y * self.width + x;
+                if self.grid[idx] == Cell::Empty {
+                    let player_here = self.players.iter().any(|p| {
+                        p.is_alive && (p.sub_x / 2) as usize == x && p.sub_y as usize == y
+                    });
+                    if !player_here {
+                        empty_cells.push(idx);
+                    }
+                }
+            }
+        }
+        if !empty_cells.is_empty() {
+            let seed = get_pseudo_random_u32();
+            let idx = empty_cells[(seed as usize) % empty_cells.len()];
+            let bonus_type = match seed % 3 {
+                0 => BonusType::BombQty,
+                1 => BonusType::BombRange,
+                _ => BonusType::Shield,
+            };
+            self.grid[idx] = Cell::Bonus(bonus_type);
+        }
     }
 }
 
