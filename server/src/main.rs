@@ -19,14 +19,12 @@ async fn main() {
         .route("/", get(|| async { "Bombeat TUI Server is running!" }))
         .with_state(state.clone());
 
-    // Spawn game loop coordinator task
     let loop_state = state.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(16));
         loop {
             interval.tick().await;
             
-            // Collect state updates for each room
             let mut updates = Vec::new();
             {
                 let mut s = loop_state.lock().await;
@@ -40,7 +38,6 @@ async fn main() {
                 }
             }
             
-            // Broadcast updates
             if !updates.is_empty() {
                 let s = loop_state.lock().await;
                 for (code, state) in updates {
@@ -52,7 +49,6 @@ async fn main() {
         }
     });
 
-    // Spawn UDP broadcast task for LAN room discovery
     let udp_state = state.clone();
     tokio::spawn(async move {
         let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok();

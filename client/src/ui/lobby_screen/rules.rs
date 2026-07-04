@@ -10,10 +10,18 @@ use ratatui::{
 
 pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     let ascii = app.profile.ascii_mode;
-    let title = if ascii {
-        " [ ROOM CONFIG ] "
+    let title = if let Some(ref code) = app.network.room_code {
+        if ascii {
+            format!(" [ ROOM CONFIG | CODE: {} ] ", code)
+        } else {
+            format!(" 🎮 ROOM CONFIG | 🔑 CODE: {} ", code)
+        }
     } else {
-        " 🎮 ROOM CONFIG "
+        if ascii {
+            " [ ROOM CONFIG ] ".to_string()
+        } else {
+            " 🎮 ROOM CONFIG ".to_string()
+        }
     };
     let center_block = Block::default()
         .title(title)

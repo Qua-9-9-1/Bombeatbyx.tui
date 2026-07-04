@@ -1,7 +1,7 @@
 pub mod animation;
 pub mod game_screen;
 pub mod lobby_screen;
-pub mod render_menu;
+pub mod menu;
 pub mod render_rhythm;
 
 use crate::local::app::{App, AppState, CELL_H, CELL_W};
@@ -25,13 +25,19 @@ pub fn draw(frame: &mut Frame, app: &App) {
 
     match app.state {
         AppState::MainMenu => {
-            render_menu::draw_main_menu(buffer, tui_area, app);
+            menu::draw_main_menu(buffer, tui_area, app);
         }
         AppState::Lobby => {
             lobby_screen::draw_lobby(buffer, tui_area, app);
         }
         AppState::SettingsMenu => {
-            render_menu::draw_settings_menu(buffer, tui_area, app);
+            menu::draw_settings_menu(buffer, tui_area, app);
+        }
+        AppState::HostModal => {
+            menu::draw_host_modal(buffer, tui_area, app);
+        }
+        AppState::JoinRoomMenu => {
+            menu::draw_join_room_menu(buffer, tui_area, app);
         }
         AppState::InGame | AppState::PauseMenu => {
             if let Some(ref ctx) = app.game_ctx {
@@ -76,7 +82,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
             }
 
             if app.state == AppState::PauseMenu {
-                render_menu::draw_pause_menu(buffer, tui_area, app);
+                menu::draw_pause_menu(buffer, tui_area, app);
             }
         }
     }

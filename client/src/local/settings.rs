@@ -10,6 +10,7 @@ pub struct ClientSettings {
     pub key_left: char,
     pub key_right: char,
     pub ascii_mode: bool,
+    pub server_addr: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
@@ -30,6 +31,7 @@ impl Default for ClientSettings {
             key_right: 'd',
             gauge_skin: GaugeSkin::Simple,
             ascii_mode: false,
+            server_addr: "127.0.0.1:3000".to_string(),
         }
     }
 }

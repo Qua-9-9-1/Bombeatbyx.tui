@@ -1,0 +1,70 @@
+use crate::local::app::{App, AppState};
+use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use std::time::Duration;
+
+pub mod menu;
+pub mod lobby;
+pub mod game;
+
+impl App {
+    pub(crate) fn handle_inputs(&mut self) -> std::io::Result<()> {
+        while event::poll(Duration::ZERO)? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Release {
+                    continue;
+                }
+
+                if key.code == KeyCode::Esc {
+                    self.handle_esc();
+                    return Ok(());
+                }
+
+                match self.state {
+                    AppState::MainMenu => self.handle_main_menu_input(key.code),
+                    AppState::Lobby => self.handle_lobby_input(key.code),
+                    AppState::InGame => self.handle_in_game_input(key.code),
+                    AppState::PauseMenu => self.handle_pause_menu_input(key.code),
+                    AppState::SettingsMenu => self.handle_settings_menu_input(key.code),
+                    AppState::HostModal => self.handle_host_modal_input(key.code),
+                    AppState::JoinRoomMenu => self.handle_join_room_menu_input(key.code),
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn handle_esc(&mut self) {
+        match self.state {
+            AppState::InGame | AppState::Lobby => {
+                if self.network.is_multiplayer {
+                    if let Some(ref tx) = self.network.server_tx {
+                        let _ = tx.send(common::messages::ClientMessage::LeaveLobby);
+                    }
+                    self.network.is_multiplayer = false;
+                    self.network.server_tx = None;
+                    self.network.server_rx = None;
+                    self.network.room_code = None;
+                    self.stop_local_server();
+                    self.state = AppState::MainMenu;
+                } else {
+                    self.state = AppState::PauseMenu;
+                }
+            }
+            AppState::PauseMenu => self.state = AppState::InGame,
+            AppState::SettingsMenu => self.state = AppState::MainMenu,
+            AppState::MainMenu => self.game_run = false,
+            AppState::HostModal => self.state = AppState::MainMenu,
+            AppState::JoinRoomMenu => {
+                if self.network.show_private_join_prompt {
+                    self.network.show_private_join_prompt = false;
+                } else {
+                    self.network.is_multiplayer = false;
+                    self.network.server_tx = None;
+                    self.network.server_rx = None;
+                    self.network.room_code = None;
+                    self.state = AppState::MainMenu;
+                }
+            }
+        }
+    }
+}

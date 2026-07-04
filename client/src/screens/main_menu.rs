@@ -6,8 +6,8 @@ pub struct MainMenuScreen {
 
 pub enum MainMenuAction {
     None,
-    HostLobby,
-    JoinLobby,
+    HostGame,
+    JoinGame,
     Settings,
     Exit,
 }
@@ -28,8 +28,8 @@ impl MainMenuScreen {
                 MainMenuAction::None
             }
             KeyCode::Enter => match self.cursor {
-                0 => MainMenuAction::HostLobby,
-                1 => MainMenuAction::JoinLobby,
+                0 => MainMenuAction::HostGame,
+                1 => MainMenuAction::JoinGame,
                 2 => MainMenuAction::Settings,
                 3 => MainMenuAction::Exit,
                 _ => MainMenuAction::None,

@@ -74,8 +74,24 @@ impl App {
 
     pub(crate) fn trigger_game_action(&mut self, code: KeyCode) {
         if let Some(action) = self.map_key_to_action(code) {
-            if let Some(ref mut ctx) = self.game_ctx {
-                ctx.process_player_action(self.current_player_id, action);
+            if self.network.is_multiplayer {
+                if let Some(ref tx) = self.network.server_tx {
+                    let _ = tx.send(common::messages::ClientMessage::Action(action.clone()));
+                }
+                if let Some(ref mut ctx) = self.game_ctx {
+                    let progress = ctx.rhythm.progress();
+                    let target_beat = if progress > 0.5 {
+                        ctx.rhythm.beat_count + 1
+                    } else {
+                        ctx.rhythm.beat_count
+                    };
+                    ctx.process_player_action(self.current_player_id, action.clone());
+                    self.last_local_action = Some((target_beat, action));
+                }
+            } else {
+                if let Some(ref mut ctx) = self.game_ctx {
+                    ctx.process_player_action(self.current_player_id, action);
+                }
             }
         }
     }
