@@ -16,16 +16,23 @@ impl App {
                 let mut ctx = GameContext::new(self.room_settings.width, self.room_settings.height, self.room_settings.bpm);
                 ctx.state = current_state;
                 self.game_ctx = Some(ctx);
-                self.state = AppState::Lobby;
+                let is_me_spectator = self.game_ctx.as_ref()
+                    .and_then(|c| c.state.players.iter().find(|p| p.id == your_id))
+                    .map(|p| p.is_spectator)
+                    .unwrap_or(false);
+                if is_me_spectator {
+                    self.state = AppState::InGame;
+                } else {
+                    self.state = AppState::Lobby;
+                }
             }
             ServerMessage::LobbyUpdate { players, settings } => {
-                self.room_settings = settings;
-                if let Some(ref mut ctx) = self.game_ctx {
-                    ctx.state.players = players;
-                    ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
-                }
-                if self.state == AppState::InGame || self.state == AppState::PauseMenu {
-                    self.state = AppState::Lobby;
+                self.room_settings = settings.clone();
+                if self.state != AppState::InGame && self.state != AppState::PauseMenu {
+                    if let Some(ref mut ctx) = self.game_ctx {
+                        ctx.state.players = players;
+                        ctx.rhythm = common::game::RhythmEngine::new(settings.bpm);
+                    }
                 }
             }
             ServerMessage::GameStarted { initial_state } => {
@@ -100,6 +107,16 @@ impl App {
                 self.network.room_code = None;
                 self.paused_from = None;
                 self.stop_local_server();
+            }
+            ServerMessage::Ping => {}
+            ServerMessage::GameStopped { players, settings } => {
+                self.room_settings = settings;
+                if let Some(ref mut ctx) = self.game_ctx {
+                    ctx.state.players = players;
+                    ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
+                }
+                self.paused_from = None;
+                self.state = AppState::Lobby;
             }
         }
     }

@@ -8,7 +8,7 @@ use crate::local::app::{App, AppState, CELL_H, CELL_W};
 use ratatui::{
     Frame,
     layout::{Alignment, Rect},
-    style::{Color, Style},
+    style::{Color, Modifier, Style},
     widgets::{Paragraph, Widget},
 };
 
@@ -79,17 +79,36 @@ fn draw_game_board(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect, app: &A
         let map_rect = Rect::new(start_x, start_y, display_w, map_box_h);
         game_screen::draw_map(buffer, app, ctx, map_rect);
 
-        let feedback_area = Rect::new(start_x, start_y + map_box_h, display_w, 1);
-        render_rhythm::draw_feedback(buffer, app, ctx, feedback_area);
+        let is_spectator = app.is_local_player_spectator();
 
-        let gauge_area = Rect::new(start_x, start_y + map_box_h + 1, display_w, 1);
-        render_rhythm::draw_rhythm_gauge(buffer, app, ctx, gauge_area);
+        if is_spectator {
+            let banner_area = Rect::new(start_x, start_y + map_box_h, display_w, 8);
+            let spectator_msg = if app.profile.ascii_mode {
+                "[ SPECTATING ]"
+            } else {
+                "  👁  SPECTATING "
+            };
+            Paragraph::new(spectator_msg)
+                .alignment(Alignment::Center)
+                .style(
+                    Style::default()
+                        .fg(Color::DarkGray)
+                        .add_modifier(Modifier::ITALIC),
+                )
+                .render(banner_area, buffer);
+        } else {
+            let feedback_area = Rect::new(start_x, start_y + map_box_h, display_w, 1);
+            render_rhythm::draw_feedback(buffer, app, ctx, feedback_area);
 
-        let combo_area = Rect::new(start_x, start_y + map_box_h + 2, display_w, 1);
-        render_rhythm::draw_local_combo(buffer, app, ctx, combo_area);
+            let gauge_area = Rect::new(start_x, start_y + map_box_h + 1, display_w, 1);
+            render_rhythm::draw_rhythm_gauge(buffer, app, ctx, gauge_area);
 
-        let stats_area = Rect::new(start_x, start_y + map_box_h + 3, display_w, 5);
-        game_screen::draw_local_player_stats(buffer, app, ctx, stats_area);
+            let combo_area = Rect::new(start_x, start_y + map_box_h + 2, display_w, 1);
+            render_rhythm::draw_local_combo(buffer, app, ctx, combo_area);
+
+            let stats_area = Rect::new(start_x, start_y + map_box_h + 3, display_w, 5);
+            game_screen::draw_local_player_stats(buffer, app, ctx, stats_area);
+        }
 
         let sidebar_area = Rect::new(start_x + display_w + spacing, start_y, sidebar_w, total_needed_height);
         game_screen::draw_game_sidebar(buffer, app, ctx, sidebar_area);

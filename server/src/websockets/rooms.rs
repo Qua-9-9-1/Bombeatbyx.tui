@@ -52,6 +52,7 @@ pub async fn process_client_message(
                 color,
                 tx: tx.clone(),
                 is_ready: false,
+                is_spectator: false,
             };
             room.peers.insert(id, peer);
 
@@ -97,10 +98,6 @@ pub async fn process_client_message(
                     return Ok(());
                 }
 
-                if room.in_game {
-                    let _ = tx.send(ServerMessage::ConnectionFailed("Game already in progress".to_string()));
-                    return Err(());
-                }
                 if room.peers.len() >= 8 {
                     let _ = tx.send(ServerMessage::ConnectionFailed("Room is full".to_string()));
                     return Err(());
@@ -110,33 +107,80 @@ pub async fn process_client_message(
                 room.next_peer_id += 1;
 
                 let color = get_color_for_id(id);
+                let is_spectator = room.in_game;
                 let peer = Peer {
                     id,
-                    name,
-                    skin,
-                    color,
+                    name: name.clone(),
+                    skin: skin.clone(),
+                    color: color.clone(),
                     tx: tx.clone(),
                     is_ready: false,
+                    is_spectator,
                 };
                 room.peers.insert(id, peer);
 
                 *my_room_code = Some(code_upper.clone());
                 *my_player_id = Some(id);
 
-                let initial_lobby = GameState::new(room.room_settings.width, room.room_settings.height);
+                if is_spectator {
+                    if let Some(ref mut ctx) = room.game_ctx {
+                        ctx.state.players.push(common::game::Player {
+                            id,
+                            is_host: false,
+                            name: name.clone(),
+                            skin: skin.clone(),
+                            color: color.clone(),
+                            sub_x: 0,
+                            sub_y: 0,
+                            is_alive: false,
+                            score: 0,
+                            combo: 0,
+                            max_bombs: 1,
+                            active_bombs: 0,
+                            bomb_range: 1,
+                            last_acted_beat: None,
+                            last_accuracy: common::game::BeatAccuracy::Waiting,
+                            last_action_time: None,
+                            spam_lockout_until: None,
+                            active_emote: None,
+                            emote_until: None,
+                            lives: 0,
+                            death_pos: None,
+                            respawn_timer: None,
+                            collected_bonuses: Vec::new(),
+                            is_spectator: true,
+                            second_item: None,
+                            shield_until_beat: None,
+                            is_ready: false,
+                        });
+                    }
+                }
+
+                let current_state = if let Some(ref ctx) = room.game_ctx {
+                    ctx.state.clone()
+                } else {
+                    GameState::new(room.room_settings.width, room.room_settings.height)
+                };
+
                 let joined_msg = ServerMessage::Joined {
                     your_id: id,
                     room_code: code_upper.clone(),
-                    current_state: initial_lobby,
+                    current_state,
                     settings: room.room_settings.clone(),
                 };
                 let _ = tx.send(joined_msg);
 
-                let players = room.get_lobby_players();
-                room.broadcast(ServerMessage::LobbyUpdate {
-                    players,
-                    settings: room.room_settings.clone(),
-                });
+                if room.in_game {
+                    let players = room.get_lobby_players();
+                    let settings = room.room_settings.clone();
+                    let _ = tx.send(ServerMessage::LobbyUpdate { players, settings });
+                } else {
+                    let players = room.get_lobby_players();
+                    room.broadcast(ServerMessage::LobbyUpdate {
+                        players,
+                        settings: room.room_settings.clone(),
+                    });
+                }
             } else {
                 let _ = tx.send(ServerMessage::ConnectionFailed("Room not found".to_string()));
                 return Err(());
@@ -233,6 +277,18 @@ pub async fn process_client_message(
         ClientMessage::LeaveLobby => {
             return Err(());
         }
+        ClientMessage::Pong => {}
+        ClientMessage::StopGame => {
+            if let (Some(code), Some(player_id)) = (my_room_code, my_player_id) {
+                let mut s = state.lock().await;
+                if let Some(room) = s.rooms.get_mut(code) {
+                    let is_host = room.host_id == Some(*player_id);
+                    if is_host && room.in_game {
+                        stop_game_in_room(room);
+                    }
+                }
+            }
+        }
     }
     Ok(())
 }
@@ -242,27 +298,50 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
     let mut remove_room = false;
     if let Some(room) = s.rooms.get_mut(code) {
         room.peers.remove(&player_id);
+
+        if let Some(ref mut ctx) = room.game_ctx {
+            ctx.state.players.retain(|p| p.id != player_id);
+        }
+
         if room.peers.is_empty() {
             remove_room = true;
         } else {
             if room.host_id == Some(player_id) {
                 room.host_id = room.peers.keys().min().copied();
             }
-            if room.in_game && room.peers.len() <= 1 {
-                room.in_game = false;
-                room.game_ctx = None;
-                for peer in room.peers.values_mut() {
-                    peer.is_ready = false;
+            if room.in_game {
+                let active_players = room.peers.values().filter(|p| !p.is_spectator).count();
+                if active_players <= 1 {
+                    stop_game_in_room(room);
+                    return;
                 }
             }
             let players = room.get_lobby_players();
             let settings = room.room_settings.clone();
-            room.broadcast(ServerMessage::LobbyUpdate { players, settings });
+            if room.in_game {
+                for peer in room.peers.values().filter(|p| p.is_spectator) {
+                    let _ = peer.tx.send(ServerMessage::LobbyUpdate { players: players.clone(), settings: settings.clone() });
+                }
+            } else {
+                room.broadcast(ServerMessage::LobbyUpdate { players, settings });
+            }
         }
     }
     if remove_room {
         s.rooms.remove(code);
     }
+}
+
+pub fn stop_game_in_room(room: &mut Room) {
+    room.in_game = false;
+    room.game_ctx = None;
+    for peer in room.peers.values_mut() {
+        peer.is_ready = false;
+        peer.is_spectator = false;
+    }
+    let players = room.get_lobby_players();
+    let settings = room.room_settings.clone();
+    room.broadcast(ServerMessage::GameStopped { players, settings });
 }
 
 fn start_game_in_room(room: &mut Room) {

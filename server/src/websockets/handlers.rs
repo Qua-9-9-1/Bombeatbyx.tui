@@ -35,19 +35,44 @@ pub async fn handle_socket(socket: WebSocket, state: SharedState) {
         }
     });
 
-    while let Some(Ok(Message::Text(text))) = ws_read.next().await {
-        if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
-            let res = process_client_message(
-                &mut my_room_code,
-                &mut my_player_id,
-                &mut my_name,
-                &mut my_skin,
-                tx.clone(),
-                client_msg,
-                &state,
-            ).await;
-            if res.is_err() {
-                break;
+    let mut ping_interval = tokio::time::interval(tokio::time::Duration::from_secs(3));
+    let mut unanswered_pings = 0;
+
+    loop {
+        tokio::select! {
+            _ = ping_interval.tick() => {
+                unanswered_pings += 1;
+                if unanswered_pings > 3 {
+                    break;
+                }
+                let _ = tx.send(ServerMessage::Ping);
+            }
+            msg_res = ws_read.next() => {
+                match msg_res {
+                    Some(Ok(Message::Text(text))) => {
+                        if let Ok(client_msg) = serde_json::from_str::<ClientMessage>(&text) {
+                            if let ClientMessage::Pong = client_msg {
+                                unanswered_pings = 0;
+                            } else {
+                                let res = process_client_message(
+                                    &mut my_room_code,
+                                    &mut my_player_id,
+                                    &mut my_name,
+                                    &mut my_skin,
+                                    tx.clone(),
+                                    client_msg,
+                                    &state,
+                                ).await;
+                                if res.is_err() {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    _ => {
+                        break;
+                    }
+                }
             }
         }
     }

@@ -23,6 +23,8 @@ pub enum ClientMessage {
     ToggleReady,
     Action(GameAction),
     LeaveLobby,
+    Pong,
+    StopGame,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -44,4 +46,9 @@ pub enum ServerMessage {
     GameStateUpdate(GameState),
     GameEnded,
     ConnectionFailed(String),
+    Ping,
+    GameStopped {
+        players: Vec<crate::game::models::Player>,
+        settings: RoomSettings,
+    },
 }

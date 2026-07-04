@@ -125,6 +125,7 @@ impl App {
         let render_rate = Duration::from_millis(16);
         let tick_rate = Duration::from_millis(16);
         let mut lag = Duration::ZERO;
+        let mut prev_state = self.state.clone();
 
         let udp_socket = std::net::UdpSocket::bind("0.0.0.0:3001").ok();
         if let Some(ref s) = udp_socket {
@@ -173,6 +174,10 @@ impl App {
                 if !self.network.is_multiplayer {
                     if let Some(ref mut ctx) = self.game_ctx {
                         ctx.tick_game_logic();
+                        let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
+                        if alive_count == 0 {
+                            self.state = AppState::Lobby;
+                        }
                     }
                 } else {
                     if let Some(ref mut ctx) = self.game_ctx {
@@ -186,6 +191,10 @@ impl App {
             }
 
             if current_time.duration_since(last_render) >= render_rate {
+                if self.state != prev_state {
+                    let _ = tui.clear();
+                    prev_state = self.state.clone();
+                }
                 tui.draw(|frame| ui::draw(frame, self))?;
                 last_render = current_time;
             }

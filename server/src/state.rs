@@ -12,6 +12,7 @@ pub struct Peer {
     pub color: String,
     pub tx: UnboundedSender<ServerMessage>,
     pub is_ready: bool,
+    pub is_spectator: bool,
 }
 
 pub struct Room {
@@ -66,7 +67,7 @@ impl Room {
             death_pos: None,
             respawn_timer: None,
             collected_bonuses: Vec::new(),
-            is_spectator: false,
+            is_spectator: p.is_spectator,
             second_item: None,
             shield_until_beat: None,
             is_ready: p.is_ready,

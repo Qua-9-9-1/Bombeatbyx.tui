@@ -50,7 +50,11 @@ impl App {
                         match msg_res {
                             Ok(tokio_tungstenite::tungstenite::Message::Text(text)) => {
                                 if let Ok(server_msg) = serde_json::from_str::<ServerMessage>(&text) {
-                                     if tx_to_app.send(server_msg).is_err() {
+                                     if let ServerMessage::Ping = server_msg {
+                                         if let Ok(json_str) = serde_json::to_string(&ClientMessage::Pong) {
+                                             let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
+                                         }
+                                     } else if tx_to_app.send(server_msg).is_err() {
                                          break;
                                      }
                                 }
@@ -66,9 +70,23 @@ impl App {
                             _ => {}
                         }
                     }
-                    Some(client_msg) = rx_from_app.recv() => {
-                        if let Ok(json_str) = serde_json::to_string(&client_msg) {
-                            if ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await.is_err() {
+                    res = rx_from_app.recv() => {
+                        match res {
+                            Some(client_msg) => {
+                                let is_leave = matches!(client_msg, ClientMessage::LeaveLobby);
+                                if let Ok(json_str) = serde_json::to_string(&client_msg) {
+                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
+                                }
+                                if is_leave {
+                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
+                                    break;
+                                }
+                            }
+                            None => {
+                                if let Ok(json_str) = serde_json::to_string(&ClientMessage::LeaveLobby) {
+                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
+                                }
+                                let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
                                 break;
                             }
                         }

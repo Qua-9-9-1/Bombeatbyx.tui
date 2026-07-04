@@ -9,6 +9,7 @@ mod websockets;
 
 use crate::state::ServerState;
 use common::messages::ServerMessage;
+use crate::websockets::rooms::stop_game_in_room;
 
 #[tokio::main]
 async fn main() {
@@ -32,6 +33,14 @@ async fn main() {
                     if room.in_game {
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
+
+                            let active_non_spec = room.peers.values().filter(|p| !p.is_spectator).count();
+                            let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0 && !p.is_spectator).count();
+                            if active_non_spec > 1 && alive_count <= 1 {
+                                stop_game_in_room(room);
+                                continue;
+                            }
+
                             updates.push((room.code.clone(), ctx.state.clone()));
                         }
                     }

@@ -46,6 +46,10 @@ impl Tui {
         self.terminal.draw(f)?;
         Ok(())
     }
+
+    pub fn clear(&mut self) -> io::Result<()> {
+        self.terminal.clear()
+    }
 }
 
 impl Drop for Tui {

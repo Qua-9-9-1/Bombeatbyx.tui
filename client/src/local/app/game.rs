@@ -73,6 +73,20 @@ impl App {
         true
     }
 
+    pub(crate) fn is_local_player_spectator(&self) -> bool {
+        if let Some(ref ctx) = self.game_ctx {
+            if let Some(player) = ctx
+                .state
+                .players
+                .iter()
+                .find(|p| p.id == self.current_player_id)
+            {
+                return player.is_spectator;
+            }
+        }
+        false
+    }
+
     pub(crate) fn trigger_game_action(&mut self, code: KeyCode) {
         if let Some(action) = self.map_key_to_action(code) {
             if self.network.is_multiplayer {
