@@ -1,12 +1,46 @@
-pub enum ClientMessage {
-    Move(Direction),
-    PlaceBomb,
-    JoinGame(String),
-    LeaveGame(String),
+use crate::game::actions::GameAction;
+use crate::game::state::GameState;
+use crate::game::models::RoomSettings;
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RoomInfo {
+    pub code: String,
+    pub host_name: String,
+    pub player_count: usize,
+    pub max_players: usize,
+    pub is_public: bool,
+    pub is_lan: bool,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ClientMessage {
+    GetRooms,
+    CreateRoom { is_public: bool, is_lan: bool },
+    JoinRoom { code: String, name: String, skin: String },
+    UpdateSettings(RoomSettings),
+    StartGame,
+    Action(GameAction),
+    LeaveLobby,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ServerMessage {
-    GameState(GameState),
-    PlayerDied(u32),
-    BombExploded { x: usize, y: usize, radius: usize },
+    RoomList(Vec<RoomInfo>),
+    Joined {
+        your_id: u32,
+        room_code: String,
+        current_state: GameState,
+        settings: RoomSettings,
+    },
+    LobbyUpdate {
+        players: Vec<crate::game::models::Player>,
+        settings: RoomSettings,
+    },
+    GameStarted {
+        initial_state: GameState,
+    },
+    GameStateUpdate(GameState),
+    GameEnded,
+    ConnectionFailed(String),
 }
