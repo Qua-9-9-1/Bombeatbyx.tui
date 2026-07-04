@@ -25,7 +25,7 @@ impl App {
         self.network.is_multiplayer = true;
 
         tokio::spawn(async move {
-            use futures_util::{StreamExt, SinkExt};
+            use futures_util::{SinkExt, StreamExt};
             let connect_result = tokio_tungstenite::connect_async(&ws_url).await;
 
             let ws_stream = match connect_result {
@@ -40,7 +40,11 @@ impl App {
 
             if let Some(msg) = pending_msg {
                 if let Ok(json_str) = serde_json::to_string(&msg) {
-                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
+                    let _ = ws_write
+                        .send(tokio_tungstenite::tungstenite::Message::Text(
+                            json_str.into(),
+                        ))
+                        .await;
                 }
             }
 

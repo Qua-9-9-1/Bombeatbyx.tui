@@ -139,17 +139,17 @@ impl GameState {
                 if self.players[i].shield_until_beat == Some(current_beat) {
                     continue;
                 }
-                 self.players[i].is_alive = false;
-                 self.players[i].lives = self.players[i].lives.saturating_sub(1);
-                 self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
-                 self.players[i].respawn_timer =
-                     Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
-                 self.players[i].combo = 0;
-                 self.players[i].collected_bonuses.clear();
-                 self.players[i].second_item = None;
-                 self.players[i].max_bombs = 1;
-                 self.players[i].bomb_range = 1;
-             }
-         }
+                self.players[i].is_alive = false;
+                self.players[i].lives = self.players[i].lives.saturating_sub(1);
+                self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
+                self.players[i].respawn_timer =
+                    Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
+                self.players[i].combo = 0;
+                self.players[i].collected_bonuses.clear();
+                self.players[i].second_item = None;
+                self.players[i].max_bombs = 1;
+                self.players[i].bomb_range = 1;
+            }
+        }
     }
 }

@@ -1,16 +1,16 @@
 use ratatui::layout::Rect;
 
-pub mod main;
 pub mod host;
 pub mod join;
-pub mod settings;
+pub mod main;
 pub mod pause;
+pub mod settings;
 
-pub use main::draw_main_menu;
 pub use host::draw_host_modal;
 pub use join::draw_join_room_menu;
-pub use settings::draw_settings_menu;
+pub use main::draw_main_menu;
 pub use pause::draw_pause_menu;
+pub use settings::draw_settings_menu;
 
 pub fn center_rect(tui_area: Rect, desired_w: u16, desired_h: u16) -> Rect {
     let x = tui_area.x + tui_area.width.saturating_sub(desired_w) / 2;

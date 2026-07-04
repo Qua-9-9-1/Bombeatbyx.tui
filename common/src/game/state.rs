@@ -82,7 +82,8 @@ impl GameState {
                 return;
             }
 
-            let success = self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
+            let success =
+                self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
             if success {
                 if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
                     p.last_acted_beat = Some(current_beat);

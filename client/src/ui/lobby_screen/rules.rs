@@ -42,13 +42,21 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     };
 
     let my_player_ready = if let Some(ref ctx) = app.game_ctx {
-        ctx.state.players.iter().find(|p| p.id == app.current_player_id).map(|p| p.is_ready).unwrap_or(false)
+        ctx.state
+            .players
+            .iter()
+            .find(|p| p.id == app.current_player_id)
+            .map(|p| p.is_ready)
+            .unwrap_or(false)
     } else {
         false
     };
 
     let skin_taken = if let Some(ref ctx) = app.game_ctx {
-        ctx.state.players.iter().any(|p| p.id != app.current_player_id && p.is_ready && p.skin == app.profile.skin)
+        ctx.state
+            .players
+            .iter()
+            .any(|p| p.id != app.current_player_id && p.is_ready && p.skin == app.profile.skin)
     } else {
         false
     };
@@ -144,7 +152,9 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             };
             center_lines.push(Line::from(Span::styled(
                 label,
-                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
             )));
             center_lines.push(Line::from(""));
         }
@@ -157,7 +167,9 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             };
             center_lines.push(Line::from(Span::styled(
                 label,
-                Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
+                Style::default()
+                    .fg(Color::Magenta)
+                    .add_modifier(Modifier::BOLD),
             )));
             center_lines.push(Line::from(""));
         }
@@ -178,31 +190,27 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 };
                 center_lines.push(Line::from(Span::styled(
                     text,
-                    Style::default()
-                        .fg(color)
-                        .add_modifier(Modifier::BOLD),
+                    Style::default().fg(color).add_modifier(Modifier::BOLD),
                 )));
             } else {
                 let is_editing = idx == 7 && app.editing_name;
-                let color = if is_editing { Color::LightGreen } else { Color::Cyan };
+                let color = if is_editing {
+                    Color::LightGreen
+                } else {
+                    Color::Cyan
+                };
                 center_lines.push(Line::from(vec![
                     Span::styled(
                         arrow_l,
-                        Style::default()
-                            .fg(color)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(color).add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         item.as_str(),
-                        Style::default()
-                            .fg(color)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(color).add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         arrow_r,
-                        Style::default()
-                            .fg(color)
-                            .add_modifier(Modifier::BOLD),
+                        Style::default().fg(color).add_modifier(Modifier::BOLD),
                     ),
                 ]));
             }

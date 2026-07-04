@@ -1,6 +1,6 @@
-use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use common::messages::{ClientMessage, ServerMessage, RoomInfo};
+use common::messages::{ClientMessage, RoomInfo, ServerMessage};
 use std::time::Instant;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub mod connection;
 pub mod messages;

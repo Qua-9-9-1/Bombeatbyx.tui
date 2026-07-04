@@ -60,37 +60,35 @@ impl App {
         let mut ctx =
             GameContext::new(room_settings.width, room_settings.height, room_settings.bpm);
 
-        ctx.state.players = vec![
-            Player {
-                id: 1,
-                is_host: true,
-                name: profile.name.clone(),
-                skin: profile.skin.clone(),
-                color: "green".to_string(),
-                sub_x: 0,
-                sub_y: 0,
-                is_alive: true,
-                score: 0,
-                combo: 0,
-                last_acted_beat: None,
-                last_accuracy: BeatAccuracy::Waiting,
-                max_bombs: 1,
-                active_bombs: 0,
-                bomb_range: 1,
-                last_action_time: None,
-                spam_lockout_until: None,
-                active_emote: None,
-                emote_until: None,
-                lives: room_settings.lives,
-                death_pos: None,
-                respawn_timer: None,
-                collected_bonuses: Vec::new(),
-                is_spectator: false,
-                second_item: None,
-                shield_until_beat: None,
-                is_ready: false,
-            },
-        ];
+        ctx.state.players = vec![Player {
+            id: 1,
+            is_host: true,
+            name: profile.name.clone(),
+            skin: profile.skin.clone(),
+            color: "green".to_string(),
+            sub_x: 0,
+            sub_y: 0,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives: room_settings.lives,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+        }];
 
         Self {
             state: AppState::MainMenu,
@@ -148,17 +146,28 @@ impl App {
                                     let code = parts[1].to_string();
                                     let host_name = parts[2].to_string();
                                     let count: usize = parts[3].parse().unwrap_or(1);
-                                    if let Some(pos) = self.network.lan_rooms.iter().position(|r| r.0 == code) {
-                                        self.network.lan_rooms[pos] = (code, host_name, count, src, Instant::now());
+                                    if let Some(pos) =
+                                        self.network.lan_rooms.iter().position(|r| r.0 == code)
+                                    {
+                                        self.network.lan_rooms[pos] =
+                                            (code, host_name, count, src, Instant::now());
                                     } else {
-                                        self.network.lan_rooms.push((code, host_name, count, src, Instant::now()));
+                                        self.network.lan_rooms.push((
+                                            code,
+                                            host_name,
+                                            count,
+                                            src,
+                                            Instant::now(),
+                                        ));
                                     }
                                 }
                             }
                         }
                     }
                 }
-                self.network.lan_rooms.retain(|r| r.4.elapsed() < Duration::from_secs(3));
+                self.network
+                    .lan_rooms
+                    .retain(|r| r.4.elapsed() < Duration::from_secs(3));
             }
 
             if self.network.is_multiplayer {

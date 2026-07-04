@@ -1,9 +1,9 @@
+use common::game::{GameContext, Player, RoomSettings};
+use common::messages::ServerMessage;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc::UnboundedSender;
 use tokio::sync::Mutex;
-use common::messages::ServerMessage;
-use common::game::{GameContext, RoomSettings, Player};
+use tokio::sync::mpsc::UnboundedSender;
 
 pub struct Peer {
     pub id: u32,
@@ -43,35 +43,39 @@ impl Room {
     }
 
     pub fn get_lobby_players(&self) -> Vec<Player> {
-        let mut players: Vec<Player> = self.peers.values().map(|p| Player {
-            id: p.id,
-            is_host: Some(p.id) == self.host_id,
-            name: p.name.clone(),
-            skin: p.skin.clone(),
-            color: p.color.clone(),
-            sub_x: 0,
-            sub_y: 0,
-            is_alive: true,
-            score: 0,
-            combo: 0,
-            max_bombs: 1,
-            active_bombs: 0,
-            bomb_range: 1,
-            last_acted_beat: None,
-            last_accuracy: common::game::BeatAccuracy::Waiting,
-            last_action_time: None,
-            spam_lockout_until: None,
-            active_emote: None,
-            emote_until: None,
-            lives: self.room_settings.lives,
-            death_pos: None,
-            respawn_timer: None,
-            collected_bonuses: Vec::new(),
-            is_spectator: p.is_spectator,
-            second_item: None,
-            shield_until_beat: None,
-            is_ready: p.is_ready,
-        }).collect();
+        let mut players: Vec<Player> = self
+            .peers
+            .values()
+            .map(|p| Player {
+                id: p.id,
+                is_host: Some(p.id) == self.host_id,
+                name: p.name.clone(),
+                skin: p.skin.clone(),
+                color: p.color.clone(),
+                sub_x: 0,
+                sub_y: 0,
+                is_alive: true,
+                score: 0,
+                combo: 0,
+                max_bombs: 1,
+                active_bombs: 0,
+                bomb_range: 1,
+                last_acted_beat: None,
+                last_accuracy: common::game::BeatAccuracy::Waiting,
+                last_action_time: None,
+                spam_lockout_until: None,
+                active_emote: None,
+                emote_until: None,
+                lives: self.room_settings.lives,
+                death_pos: None,
+                respawn_timer: None,
+                collected_bonuses: Vec::new(),
+                is_spectator: p.is_spectator,
+                second_item: None,
+                shield_until_beat: None,
+                is_ready: p.is_ready,
+            })
+            .collect();
         players.sort_by_key(|p| p.id);
         players
     }

@@ -11,47 +11,75 @@ use ratatui::{
 pub fn draw_host_modal(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     let modal_rect = center_rect(tui_area, 60, 16);
     let ascii = app.profile.ascii_mode;
-    
-    let title = if ascii { " [ HOST CONFIGURATION ] " } else { " 🚀 HOST CONFIGURATION " };
+
+    let title = if ascii {
+        " [ HOST CONFIGURATION ] "
+    } else {
+        " 🚀 HOST CONFIGURATION "
+    };
     let block = Block::default()
         .title(title)
         .title_alignment(Alignment::Center)
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::Cyan));
-        
+
     let mode_str = if app.host_mode == 0 { "Online" } else { "LAN" };
-    let vis_str = if app.host_visibility == 0 { "Public" } else { "Private" };
-    
+    let vis_str = if app.host_visibility == 0 {
+        "Public"
+    } else {
+        "Private"
+    };
+
     let items = [
         format!("Connection Mode: < {} >", mode_str),
         format!("Room Visibility: < {} >", vis_str),
         " [ Create Room ] ".to_string(),
         " [ Cancel ] ".to_string(),
     ];
-    
+
     let mut lines = vec![
         Line::from(""),
-        Line::from(Span::styled("SELECT HOST SETTINGS", Style::default().fg(Color::LightCyan).add_modifier(Modifier::BOLD))),
+        Line::from(Span::styled(
+            "SELECT HOST SETTINGS",
+            Style::default()
+                .fg(Color::LightCyan)
+                .add_modifier(Modifier::BOLD),
+        )),
         Line::from(""),
     ];
-    
+
     let arrow_l = if ascii { "  => " } else { "  ► " };
     let arrow_r = if ascii { " <=  " } else { " ◄  " };
-    
+
     for (idx, item) in items.iter().enumerate() {
         if idx == app.host_cursor {
             lines.push(Line::from(vec![
-                Span::styled(arrow_l, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(item.as_str(), Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
-                Span::styled(arrow_r, Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    arrow_l,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    item.as_str(),
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    arrow_r,
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::BOLD),
+                ),
             ]));
         } else {
             lines.push(Line::from(format!("     {}     ", item)));
         }
     }
-    
+
     lines.push(Line::from(""));
-    
+
     let desc = match app.host_cursor {
         0 => {
             if app.host_mode == 0 {
@@ -70,11 +98,17 @@ pub fn draw_host_modal(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         2 => "Create Room: Starts the room with the configured settings.",
         _ => "Cancel: Return to the main menu.",
     };
-    
-    lines.push(Line::from(Span::styled(desc, Style::default().fg(Color::LightGreen))));
+
+    lines.push(Line::from(Span::styled(
+        desc,
+        Style::default().fg(Color::LightGreen),
+    )));
     lines.push(Line::from(""));
-    lines.push(Line::from(Span::styled("Use Z/S (Up/Down) to navigate, Q/D (Left/Right) to adjust, Enter to select", Style::default().fg(Color::DarkGray))));
-    
+    lines.push(Line::from(Span::styled(
+        "Use Z/S (Up/Down) to navigate, Q/D (Left/Right) to adjust, Enter to select",
+        Style::default().fg(Color::DarkGray),
+    )));
+
     Paragraph::new(lines)
         .block(block)
         .alignment(Alignment::Center)

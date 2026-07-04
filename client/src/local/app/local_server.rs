@@ -19,7 +19,8 @@ impl App {
                 if let Ok(child) = std::process::Command::new(path)
                     .stdout(std::process::Stdio::null())
                     .stderr(std::process::Stdio::null())
-                    .spawn() {
+                    .spawn()
+                {
                     spawned = Some(child);
                     break;
                 }
@@ -27,7 +28,11 @@ impl App {
         }
 
         if spawned.is_none() {
-            let shell = if cfg!(target_os = "windows") { "cmd" } else { "sh" };
+            let shell = if cfg!(target_os = "windows") {
+                "cmd"
+            } else {
+                "sh"
+            };
             let args = if cfg!(target_os = "windows") {
                 vec!["/C", "cargo run --bin server"]
             } else {
@@ -38,7 +43,8 @@ impl App {
                 .args(&args)
                 .stdout(std::process::Stdio::null())
                 .stderr(std::process::Stdio::null())
-                .spawn() {
+                .spawn()
+            {
                 spawned = Some(child);
             }
         }

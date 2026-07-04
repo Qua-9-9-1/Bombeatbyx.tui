@@ -1,7 +1,7 @@
 use axum::{
     extract::{
-        ws::{Message, WebSocket},
         State, WebSocketUpgrade,
+        ws::{Message, WebSocket},
     },
     response::IntoResponse,
 };
@@ -9,10 +9,13 @@ use futures_util::{sink::SinkExt, stream::StreamExt};
 use tokio::sync::mpsc::unbounded_channel;
 
 use crate::state::SharedState;
-use crate::websockets::rooms::{process_client_message, disconnect_peer};
+use crate::websockets::rooms::{disconnect_peer, process_client_message};
 use common::messages::{ClientMessage, ServerMessage};
 
-pub async fn ws_handler(ws: WebSocketUpgrade, State(state): State<SharedState>) -> impl IntoResponse {
+pub async fn ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<SharedState>,
+) -> impl IntoResponse {
     ws.on_upgrade(|socket| handle_socket(socket, state))
 }
 

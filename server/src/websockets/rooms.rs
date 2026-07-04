@@ -1,8 +1,8 @@
-use tokio::sync::mpsc::UnboundedSender;
-use crate::state::{SharedState, Peer, Room, get_color_for_id};
+use crate::state::{Peer, Room, SharedState, get_color_for_id};
 use crate::websockets::utils::generate_room_code;
-use common::messages::{ClientMessage, ServerMessage, RoomInfo};
 use common::game::{GameContext, GameState};
+use common::messages::{ClientMessage, RoomInfo, ServerMessage};
+use tokio::sync::mpsc::UnboundedSender;
 
 pub async fn process_client_message(
     my_room_code: &mut Option<String>,
@@ -19,7 +19,9 @@ pub async fn process_client_message(
             let mut room_infos = Vec::new();
             for room in s.rooms.values() {
                 if room.is_public {
-                    let host_name = room.peers.values()
+                    let host_name = room
+                        .peers
+                        .values()
                         .find(|p| Some(p.id) == room.host_id)
                         .map(|p| p.name.clone())
                         .unwrap_or_else(|| "Unknown".to_string());
@@ -182,7 +184,9 @@ pub async fn process_client_message(
                     });
                 }
             } else {
-                let _ = tx.send(ServerMessage::ConnectionFailed("Room not found".to_string()));
+                let _ = tx.send(ServerMessage::ConnectionFailed(
+                    "Room not found".to_string(),
+                ));
                 return Err(());
             }
         }
@@ -211,7 +215,8 @@ pub async fn process_client_message(
                 if let Some(room) = s.rooms.get_mut(code) {
                     let is_host = room.host_id == *my_player_id;
                     if is_host && !room.in_game {
-                        let everyone_ready = !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+                        let everyone_ready =
+                            !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
                         if everyone_ready {
                             start_game_in_room(room);
                         }
@@ -228,24 +233,27 @@ pub async fn process_client_message(
                         if let Some(peer) = room.peers.get(player_id) {
                             let is_now_ready = !peer.is_ready;
                             let original_skin = peer.skin.clone();
-                            
+
                             let mut allow_ready = true;
                             if is_now_ready {
                                 let skin_taken = room.peers.values().any(|other| {
-                                    other.id != *player_id && other.is_ready && other.skin == original_skin
+                                    other.id != *player_id
+                                        && other.is_ready
+                                        && other.skin == original_skin
                                 });
                                 if skin_taken {
                                     allow_ready = false;
                                 }
                             }
-                            
+
                             if let Some(peer_mut) = room.peers.get_mut(player_id) {
                                 if allow_ready {
                                     peer_mut.is_ready = is_now_ready;
                                 }
                             }
-                            
-                            let all_ready = !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+
+                            let all_ready =
+                                !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
                             if all_ready {
                                 trigger_start = true;
                             } else {
@@ -254,7 +262,7 @@ pub async fn process_client_message(
                                 room.broadcast(ServerMessage::LobbyUpdate { players, settings });
                             }
                         }
-                        
+
                         if trigger_start {
                             start_game_in_room(room);
                         }
@@ -320,7 +328,10 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
             let settings = room.room_settings.clone();
             if room.in_game {
                 for peer in room.peers.values().filter(|p| p.is_spectator) {
-                    let _ = peer.tx.send(ServerMessage::LobbyUpdate { players: players.clone(), settings: settings.clone() });
+                    let _ = peer.tx.send(ServerMessage::LobbyUpdate {
+                        players: players.clone(),
+                        settings: settings.clone(),
+                    });
                 }
             } else {
                 room.broadcast(ServerMessage::LobbyUpdate { players, settings });
@@ -371,7 +382,11 @@ fn start_game_in_room(room: &mut Room) {
     new_state.mode = room.room_settings.mode;
     new_state.spawn_players(players);
 
-    let mut ctx = GameContext::new(room.room_settings.width, room.room_settings.height, room.room_settings.bpm);
+    let mut ctx = GameContext::new(
+        room.room_settings.width,
+        room.room_settings.height,
+        room.room_settings.bpm,
+    );
     ctx.state = new_state;
 
     room.game_ctx = Some(ctx);

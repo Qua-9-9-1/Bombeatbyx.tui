@@ -58,7 +58,11 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         } else {
             if ascii { " [WAIT]" } else { " ⏳" }
         };
-        let ready_color = if player.is_ready { Color::Green } else { Color::DarkGray };
+        let ready_color = if player.is_ready {
+            Color::Green
+        } else {
+            Color::DarkGray
+        };
         spans.push(Span::styled(ready_tag, Style::default().fg(ready_color)));
 
         right_lines.push(Line::from(spans));
@@ -71,7 +75,15 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 }
 
 fn get_color_for_id(id: u32) -> Color {
-    let colors = [Color::Green, Color::Magenta, Color::Yellow, Color::Blue, Color::Red, Color::Cyan, Color::White];
+    let colors = [
+        Color::Green,
+        Color::Magenta,
+        Color::Yellow,
+        Color::Blue,
+        Color::Red,
+        Color::Cyan,
+        Color::White,
+    ];
     colors[(id as usize) % colors.len()]
 }
 

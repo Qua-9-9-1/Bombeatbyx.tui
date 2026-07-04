@@ -38,7 +38,9 @@ impl App {
             code,
         ) {
             let skin_taken = if let Some(ref ctx) = self.game_ctx {
-                ctx.state.players.iter().any(|p| p.id != self.current_player_id && p.is_ready && p.skin == self.profile.skin)
+                ctx.state.players.iter().any(|p| {
+                    p.id != self.current_player_id && p.is_ready && p.skin == self.profile.skin
+                })
             } else {
                 false
             };
@@ -53,7 +55,12 @@ impl App {
                 }
             } else {
                 if let Some(ref mut ctx) = self.game_ctx {
-                    if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+                    if let Some(p) = ctx
+                        .state
+                        .players
+                        .iter_mut()
+                        .find(|p| p.id == self.current_player_id)
+                    {
                         p.is_ready = !p.is_ready;
                     }
                 }

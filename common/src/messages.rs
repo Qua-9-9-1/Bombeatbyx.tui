@@ -1,7 +1,7 @@
 use crate::game::actions::GameAction;
-use crate::game::state::GameState;
 use crate::game::models::RoomSettings;
-use serde::{Serialize, Deserialize};
+use crate::game::state::GameState;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RoomInfo {
@@ -16,8 +16,15 @@ pub struct RoomInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ClientMessage {
     GetRooms,
-    CreateRoom { is_public: bool, is_lan: bool },
-    JoinRoom { code: String, name: String, skin: String },
+    CreateRoom {
+        is_public: bool,
+        is_lan: bool,
+    },
+    JoinRoom {
+        code: String,
+        name: String,
+        skin: String,
+    },
     UpdateSettings(RoomSettings),
     StartGame,
     ToggleReady,

@@ -2,9 +2,9 @@ use crate::local::app::{App, AppState};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use std::time::Duration;
 
-pub mod menu;
-pub mod lobby;
 pub mod game;
+pub mod lobby;
+pub mod menu;
 
 impl App {
     pub(crate) fn handle_inputs(&mut self) -> std::io::Result<()> {
@@ -38,7 +38,12 @@ impl App {
             AppState::InGame | AppState::Lobby => {
                 if self.state == AppState::Lobby {
                     let my_player_ready = if let Some(ref ctx) = self.game_ctx {
-                        ctx.state.players.iter().find(|p| p.id == self.current_player_id).map(|p| p.is_ready).unwrap_or(false)
+                        ctx.state
+                            .players
+                            .iter()
+                            .find(|p| p.id == self.current_player_id)
+                            .map(|p| p.is_ready)
+                            .unwrap_or(false)
                     } else {
                         false
                     };
@@ -49,7 +54,12 @@ impl App {
                             }
                         } else {
                             if let Some(ref mut ctx) = self.game_ctx {
-                                if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+                                if let Some(p) = ctx
+                                    .state
+                                    .players
+                                    .iter_mut()
+                                    .find(|p| p.id == self.current_player_id)
+                                {
                                     p.is_ready = false;
                                 }
                             }

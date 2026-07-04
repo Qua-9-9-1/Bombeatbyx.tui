@@ -1,6 +1,5 @@
 use super::helpers::{
-    get_collected_bonuses_str, get_combo_info, get_player_status_icon,
-    get_second_item_str,
+    get_collected_bonuses_str, get_combo_info, get_player_status_icon, get_second_item_str,
 };
 use crate::local::app::App;
 use ratatui::{
@@ -151,6 +150,14 @@ fn draw_sidebar_player(
 }
 
 fn get_color_for_id(id: u32) -> Color {
-    let colors = [Color::Green, Color::Magenta, Color::Yellow, Color::Blue, Color::Red, Color::Cyan, Color::White];
+    let colors = [
+        Color::Green,
+        Color::Magenta,
+        Color::Yellow,
+        Color::Blue,
+        Color::Red,
+        Color::Cyan,
+        Color::White,
+    ];
     colors[(id as usize) % colors.len()]
 }

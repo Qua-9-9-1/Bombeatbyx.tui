@@ -19,7 +19,10 @@ impl App {
                 self.network.online_rooms.clear();
                 self.network.show_private_join_prompt = false;
                 self.network.private_room_code_input.clear();
-                self.connect_to_server(self.profile.server_addr.clone(), Some(ClientMessage::GetRooms));
+                self.connect_to_server(
+                    self.profile.server_addr.clone(),
+                    Some(ClientMessage::GetRooms),
+                );
             }
             MainMenuAction::Settings => self.state = AppState::SettingsMenu,
             MainMenuAction::Exit => self.game_run = false,
@@ -80,31 +83,35 @@ impl App {
                     _ => {}
                 }
             }
-            KeyCode::Enter => {
-                match self.host_cursor {
-                    2 => {
-                        let is_public = self.host_visibility == 0;
-                        let is_lan = self.host_mode == 1;
+            KeyCode::Enter => match self.host_cursor {
+                2 => {
+                    let is_public = self.host_visibility == 0;
+                    let is_lan = self.host_mode == 1;
 
-                        if is_lan {
-                            if let Err(e) = self.start_local_server() {
-                                self.network.network_error = Some(e);
-                                self.state = AppState::MainMenu;
-                                return;
-                            }
-                            let addr = "127.0.0.1:3000".to_string();
-                            self.connect_to_server(addr, Some(ClientMessage::CreateRoom { is_public, is_lan }));
-                        } else {
-                            let addr = self.profile.server_addr.clone();
-                            self.connect_to_server(addr, Some(ClientMessage::CreateRoom { is_public, is_lan }));
+                    if is_lan {
+                        if let Err(e) = self.start_local_server() {
+                            self.network.network_error = Some(e);
+                            self.state = AppState::MainMenu;
+                            return;
                         }
+                        let addr = "127.0.0.1:3000".to_string();
+                        self.connect_to_server(
+                            addr,
+                            Some(ClientMessage::CreateRoom { is_public, is_lan }),
+                        );
+                    } else {
+                        let addr = self.profile.server_addr.clone();
+                        self.connect_to_server(
+                            addr,
+                            Some(ClientMessage::CreateRoom { is_public, is_lan }),
+                        );
                     }
-                    3 => {
-                        self.state = AppState::MainMenu;
-                    }
-                    _ => {}
                 }
-            }
+                3 => {
+                    self.state = AppState::MainMenu;
+                }
+                _ => {}
+            },
             KeyCode::Esc => {
                 self.state = AppState::MainMenu;
             }
@@ -122,18 +129,21 @@ impl App {
                     if !self.network.private_room_code_input.is_empty() {
                         let code_to_join = self.network.private_room_code_input.clone();
                         self.network.show_private_join_prompt = false;
-                        
+
                         let addr = if self.join_filter_mode == 2 {
                             "127.0.0.1:3000".to_string()
                         } else {
                             self.profile.server_addr.clone()
                         };
-                        
-                        self.connect_to_server(addr, Some(ClientMessage::JoinRoom {
-                            code: code_to_join,
-                            name: self.profile.name.clone(),
-                            skin: self.profile.skin.clone(),
-                        }));
+
+                        self.connect_to_server(
+                            addr,
+                            Some(ClientMessage::JoinRoom {
+                                code: code_to_join,
+                                name: self.profile.name.clone(),
+                                skin: self.profile.skin.clone(),
+                            }),
+                        );
                     }
                 }
                 KeyCode::Backspace => {
@@ -141,7 +151,9 @@ impl App {
                 }
                 KeyCode::Char(c) => {
                     if self.network.private_room_code_input.len() < 8 && c.is_alphanumeric() {
-                        self.network.private_room_code_input.push(c.to_ascii_uppercase());
+                        self.network
+                            .private_room_code_input
+                            .push(c.to_ascii_uppercase());
                     }
                 }
                 _ => {}
@@ -152,12 +164,26 @@ impl App {
         let mut filtered_rooms = Vec::new();
         if self.join_filter_mode == 0 || self.join_filter_mode == 1 {
             for r in &self.network.online_rooms {
-                filtered_rooms.push((r.code.clone(), r.host_name.clone(), r.player_count, "Online".to_string(), if r.is_public { "Public" } else { "Private" }, None));
+                filtered_rooms.push((
+                    r.code.clone(),
+                    r.host_name.clone(),
+                    r.player_count,
+                    "Online".to_string(),
+                    if r.is_public { "Public" } else { "Private" },
+                    None,
+                ));
             }
         }
         if self.join_filter_mode == 0 || self.join_filter_mode == 2 {
             for r in &self.network.lan_rooms {
-                filtered_rooms.push((r.0.clone(), r.1.clone(), r.2, "LAN".to_string(), "Public", Some(r.3)));
+                filtered_rooms.push((
+                    r.0.clone(),
+                    r.1.clone(),
+                    r.2,
+                    "LAN".to_string(),
+                    "Public",
+                    Some(r.3),
+                ));
             }
         }
 
@@ -192,18 +218,21 @@ impl App {
                 if !filtered_rooms.is_empty() && self.join_cursor < filtered_rooms.len() {
                     let room = &filtered_rooms[self.join_cursor];
                     let code_to_join = room.0.clone();
-                    
+
                     let addr = if let Some(src) = room.5 {
                         format!("{}:3000", src.ip())
                     } else {
                         self.profile.server_addr.clone()
                     };
 
-                    self.connect_to_server(addr, Some(ClientMessage::JoinRoom {
-                        code: code_to_join,
-                        name: self.profile.name.clone(),
-                        skin: self.profile.skin.clone(),
-                    }));
+                    self.connect_to_server(
+                        addr,
+                        Some(ClientMessage::JoinRoom {
+                            code: code_to_join,
+                            name: self.profile.name.clone(),
+                            skin: self.profile.skin.clone(),
+                        }),
+                    );
                 }
             }
             KeyCode::Char('p') | KeyCode::Char('P') => {
@@ -213,7 +242,10 @@ impl App {
             KeyCode::Char('r') | KeyCode::Char('R') => {
                 self.network.lan_rooms.clear();
                 self.network.online_rooms.clear();
-                self.connect_to_server(self.profile.server_addr.clone(), Some(ClientMessage::GetRooms));
+                self.connect_to_server(
+                    self.profile.server_addr.clone(),
+                    Some(ClientMessage::GetRooms),
+                );
             }
             _ => {}
         }

@@ -110,7 +110,12 @@ fn draw_game_board(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect, app: &A
             game_screen::draw_local_player_stats(buffer, app, ctx, stats_area);
         }
 
-        let sidebar_area = Rect::new(start_x + display_w + spacing, start_y, sidebar_w, total_needed_height);
+        let sidebar_area = Rect::new(
+            start_x + display_w + spacing,
+            start_y,
+            sidebar_w,
+            total_needed_height,
+        );
         game_screen::draw_game_sidebar(buffer, app, ctx, sidebar_area);
     }
 }

@@ -1,6 +1,6 @@
 use crate::local::app::{App, AppState};
-use common::messages::ServerMessage;
 use common::game::GameContext;
+use common::messages::ServerMessage;
 
 impl App {
     pub fn handle_server_message(&mut self, msg: ServerMessage) {
@@ -8,15 +8,26 @@ impl App {
             ServerMessage::RoomList(rooms) => {
                 self.network.online_rooms = rooms;
             }
-            ServerMessage::Joined { your_id, room_code, current_state, settings } => {
+            ServerMessage::Joined {
+                your_id,
+                room_code,
+                current_state,
+                settings,
+            } => {
                 self.current_player_id = your_id;
                 self.network.room_code = Some(room_code);
                 self.room_settings = settings;
-                
-                let mut ctx = GameContext::new(self.room_settings.width, self.room_settings.height, self.room_settings.bpm);
+
+                let mut ctx = GameContext::new(
+                    self.room_settings.width,
+                    self.room_settings.height,
+                    self.room_settings.bpm,
+                );
                 ctx.state = current_state;
                 self.game_ctx = Some(ctx);
-                let is_me_spectator = self.game_ctx.as_ref()
+                let is_me_spectator = self
+                    .game_ctx
+                    .as_ref()
                     .and_then(|c| c.state.players.iter().find(|p| p.id == your_id))
                     .map(|p| p.is_spectator)
                     .unwrap_or(false);
@@ -46,10 +57,18 @@ impl App {
             }
             ServerMessage::GameStateUpdate(mut new_state) => {
                 if let Some(ref mut ctx) = self.game_ctx {
-                    ctx.rhythm.beat_count = new_state.players.iter().find(|p| p.id == self.current_player_id).and_then(|p| p.last_acted_beat).unwrap_or(ctx.rhythm.beat_count);
-                    
+                    ctx.rhythm.beat_count = new_state
+                        .players
+                        .iter()
+                        .find(|p| p.id == self.current_player_id)
+                        .and_then(|p| p.last_acted_beat)
+                        .unwrap_or(ctx.rhythm.beat_count);
+
                     let mut updated_players = new_state.players.clone();
-                    if let Some(p) = updated_players.iter_mut().find(|p| p.id == self.current_player_id) {
+                    if let Some(p) = updated_players
+                        .iter_mut()
+                        .find(|p| p.id == self.current_player_id)
+                    {
                         if let Some(local_p) = ctx.state.players.iter().find(|lp| lp.id == p.id) {
                             if local_p.last_acted_beat > p.last_acted_beat {
                                 p.sub_x = local_p.sub_x;
@@ -65,12 +84,16 @@ impl App {
                                 p.second_item = local_p.second_item;
                                 p.shield_until_beat = local_p.shield_until_beat;
 
-                                if let Some((predicted_beat, common::game::GameAction::PlaceBomb)) = self.last_local_action {
+                                if let Some((predicted_beat, common::game::GameAction::PlaceBomb)) =
+                                    self.last_local_action
+                                {
                                     if Some(predicted_beat) == local_p.last_acted_beat {
                                         let grid_x = (local_p.sub_x / 2) as usize;
                                         let grid_y = (local_p.sub_y / 1) as usize;
                                         let idx = grid_y * new_state.width + grid_x;
-                                        if idx < new_state.grid.len() && new_state.grid[idx] == common::game::Cell::Empty {
+                                        if idx < new_state.grid.len()
+                                            && new_state.grid[idx] == common::game::Cell::Empty
+                                        {
                                             new_state.grid[idx] = common::game::Cell::Bomb {
                                                 owner_id: self.current_player_id,
                                                 ticks_left: 4,

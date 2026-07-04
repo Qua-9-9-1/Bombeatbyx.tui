@@ -1,15 +1,12 @@
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{Router, routing::get};
 use std::sync::Arc;
 
 mod state;
 mod websockets;
 
 use crate::state::ServerState;
-use common::messages::ServerMessage;
 use crate::websockets::rooms::stop_game_in_room;
+use common::messages::ServerMessage;
 
 #[tokio::main]
 async fn main() {
@@ -25,7 +22,7 @@ async fn main() {
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(16));
         loop {
             interval.tick().await;
-            
+
             let mut updates = Vec::new();
             {
                 let mut s = loop_state.lock().await;
@@ -34,8 +31,14 @@ async fn main() {
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
 
-                            let active_non_spec = room.peers.values().filter(|p| !p.is_spectator).count();
-                            let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0 && !p.is_spectator).count();
+                            let active_non_spec =
+                                room.peers.values().filter(|p| !p.is_spectator).count();
+                            let alive_count = ctx
+                                .state
+                                .players
+                                .iter()
+                                .filter(|p| p.lives > 0 && !p.is_spectator)
+                                .count();
                             if active_non_spec > 1 && alive_count <= 1 {
                                 stop_game_in_room(room);
                                 continue;
@@ -46,7 +49,7 @@ async fn main() {
                     }
                 }
             }
-            
+
             if !updates.is_empty() {
                 let s = loop_state.lock().await;
                 for (code, state) in updates {
@@ -71,7 +74,9 @@ async fn main() {
                     let s = udp_state.lock().await;
                     for room in s.rooms.values() {
                         if room.is_lan && room.is_public {
-                            let host_name = room.peers.values()
+                            let host_name = room
+                                .peers
+                                .values()
                                 .find(|p| Some(p.id) == room.host_id)
                                 .map(|p| p.name.clone())
                                 .unwrap_or_else(|| "Unknown".to_string());

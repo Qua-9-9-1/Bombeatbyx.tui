@@ -26,8 +26,16 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
     let inner_w = rect.width.saturating_sub(2);
     let inner_h = rect.height.saturating_sub(2);
 
-    let offset_x = if inner_w > arena_w { (inner_w - arena_w) / 2 } else { 0 };
-    let offset_y = if inner_h > arena_h { (inner_h - arena_h) / 2 } else { 0 };
+    let offset_x = if inner_w > arena_w {
+        (inner_w - arena_w) / 2
+    } else {
+        0
+    };
+    let offset_y = if inner_h > arena_h {
+        (inner_h - arena_h) / 2
+    } else {
+        0
+    };
 
     let play_zone_x = rect.x + 1 + offset_x;
     let play_zone_y = rect.y + 1 + offset_y;
@@ -250,6 +258,14 @@ fn draw_player(
 }
 
 fn get_color_for_id(id: u32) -> Color {
-    let colors = [Color::Green, Color::Magenta, Color::Yellow, Color::Blue, Color::Red, Color::Cyan, Color::White];
+    let colors = [
+        Color::Green,
+        Color::Magenta,
+        Color::Yellow,
+        Color::Blue,
+        Color::Red,
+        Color::Cyan,
+        Color::White,
+    ];
     colors[(id as usize) % colors.len()]
 }
