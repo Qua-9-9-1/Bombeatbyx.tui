@@ -32,10 +32,16 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     let mode_str = if ascii { "ASCII" } else { "Emojis" };
 
+    let back_label = if app.paused_from.is_some() {
+        "Back to Pause"
+    } else {
+        "Back to Main Menu"
+    };
+
     let items = [
         format!("Gauge Skin  : < {} >", gauge_str),
         format!("Display Mode: < {} >", mode_str),
-        "Back to Main Menu".to_string(),
+        back_label.to_string(),
     ];
 
     let mut lines = vec![

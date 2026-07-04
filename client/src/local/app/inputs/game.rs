@@ -16,7 +16,7 @@ impl App {
                 self.pause_cursor = (self.pause_cursor + 1).min(2)
             }
             KeyCode::Enter => match self.pause_cursor {
-                0 => self.state = AppState::InGame,
+                0 => self.state = self.paused_from.take().unwrap_or(AppState::InGame),
                 1 => self.state = AppState::SettingsMenu,
                 2 => {
                     if self.network.is_multiplayer {

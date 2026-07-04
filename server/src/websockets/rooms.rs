@@ -248,6 +248,13 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
             if room.host_id == Some(player_id) {
                 room.host_id = room.peers.keys().min().copied();
             }
+            if room.in_game && room.peers.len() <= 1 {
+                room.in_game = false;
+                room.game_ctx = None;
+                for peer in room.peers.values_mut() {
+                    peer.is_ready = false;
+                }
+            }
             let players = room.get_lobby_players();
             let settings = room.room_settings.clone();
             room.broadcast(ServerMessage::LobbyUpdate { players, settings });

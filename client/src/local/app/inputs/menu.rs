@@ -52,7 +52,13 @@ impl App {
             }
             KeyCode::Enter => match self.settings_cursor {
                 1 => self.profile.ascii_mode = !self.profile.ascii_mode,
-                2 => self.state = AppState::MainMenu,
+                2 => {
+                    if self.paused_from.is_some() {
+                        self.state = AppState::PauseMenu;
+                    } else {
+                        self.state = AppState::MainMenu;
+                    }
+                }
                 _ => {}
             },
             _ => {}

@@ -48,6 +48,7 @@ pub struct App {
     pub host_visibility: usize,
     pub join_cursor: usize,
     pub join_filter_mode: usize,
+    pub paused_from: Option<AppState>,
 }
 
 impl App {
@@ -113,6 +114,7 @@ impl App {
             host_visibility: 0,
             join_cursor: 0,
             join_filter_mode: 0,
+            paused_from: None,
         }
     }
 

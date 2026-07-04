@@ -24,6 +24,9 @@ impl App {
                     ctx.state.players = players;
                     ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
                 }
+                if self.state == AppState::InGame || self.state == AppState::PauseMenu {
+                    self.state = AppState::Lobby;
+                }
             }
             ServerMessage::GameStarted { initial_state } => {
                 if let Some(ref mut ctx) = self.game_ctx {
@@ -31,6 +34,7 @@ impl App {
                     ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
                     ctx.last_closed_window_beat = None;
                 }
+                self.paused_from = None;
                 self.state = AppState::InGame;
             }
             ServerMessage::GameStateUpdate(mut new_state) => {
@@ -84,6 +88,7 @@ impl App {
                 self.network.server_tx = None;
                 self.network.server_rx = None;
                 self.network.room_code = None;
+                self.paused_from = None;
                 self.stop_local_server();
             }
             ServerMessage::ConnectionFailed(err) => {
@@ -93,6 +98,7 @@ impl App {
                 self.network.server_tx = None;
                 self.network.server_rx = None;
                 self.network.room_code = None;
+                self.paused_from = None;
                 self.stop_local_server();
             }
         }

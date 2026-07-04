@@ -35,36 +35,40 @@ impl App {
 
     pub(crate) fn handle_esc(&mut self) {
         match self.state {
-            AppState::InGame => {
-                if self.network.is_multiplayer {
-                    if let Some(ref tx) = self.network.server_tx {
-                        let _ = tx.send(common::messages::ClientMessage::LeaveLobby);
+            AppState::InGame | AppState::Lobby => {
+                if self.state == AppState::Lobby {
+                    let my_player_ready = if let Some(ref ctx) = self.game_ctx {
+                        ctx.state.players.iter().find(|p| p.id == self.current_player_id).map(|p| p.is_ready).unwrap_or(false)
+                    } else {
+                        false
+                    };
+                    if my_player_ready {
+                        if self.network.is_multiplayer {
+                            if let Some(ref tx) = self.network.server_tx {
+                                let _ = tx.send(common::messages::ClientMessage::ToggleReady);
+                            }
+                        } else {
+                            if let Some(ref mut ctx) = self.game_ctx {
+                                if let Some(p) = ctx.state.players.iter_mut().find(|p| p.id == self.current_player_id) {
+                                    p.is_ready = false;
+                                }
+                            }
+                        }
                     }
-                    self.network.is_multiplayer = false;
-                    self.network.server_tx = None;
-                    self.network.server_rx = None;
-                    self.network.room_code = None;
-                    self.stop_local_server();
-                    self.state = AppState::MainMenu;
-                } else {
+                }
+                self.paused_from = Some(self.state.clone());
+                self.state = AppState::PauseMenu;
+            }
+            AppState::PauseMenu => {
+                self.state = self.paused_from.take().unwrap_or(AppState::InGame);
+            }
+            AppState::SettingsMenu => {
+                if self.paused_from.is_some() {
                     self.state = AppState::PauseMenu;
+                } else {
+                    self.state = AppState::MainMenu;
                 }
             }
-            AppState::Lobby => {
-                if self.network.is_multiplayer {
-                    if let Some(ref tx) = self.network.server_tx {
-                        let _ = tx.send(common::messages::ClientMessage::LeaveLobby);
-                    }
-                    self.network.is_multiplayer = false;
-                    self.network.server_tx = None;
-                    self.network.server_rx = None;
-                    self.network.room_code = None;
-                    self.stop_local_server();
-                }
-                self.state = AppState::MainMenu;
-            }
-            AppState::PauseMenu => self.state = AppState::InGame,
-            AppState::SettingsMenu => self.state = AppState::MainMenu,
             AppState::MainMenu => self.game_run = false,
             AppState::HostModal => self.state = AppState::MainMenu,
             AppState::JoinRoomMenu => {

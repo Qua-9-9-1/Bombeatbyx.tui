@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Clear, Paragraph, Widget},
 };
 
 pub fn draw_pause_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
@@ -60,8 +60,10 @@ pub fn draw_pause_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         }
     }
 
+    Clear.render(menu_rect, buffer);
     Paragraph::new(lines)
         .block(menu_block)
+        .style(Style::default().bg(Color::Black).fg(Color::Yellow))
         .alignment(Alignment::Center)
         .render(menu_rect, buffer);
 }
