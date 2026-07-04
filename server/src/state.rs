@@ -13,7 +13,10 @@ pub struct Peer {
     pub tx: UnboundedSender<ServerMessage>,
 }
 
-pub struct ServerState {
+pub struct Room {
+    pub code: String,
+    pub is_public: bool,
+    pub is_lan: bool,
     pub peers: HashMap<u32, Peer>,
     pub host_id: Option<u32>,
     pub next_peer_id: u32,
@@ -22,9 +25,12 @@ pub struct ServerState {
     pub in_game: bool,
 }
 
-impl ServerState {
-    pub fn new() -> Self {
+impl Room {
+    pub fn new(code: String, is_public: bool, is_lan: bool) -> Self {
         Self {
+            code,
+            is_public,
+            is_lan,
             peers: HashMap::new(),
             host_id: None,
             next_peer_id: 1,
@@ -70,6 +76,18 @@ impl ServerState {
     pub fn broadcast(&self, msg: ServerMessage) {
         for peer in self.peers.values() {
             let _ = peer.tx.send(msg.clone());
+        }
+    }
+}
+
+pub struct ServerState {
+    pub rooms: HashMap<String, Room>,
+}
+
+impl ServerState {
+    pub fn new() -> Self {
+        Self {
+            rooms: HashMap::new(),
         }
     }
 }
