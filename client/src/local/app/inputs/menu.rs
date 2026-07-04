@@ -28,54 +28,34 @@ impl App {
     }
 
     pub(crate) fn handle_settings_menu_input(&mut self, code: KeyCode) {
-        if self.editing_name {
-            match code {
-                KeyCode::Enter | KeyCode::Esc => {
-                    self.editing_name = false;
-                }
-                KeyCode::Backspace => {
-                    self.profile.name.pop();
-                    self.sync_lobby_name();
-                }
-                KeyCode::Char(c) => {
-                    if self.profile.name.len() < 12 {
-                        self.profile.name.push(c);
-                        self.sync_lobby_name();
-                    }
-                }
-                _ => {}
+        match code {
+            KeyCode::Up | KeyCode::Char('z') => {
+                self.settings_cursor = self.settings_cursor.saturating_sub(1)
             }
-        } else {
-            match code {
-                KeyCode::Up | KeyCode::Char('z') => {
-                    self.settings_cursor = self.settings_cursor.saturating_sub(1)
-                }
-                KeyCode::Down | KeyCode::Char('s') => {
-                    self.settings_cursor = (self.settings_cursor + 1).min(3)
-                }
-                KeyCode::Left | KeyCode::Char('q') | KeyCode::Right | KeyCode::Char('d') => {
-                    match self.settings_cursor {
-                        0 => {
-                            self.profile.gauge_skin = match self.profile.gauge_skin {
-                                GaugeSkin::NecroDancer => GaugeSkin::Simple,
-                                GaugeSkin::Undertale => GaugeSkin::NecroDancer,
-                                GaugeSkin::Simple => GaugeSkin::Undertale,
-                            };
-                        }
-                        2 => {
-                            self.profile.ascii_mode = !self.profile.ascii_mode;
-                        }
-                        _ => {}
+            KeyCode::Down | KeyCode::Char('s') => {
+                self.settings_cursor = (self.settings_cursor + 1).min(2)
+            }
+            KeyCode::Left | KeyCode::Char('q') | KeyCode::Right | KeyCode::Char('d') => {
+                match self.settings_cursor {
+                    0 => {
+                        self.profile.gauge_skin = match self.profile.gauge_skin {
+                            GaugeSkin::NecroDancer => GaugeSkin::Simple,
+                            GaugeSkin::Undertale => GaugeSkin::NecroDancer,
+                            GaugeSkin::Simple => GaugeSkin::Undertale,
+                        };
                     }
-                }
-                KeyCode::Enter => match self.settings_cursor {
-                    1 => self.editing_name = true,
-                    2 => self.profile.ascii_mode = !self.profile.ascii_mode,
-                    3 => self.state = AppState::MainMenu,
+                    1 => {
+                        self.profile.ascii_mode = !self.profile.ascii_mode;
+                    }
                     _ => {}
-                },
-                _ => {}
+                }
             }
+            KeyCode::Enter => match self.settings_cursor {
+                1 => self.profile.ascii_mode = !self.profile.ascii_mode,
+                2 => self.state = AppState::MainMenu,
+                _ => {}
+            },
+            _ => {}
         }
     }
 

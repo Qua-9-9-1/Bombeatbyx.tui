@@ -4,7 +4,33 @@ use crossterm::event::KeyCode;
 
 impl App {
     pub(crate) fn handle_lobby_input(&mut self, code: KeyCode) {
+        if self.editing_name {
+            match code {
+                KeyCode::Enter | KeyCode::Esc => {
+                    self.editing_name = false;
+                }
+                KeyCode::Backspace => {
+                    self.profile.name.pop();
+                    self.sync_lobby_name();
+                }
+                KeyCode::Char(c) => {
+                    if self.profile.name.len() < 12 {
+                        self.profile.name.push(c);
+                        self.sync_lobby_name();
+                    }
+                }
+                _ => {}
+            }
+            return;
+        }
+
         let is_host = self.is_local_player_host();
+
+        if code == KeyCode::Enter && self.lobby_screen.cursor == 7 {
+            self.editing_name = true;
+            return;
+        }
+
         if self.lobby_screen.handle_input(
             &mut self.room_settings,
             &mut self.profile.skin,

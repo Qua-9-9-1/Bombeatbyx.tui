@@ -22,24 +22,24 @@ impl LobbyScreen {
                 self.cursor = self.cursor.saturating_sub(1);
             }
             KeyCode::Down | KeyCode::Char('s') => {
-                let max_row = if is_host { 8 } else { 7 };
+                let max_row = if is_host { 9 } else { 8 };
                 self.cursor = (self.cursor + 1).min(max_row);
             }
             KeyCode::Left | KeyCode::Char('q') => {
-                if self.cursor == 7 {
+                if self.cursor == 8 {
                     self.modify_local_skin(profile_skin, false);
                 } else if is_host && self.cursor < 7 {
                     self.modify_room_setting(room_settings, false);
                 }
             }
             KeyCode::Right | KeyCode::Char('d') => {
-                if self.cursor == 7 {
+                if self.cursor == 8 {
                     self.modify_local_skin(profile_skin, true);
                 } else if is_host && self.cursor < 7 {
                     self.modify_room_setting(room_settings, true);
                 }
             }
-            KeyCode::Enter if self.cursor == 8 && is_host => {
+            KeyCode::Enter if self.cursor == 9 && is_host => {
                 return true;
             }
             _ => {}

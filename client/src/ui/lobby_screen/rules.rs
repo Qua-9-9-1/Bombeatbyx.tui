@@ -35,6 +35,12 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
     let skin_name = get_skin_label(&app.profile.skin, ascii);
 
+    let name_display = if app.editing_name {
+        format!("{}█", app.profile.name)
+    } else {
+        app.profile.name.clone()
+    };
+
     let items = [
         if is_host {
             format!("Map Width     : < {} >", rs.width)
@@ -77,6 +83,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         } else {
             format!("Game Mode     : {:?}", rs.mode)
         },
+        format!("Your Name     : < {} >", name_display),
         format!("Your Skin     : < {} >", skin_name),
         " [ START GAME ] ".to_string(),
     ];
@@ -109,12 +116,38 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     let arrow_r = if ascii { " <= " } else { " ◄" };
 
     for (idx, item) in items.iter().enumerate() {
-        if idx == 8 && !is_host {
+        if idx == 9 && !is_host {
             continue;
         }
 
+        if idx == 0 {
+            let label = if ascii {
+                "  -- GAME CONFIGURATION --"
+            } else {
+                "  ⚙️  GAME CONFIGURATION ⚙️"
+            };
+            center_lines.push(Line::from(Span::styled(
+                label,
+                Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            )));
+            center_lines.push(Line::from(""));
+        }
+
+        if idx == 7 {
+            let label = if ascii {
+                "  -- PLAYER PERSONALIZATION --"
+            } else {
+                "  👤 PLAYER PERSONALIZATION 👤"
+            };
+            center_lines.push(Line::from(Span::styled(
+                label,
+                Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
+            )));
+            center_lines.push(Line::from(""));
+        }
+
         if idx == cursor {
-            if idx == 8 {
+            if idx == 9 {
                 let text = if ascii {
                     format!(" =>> {} <<=", item)
                 } else {
@@ -127,29 +160,31 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                         .add_modifier(Modifier::BOLD),
                 )));
             } else {
+                let is_editing = idx == 7 && app.editing_name;
+                let color = if is_editing { Color::LightGreen } else { Color::Cyan };
                 center_lines.push(Line::from(vec![
                     Span::styled(
                         arrow_l,
                         Style::default()
-                            .fg(Color::Cyan)
+                            .fg(color)
                             .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         item.as_str(),
                         Style::default()
-                            .fg(Color::Cyan)
+                            .fg(color)
                             .add_modifier(Modifier::BOLD),
                     ),
                     Span::styled(
                         arrow_r,
                         Style::default()
-                            .fg(Color::Cyan)
+                            .fg(color)
                             .add_modifier(Modifier::BOLD),
                     ),
                 ]));
             }
         } else {
-            if idx == 8 {
+            if idx == 9 {
                 center_lines.push(Line::from(Span::styled(
                     format!("     {}", item),
                     Style::default().fg(Color::LightGreen),
@@ -159,6 +194,27 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             }
         }
     }
+
+    center_lines.push(Line::from(""));
+
+    let help_desc = if cursor == 7 {
+        if app.editing_name {
+            "Type name, Backspace to delete, Enter to save"
+        } else {
+            "Press Enter to edit name"
+        }
+    } else if cursor == 8 {
+        "Press Q/D or Left/Right to change skin"
+    } else if cursor == 9 {
+        "Press Enter to launch match!"
+    } else {
+        "Press Q/D or Left/Right to adjust values"
+    };
+
+    center_lines.push(Line::from(Span::styled(
+        format!("  {}", help_desc),
+        Style::default().fg(Color::DarkGray),
+    )));
 
     Paragraph::new(center_lines)
         .block(center_block)
