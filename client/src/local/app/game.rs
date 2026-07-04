@@ -4,6 +4,7 @@ use crossterm::event::KeyCode;
 use std::time::Duration;
 
 impl App {
+    #[allow(dead_code)]
     pub(crate) fn start_game(&mut self) {
         if let Some(ref mut ctx) = self.game_ctx {
             let mut players = ctx.state.players.clone();

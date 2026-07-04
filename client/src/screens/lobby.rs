@@ -22,8 +22,7 @@ impl LobbyScreen {
                 self.cursor = self.cursor.saturating_sub(1);
             }
             KeyCode::Down | KeyCode::Char('s') => {
-                let max_row = if is_host { 9 } else { 8 };
-                self.cursor = (self.cursor + 1).min(max_row);
+                self.cursor = (self.cursor + 1).min(9);
             }
             KeyCode::Left | KeyCode::Char('q') => {
                 if self.cursor == 8 {
@@ -39,7 +38,7 @@ impl LobbyScreen {
                     self.modify_room_setting(room_settings, true);
                 }
             }
-            KeyCode::Enter if self.cursor == 9 && is_host => {
+            KeyCode::Enter if self.cursor == 9 => {
                 return true;
             }
             _ => {}

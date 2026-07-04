@@ -62,6 +62,7 @@ pub struct Player {
     pub is_spectator: bool,
     pub second_item: Option<SecondItem>,
     pub shield_until_beat: Option<u64>,
+    pub is_ready: bool,
 }
 
 impl Player {

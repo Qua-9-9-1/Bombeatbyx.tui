@@ -1,4 +1,4 @@
-use super::helpers::{get_color_from_str, get_emote_symbol, get_player_symbol};
+use super::helpers::{get_emote_symbol, get_player_symbol};
 use crate::local::app::{App, CELL_H, CELL_W};
 use common::game::Cell;
 use ratatui::{
@@ -208,7 +208,7 @@ fn draw_player(
     current_beat: Option<u64>,
 ) {
     let bg = Style::default().bg(Color::Indexed(234));
-    let fg = get_color_from_str(&player.color);
+    let fg = get_color_for_id(player.id);
 
     if player.is_alive {
         let p_screen_x = play_zone_x + player.sub_x as u16;
@@ -247,4 +247,9 @@ fn draw_player(
             }
         }
     }
+}
+
+fn get_color_for_id(id: u32) -> Color {
+    let colors = [Color::Green, Color::Magenta, Color::Yellow, Color::Blue, Color::Red, Color::Cyan, Color::White];
+    colors[(id as usize) % colors.len()]
 }

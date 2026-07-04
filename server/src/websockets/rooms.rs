@@ -51,6 +51,7 @@ pub async fn process_client_message(
                 skin: my_skin.clone(),
                 color,
                 tx: tx.clone(),
+                is_ready: false,
             };
             room.peers.insert(id, peer);
 
@@ -86,6 +87,7 @@ pub async fn process_client_message(
                     if let Some(peer) = room.peers.get_mut(&player_id) {
                         peer.name = name;
                         peer.skin = skin;
+                        peer.is_ready = false;
                     }
                     let players = room.get_lobby_players();
                     room.broadcast(ServerMessage::LobbyUpdate {
@@ -114,6 +116,7 @@ pub async fn process_client_message(
                     skin,
                     color,
                     tx: tx.clone(),
+                    is_ready: false,
                 };
                 room.peers.insert(id, peer);
 
@@ -146,6 +149,11 @@ pub async fn process_client_message(
                     let is_host = room.host_id == *my_player_id;
                     if is_host && !room.in_game {
                         room.room_settings = settings;
+                        if let Some(pid) = my_player_id.as_ref() {
+                            if let Some(host_peer) = room.peers.get_mut(pid) {
+                                host_peer.is_ready = false;
+                            }
+                        }
                         let players = room.get_lobby_players();
                         let settings = room.room_settings.clone();
                         room.broadcast(ServerMessage::LobbyUpdate { players, settings });
@@ -159,41 +167,53 @@ pub async fn process_client_message(
                 if let Some(room) = s.rooms.get_mut(code) {
                     let is_host = room.host_id == *my_player_id;
                     if is_host && !room.in_game {
-                        let mut players = room.get_lobby_players();
-                        for p in &mut players {
-                            p.lives = room.room_settings.lives;
-                            p.is_alive = !p.is_spectator;
-                            p.death_pos = None;
-                            p.respawn_timer = None;
-                            p.active_bombs = 0;
-                            p.max_bombs = 1;
-                            p.bomb_range = 1;
-                            p.collected_bonuses.clear();
-                            p.second_item = if p.id == 2 {
-                                Some(common::game::models::SecondItem::Shield)
-                            } else {
-                                None
-                            };
-                            p.shield_until_beat = None;
-                            p.combo = 0;
+                        let everyone_ready = !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+                        if everyone_ready {
+                            start_game_in_room(room);
                         }
-
-                        let mut new_state = GameState::new(room.room_settings.width, room.room_settings.height);
-                        new_state.bpm = room.room_settings.bpm;
-                        new_state.sudden_death = room.room_settings.sudden_death;
-                        new_state.bonus_every = room.room_settings.bonus_every;
-                        new_state.mode = room.room_settings.mode;
-                        new_state.spawn_players(players);
-
-                        let mut ctx = GameContext::new(room.room_settings.width, room.room_settings.height, room.room_settings.bpm);
-                        ctx.state = new_state;
-
-                        room.game_ctx = Some(ctx);
-                        room.in_game = true;
-
-                        room.broadcast(ServerMessage::GameStarted {
-                            initial_state: room.game_ctx.as_ref().unwrap().state.clone(),
-                        });
+                    }
+                }
+            }
+        }
+        ClientMessage::ToggleReady => {
+            if let (Some(code), Some(player_id)) = (my_room_code, my_player_id) {
+                let mut s = state.lock().await;
+                if let Some(room) = s.rooms.get_mut(code) {
+                    if !room.in_game {
+                        let mut trigger_start = false;
+                        if let Some(peer) = room.peers.get(player_id) {
+                            let is_now_ready = !peer.is_ready;
+                            let original_skin = peer.skin.clone();
+                            
+                            let mut allow_ready = true;
+                            if is_now_ready {
+                                let skin_taken = room.peers.values().any(|other| {
+                                    other.id != *player_id && other.is_ready && other.skin == original_skin
+                                });
+                                if skin_taken {
+                                    allow_ready = false;
+                                }
+                            }
+                            
+                            if let Some(peer_mut) = room.peers.get_mut(player_id) {
+                                if allow_ready {
+                                    peer_mut.is_ready = is_now_ready;
+                                }
+                            }
+                            
+                            let all_ready = !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+                            if all_ready {
+                                trigger_start = true;
+                            } else {
+                                let players = room.get_lobby_players();
+                                let settings = room.room_settings.clone();
+                                room.broadcast(ServerMessage::LobbyUpdate { players, settings });
+                            }
+                        }
+                        
+                        if trigger_start {
+                            start_game_in_room(room);
+                        }
                     }
                 }
             }
@@ -236,4 +256,42 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
     if remove_room {
         s.rooms.remove(code);
     }
+}
+
+fn start_game_in_room(room: &mut Room) {
+    let mut players = room.get_lobby_players();
+    for p in &mut players {
+        p.lives = room.room_settings.lives;
+        p.is_alive = !p.is_spectator;
+        p.death_pos = None;
+        p.respawn_timer = None;
+        p.active_bombs = 0;
+        p.max_bombs = 1;
+        p.bomb_range = 1;
+        p.collected_bonuses.clear();
+        p.second_item = if p.id == 2 {
+            Some(common::game::models::SecondItem::Shield)
+        } else {
+            None
+        };
+        p.shield_until_beat = None;
+        p.combo = 0;
+    }
+
+    let mut new_state = GameState::new(room.room_settings.width, room.room_settings.height);
+    new_state.bpm = room.room_settings.bpm;
+    new_state.sudden_death = room.room_settings.sudden_death;
+    new_state.bonus_every = room.room_settings.bonus_every;
+    new_state.mode = room.room_settings.mode;
+    new_state.spawn_players(players);
+
+    let mut ctx = GameContext::new(room.room_settings.width, room.room_settings.height, room.room_settings.bpm);
+    ctx.state = new_state;
+
+    room.game_ctx = Some(ctx);
+    room.in_game = true;
+
+    room.broadcast(ServerMessage::GameStarted {
+        initial_state: room.game_ctx.as_ref().unwrap().state.clone(),
+    });
 }

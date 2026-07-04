@@ -20,6 +20,7 @@ pub enum ClientMessage {
     JoinRoom { code: String, name: String, skin: String },
     UpdateSettings(RoomSettings),
     StartGame,
+    ToggleReady,
     Action(GameAction),
     LeaveLobby,
 }

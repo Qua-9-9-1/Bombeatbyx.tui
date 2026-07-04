@@ -41,6 +41,26 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         app.profile.name.clone()
     };
 
+    let my_player_ready = if let Some(ref ctx) = app.game_ctx {
+        ctx.state.players.iter().find(|p| p.id == app.current_player_id).map(|p| p.is_ready).unwrap_or(false)
+    } else {
+        false
+    };
+
+    let skin_taken = if let Some(ref ctx) = app.game_ctx {
+        ctx.state.players.iter().any(|p| p.id != app.current_player_id && p.is_ready && p.skin == app.profile.skin)
+    } else {
+        false
+    };
+
+    let ready_btn_text = if skin_taken {
+        " [ SKIN ALREADY TAKEN! ] ".to_string()
+    } else if my_player_ready {
+        " [ READY ] ".to_string()
+    } else {
+        " [ READY ] ".to_string()
+    };
+
     let items = [
         if is_host {
             format!("Map Width     : < {} >", rs.width)
@@ -85,7 +105,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         },
         format!("Your Name     : < {} >", name_display),
         format!("Your Skin     : < {} >", skin_name),
-        " [ START GAME ] ".to_string(),
+        ready_btn_text,
     ];
 
     let mut center_lines = vec![Line::from("")];
@@ -116,10 +136,6 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     let arrow_r = if ascii { " <= " } else { " ◄" };
 
     for (idx, item) in items.iter().enumerate() {
-        if idx == 9 && !is_host {
-            continue;
-        }
-
         if idx == 0 {
             let label = if ascii {
                 "  -- GAME CONFIGURATION --"
@@ -148,6 +164,13 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
         if idx == cursor {
             if idx == 9 {
+                let color = if skin_taken {
+                    Color::Red
+                } else if my_player_ready {
+                    Color::Green
+                } else {
+                    Color::Yellow
+                };
                 let text = if ascii {
                     format!(" =>> {} <<=", item)
                 } else {
@@ -156,7 +179,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 center_lines.push(Line::from(Span::styled(
                     text,
                     Style::default()
-                        .fg(Color::Green)
+                        .fg(color)
                         .add_modifier(Modifier::BOLD),
                 )));
             } else {
@@ -185,9 +208,16 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             }
         } else {
             if idx == 9 {
+                let color = if skin_taken {
+                    Color::Red
+                } else if my_player_ready {
+                    Color::Green
+                } else {
+                    Color::DarkGray
+                };
                 center_lines.push(Line::from(Span::styled(
                     format!("     {}", item),
-                    Style::default().fg(Color::LightGreen),
+                    Style::default().fg(color),
                 )));
             } else {
                 center_lines.push(Line::from(format!("   {}   ", item)));
@@ -206,7 +236,13 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
     } else if cursor == 8 {
         "Press Q/D or Left/Right to change skin"
     } else if cursor == 9 {
-        "Press Enter to launch match!"
+        if skin_taken {
+            "Change your skin! Someone else is ready with it"
+        } else if my_player_ready {
+            "Press Enter to toggle NOT READY"
+        } else {
+            "Press Enter to toggle READY"
+        }
     } else {
         "Press Q/D or Left/Right to adjust values"
     };

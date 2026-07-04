@@ -11,6 +11,7 @@ pub struct Peer {
     pub skin: String,
     pub color: String,
     pub tx: UnboundedSender<ServerMessage>,
+    pub is_ready: bool,
 }
 
 pub struct Room {
@@ -68,6 +69,7 @@ impl Room {
             is_spectator: false,
             second_item: None,
             shield_until_beat: None,
+            is_ready: p.is_ready,
         }).collect();
         players.sort_by_key(|p| p.id);
         players

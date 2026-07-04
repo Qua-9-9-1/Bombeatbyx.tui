@@ -35,7 +35,7 @@ impl App {
 
     pub(crate) fn handle_esc(&mut self) {
         match self.state {
-            AppState::InGame | AppState::Lobby => {
+            AppState::InGame => {
                 if self.network.is_multiplayer {
                     if let Some(ref tx) = self.network.server_tx {
                         let _ = tx.send(common::messages::ClientMessage::LeaveLobby);
@@ -49,6 +49,19 @@ impl App {
                 } else {
                     self.state = AppState::PauseMenu;
                 }
+            }
+            AppState::Lobby => {
+                if self.network.is_multiplayer {
+                    if let Some(ref tx) = self.network.server_tx {
+                        let _ = tx.send(common::messages::ClientMessage::LeaveLobby);
+                    }
+                    self.network.is_multiplayer = false;
+                    self.network.server_tx = None;
+                    self.network.server_rx = None;
+                    self.network.room_code = None;
+                    self.stop_local_server();
+                }
+                self.state = AppState::MainMenu;
             }
             AppState::PauseMenu => self.state = AppState::InGame,
             AppState::SettingsMenu => self.state = AppState::MainMenu,

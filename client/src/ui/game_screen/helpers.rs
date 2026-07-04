@@ -94,6 +94,7 @@ pub fn get_player_status_icon(player: &common::game::Player, ascii: bool) -> Str
     }
 }
 
+#[allow(dead_code)]
 pub fn get_color_from_str(color_str: &str) -> Color {
     match color_str.to_lowercase().as_str() {
         "cyan" => Color::Cyan,

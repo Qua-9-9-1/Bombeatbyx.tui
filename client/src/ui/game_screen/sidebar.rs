@@ -1,5 +1,5 @@
 use super::helpers::{
-    get_collected_bonuses_str, get_color_from_str, get_combo_info, get_player_status_icon,
+    get_collected_bonuses_str, get_combo_info, get_player_status_icon,
     get_second_item_str,
 };
 use crate::local::app::App;
@@ -74,7 +74,7 @@ fn draw_sidebar_player(
     ascii: bool,
 ) {
     let icon = get_player_status_icon(player, ascii);
-    let fg_color = get_color_from_str(&player.color);
+    let fg_color = get_color_for_id(player.id);
     let name = if player.name.len() > 14 {
         format!("{}..", &player.name[..12])
     } else {
@@ -148,4 +148,9 @@ fn draw_sidebar_player(
     }
 
     lines.push(Line::from(""));
+}
+
+fn get_color_for_id(id: u32) -> Color {
+    let colors = [Color::Green, Color::Magenta, Color::Yellow, Color::Blue, Color::Red, Color::Cyan, Color::White];
+    colors[(id as usize) % colors.len()]
 }

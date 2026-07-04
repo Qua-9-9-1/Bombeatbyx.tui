@@ -87,6 +87,7 @@ impl App {
                 is_spectator: false,
                 second_item: None,
                 shield_until_beat: None,
+                is_ready: false,
             },
         ];
 
