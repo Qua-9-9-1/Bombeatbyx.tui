@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build binaires
+        run: |
+          cargo build -p client --release
+          cargo build -p server --release
+
+      - name: Prepare the bundle
+        shell: bash
+        run: |
+          mkdir -p bundle
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cp target/release/client.exe bundle/
+            cp target/release/server.exe bundle/
+          else
+            cp target/release/client bundle/
+            cp target/release/server bundle/
+          fi
+
+      - name: Create the archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: bombeat-bundle-${{ matrix.os }}
+          path: bundle/
