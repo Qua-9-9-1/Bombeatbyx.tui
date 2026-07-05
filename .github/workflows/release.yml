@@ -23,30 +23,34 @@ jobs:
       - name: Package
         shell: bash
         run: |
-          # Créer un dossier temporaire par plateforme
           mkdir -p dist
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cp target/release/client.exe dist/
             cp target/release/server.exe dist/
-            7z a bombeat-windows.zip ./dist/*
+            cd dist && 7z a ../bombeat-windows.zip * && cd ..
           else
             cp target/release/client dist/
             cp target/release/server dist/
-            zip -j bombeat-linux.zip ./dist/*
+            cd dist && zip -j ../bombeat-linux.zip * && cd ..
           fi
 
-      - name: Upload Artifact
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: bombeat-${{ matrix.os }}
+          name: artifacts-${{ matrix.os }}
           path: "*.zip"
+
   publish:
     needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          
       - name: Publish to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
