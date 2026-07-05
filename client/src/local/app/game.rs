@@ -112,25 +112,26 @@ impl App {
     }
 
     fn map_key_to_action(&self, code: KeyCode) -> Option<GameAction> {
-        if code == KeyCode::Left || code == KeyCode::Char(self.profile.key_left) {
+        let (key_up, key_down, key_left, key_right, key_bomb, key_spell) = self.profile.keys();
+        if code == KeyCode::Left || code == KeyCode::Char(key_left) {
             Some(GameAction::MoveLeft)
-        } else if code == KeyCode::Right || code == KeyCode::Char(self.profile.key_right) {
+        } else if code == KeyCode::Right || code == KeyCode::Char(key_right) {
             Some(GameAction::MoveRight)
-        } else if code == KeyCode::Up || code == KeyCode::Char(self.profile.key_up) {
+        } else if code == KeyCode::Up || code == KeyCode::Char(key_up) {
             Some(GameAction::MoveUp)
-        } else if code == KeyCode::Down || code == KeyCode::Char(self.profile.key_down) {
+        } else if code == KeyCode::Down || code == KeyCode::Char(key_down) {
             Some(GameAction::MoveDown)
-        } else if code == KeyCode::Char(' ') {
+        } else if code == KeyCode::Char(key_bomb) || (key_bomb == ' ' && code == KeyCode::Char(' ')) {
             Some(GameAction::PlaceBomb)
-        } else if code == KeyCode::Char('e') {
+        } else if code == KeyCode::Char(key_spell) {
             Some(GameAction::TriggerSpell)
-        } else if code == KeyCode::Char('1') {
+        } else if code == KeyCode::F(1) {
             Some(GameAction::Emote(1))
-        } else if code == KeyCode::Char('2') {
+        } else if code == KeyCode::F(2) {
             Some(GameAction::Emote(2))
-        } else if code == KeyCode::Char('3') {
+        } else if code == KeyCode::F(3) {
             Some(GameAction::Emote(3))
-        } else if code == KeyCode::Char('4') {
+        } else if code == KeyCode::F(4) {
             Some(GameAction::Emote(4))
         } else {
             None

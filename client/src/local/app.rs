@@ -49,13 +49,14 @@ pub struct App {
     pub join_cursor: usize,
     pub join_filter_mode: usize,
     pub paused_from: Option<AppState>,
+    pub capturing_key: bool,
 }
 
 impl App {
     pub fn new() -> Self {
         let current_player_id = 1;
-        let profile = ClientSettings::default();
-        let room_settings = RoomSettings::default();
+        let profile = ClientSettings::load();
+        let room_settings = profile.last_room_settings.clone();
 
         let mut ctx =
             GameContext::new(room_settings.width, room_settings.height, room_settings.bpm);
@@ -113,6 +114,7 @@ impl App {
             join_cursor: 0,
             join_filter_mode: 0,
             paused_from: None,
+            capturing_key: false,
         }
     }
 

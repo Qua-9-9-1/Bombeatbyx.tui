@@ -73,7 +73,9 @@ impl App {
                 self.state = self.paused_from.take().unwrap_or(AppState::InGame);
             }
             AppState::SettingsMenu => {
-                if self.paused_from.is_some() {
+                if self.capturing_key {
+                    self.capturing_key = false;
+                } else if self.paused_from.is_some() {
                     self.state = AppState::PauseMenu;
                 } else {
                     self.state = AppState::MainMenu;

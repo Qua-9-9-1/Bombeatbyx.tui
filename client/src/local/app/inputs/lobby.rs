@@ -8,6 +8,7 @@ impl App {
             match code {
                 KeyCode::Enter | KeyCode::Esc => {
                     self.editing_name = false;
+                    let _ = self.profile.save();
                 }
                 KeyCode::Backspace => {
                     self.profile.name.pop();
@@ -68,6 +69,7 @@ impl App {
         } else {
             if self.network.is_multiplayer {
                 self.sync_lobby_skin();
+                let _ = self.profile.save();
                 if is_host && self.lobby_screen.cursor < 7 {
                     if let Some(ref tx) = self.network.server_tx {
                         let _ = tx.send(ClientMessage::UpdateSettings(self.room_settings.clone()));
@@ -75,6 +77,7 @@ impl App {
                 }
             } else {
                 self.sync_lobby_skin();
+                let _ = self.profile.save();
             }
         }
     }
