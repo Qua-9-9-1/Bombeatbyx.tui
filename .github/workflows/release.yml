@@ -15,25 +15,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build binaires
+      - name: Build
         run: |
           cargo build -p client --release
           cargo build -p server --release
 
-      - name: Prepare the bundle
+      - name: Package
         shell: bash
         run: |
-          mkdir -p bundle
+          # Créer un dossier temporaire par plateforme
+          mkdir -p dist
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cp target/release/client.exe bundle/
-            cp target/release/server.exe bundle/
+            cp target/release/client.exe dist/
+            cp target/release/server.exe dist/
+            7z a bombeat-windows.zip ./dist/*
           else
-            cp target/release/client bundle/
-            cp target/release/server bundle/
+            cp target/release/client dist/
+            cp target/release/server dist/
+            zip -j bombeat-linux.zip ./dist/*
           fi
 
-      - name: Create the archive
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bombeat-bundle-${{ matrix.os }}
-          path: bundle/
+          name: bombeat-${{ matrix.os }}
+          path: "*.zip"
