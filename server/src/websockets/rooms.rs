@@ -18,7 +18,7 @@ pub async fn process_client_message(
             let s = state.lock().await;
             let mut room_infos = Vec::new();
             for room in s.rooms.values() {
-                if room.is_public {
+                if room.is_public && !room.is_lan {
                     let host_name = room
                         .peers
                         .values()

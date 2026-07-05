@@ -24,10 +24,9 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         .style(Style::default().fg(Color::Cyan));
 
     let filter_str = match app.join_filter_mode {
-        0 => "All",
-        1 => "Online Only",
-        2 => "LAN Only",
-        _ => "All",
+        0 => "Online",
+        1 => "LAN",
+        _ => "Online",
     };
 
     let mut lines = vec![
@@ -53,7 +52,7 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     )));
 
     let mut filtered_rooms = Vec::new();
-    if app.join_filter_mode == 0 || app.join_filter_mode == 1 {
+    if app.join_filter_mode == 0 {
         for r in &app.network.online_rooms {
             filtered_rooms.push((
                 r.code.clone(),
@@ -63,8 +62,7 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
                 if r.is_public { "Public" } else { "Private" },
             ));
         }
-    }
-    if app.join_filter_mode == 0 || app.join_filter_mode == 2 {
+    } else {
         for r in &app.network.lan_rooms {
             filtered_rooms.push((r.0.clone(), r.1.clone(), r.2, "LAN".to_string(), "Public"));
         }

@@ -162,7 +162,7 @@ impl App {
         }
 
         let mut filtered_rooms = Vec::new();
-        if self.join_filter_mode == 0 || self.join_filter_mode == 1 {
+        if self.join_filter_mode == 0 {
             for r in &self.network.online_rooms {
                 filtered_rooms.push((
                     r.code.clone(),
@@ -173,8 +173,7 @@ impl App {
                     None,
                 ));
             }
-        }
-        if self.join_filter_mode == 0 || self.join_filter_mode == 2 {
+        } else {
             for r in &self.network.lan_rooms {
                 filtered_rooms.push((
                     r.0.clone(),
@@ -197,21 +196,11 @@ impl App {
                 }
             }
             KeyCode::Left | KeyCode::Char('q') => {
-                self.join_filter_mode = match self.join_filter_mode {
-                    0 => 2,
-                    1 => 0,
-                    2 => 1,
-                    _ => 0,
-                };
+                self.join_filter_mode = if self.join_filter_mode == 0 { 1 } else { 0 };
                 self.join_cursor = 0;
             }
             KeyCode::Right | KeyCode::Char('d') => {
-                self.join_filter_mode = match self.join_filter_mode {
-                    0 => 1,
-                    1 => 2,
-                    2 => 0,
-                    _ => 0,
-                };
+                self.join_filter_mode = if self.join_filter_mode == 0 { 1 } else { 0 };
                 self.join_cursor = 0;
             }
             KeyCode::Enter => {
