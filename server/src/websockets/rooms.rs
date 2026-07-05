@@ -215,8 +215,14 @@ pub async fn process_client_message(
                 if let Some(room) = s.rooms.get_mut(code) {
                     let is_host = room.host_id == *my_player_id;
                     if is_host && !room.in_game {
-                        let everyone_ready =
-                            !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+                        let non_spectator_count =
+                            room.peers.values().filter(|p| !p.is_spectator).count();
+                        let everyone_ready = non_spectator_count >= 2
+                            && room
+                                .peers
+                                .values()
+                                .filter(|p| !p.is_spectator)
+                                .all(|p| p.is_ready);
                         if everyone_ready {
                             start_game_in_room(room);
                         }
@@ -252,8 +258,14 @@ pub async fn process_client_message(
                                 }
                             }
 
-                            let all_ready =
-                                !room.peers.is_empty() && room.peers.values().all(|p| p.is_ready);
+                            let non_spectator_count =
+                                room.peers.values().filter(|p| !p.is_spectator).count();
+                            let all_ready = non_spectator_count >= 2
+                                && room
+                                    .peers
+                                    .values()
+                                    .filter(|p| !p.is_spectator)
+                                    .all(|p| p.is_ready);
                             if all_ready {
                                 trigger_start = true;
                             } else {
