@@ -58,11 +58,11 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     let items: Vec<String> = vec![
         format!("Key Preset  : < {} >", preset_str),
-        key_label(1, app.profile.key_up,    "Move Up"),
-        key_label(2, app.profile.key_down,  "Move Down"),
-        key_label(3, app.profile.key_left,  "Move Left"),
+        key_label(1, app.profile.key_up, "Move Up"),
+        key_label(2, app.profile.key_down, "Move Down"),
+        key_label(3, app.profile.key_left, "Move Left"),
         key_label(4, app.profile.key_right, "Move Right"),
-        key_label(5, app.profile.key_bomb,  "Place Bomb"),
+        key_label(5, app.profile.key_bomb, "Place Bomb"),
         key_label(6, app.profile.key_spell, "Spell / Item"),
         format!("Gauge Skin  : < {} >", gauge_str),
         format!("Display Mode: < {} >", mode_str),
@@ -90,18 +90,35 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
             _ => Color::Yellow,
         };
         let is_capturing_slot = capturing && idx == cursor;
-        let color = if is_capturing_slot { Color::LightRed } else { base_color };
+        let color = if is_capturing_slot {
+            Color::LightRed
+        } else {
+            base_color
+        };
 
         if idx == cursor {
             lines.push(Line::from(vec![
-                Span::styled(arrow_l, Style::default().fg(color).add_modifier(Modifier::BOLD)),
-                Span::styled(item.as_str(), Style::default().fg(color).add_modifier(Modifier::BOLD)),
-                Span::styled(arrow_r, Style::default().fg(color).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    arrow_l,
+                    Style::default().fg(color).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    item.as_str(),
+                    Style::default().fg(color).add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    arrow_r,
+                    Style::default().fg(color).add_modifier(Modifier::BOLD),
+                ),
             ]));
         } else {
             lines.push(Line::from(Span::styled(
                 format!("    {}    ", item),
-                Style::default().fg(if (1..=6).contains(&idx) { Color::Cyan } else { Color::Reset }),
+                Style::default().fg(if (1..=6).contains(&idx) {
+                    Color::Cyan
+                } else {
+                    Color::Reset
+                }),
             )));
         }
     }
@@ -110,7 +127,9 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     if capturing {
         lines.push(Line::from(Span::styled(
             "Press any character key to bind  |  Esc to cancel",
-            Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::LightRed)
+                .add_modifier(Modifier::BOLD),
         )));
     } else {
         lines.push(Line::from(Span::styled(

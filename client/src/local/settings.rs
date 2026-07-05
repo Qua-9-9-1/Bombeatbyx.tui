@@ -72,12 +72,18 @@ impl ClientSettings {
     }
 
     pub fn keys(&self) -> (char, char, char, char, char, char) {
-        (self.key_up, self.key_down, self.key_left, self.key_right, self.key_bomb, self.key_spell)
+        (
+            self.key_up,
+            self.key_down,
+            self.key_left,
+            self.key_right,
+            self.key_bomb,
+            self.key_spell,
+        )
     }
 
     fn config_path() -> std::path::PathBuf {
-        let exe = std::env::current_exe()
-            .unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let exe = std::env::current_exe().unwrap_or_else(|_| std::path::PathBuf::from("."));
         exe.parent()
             .unwrap_or_else(|| std::path::Path::new("."))
             .join("config.json")

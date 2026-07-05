@@ -121,7 +121,8 @@ impl App {
             Some(GameAction::MoveUp)
         } else if code == KeyCode::Down || code == KeyCode::Char(key_down) {
             Some(GameAction::MoveDown)
-        } else if code == KeyCode::Char(key_bomb) || (key_bomb == ' ' && code == KeyCode::Char(' ')) {
+        } else if code == KeyCode::Char(key_bomb) || (key_bomb == ' ' && code == KeyCode::Char(' '))
+        {
             Some(GameAction::PlaceBomb)
         } else if code == KeyCode::Char(key_spell) {
             Some(GameAction::TriggerSpell)
