@@ -4,6 +4,7 @@ use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub mod connection;
 pub mod messages;
+pub mod tick;
 
 pub struct NetworkContext {
     pub is_multiplayer: bool,

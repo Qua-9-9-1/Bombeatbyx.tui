@@ -147,7 +147,10 @@ impl App {
                 self.paused_from = None;
                 self.state = AppState::Lobby;
             }
-            ServerMessage::HostTransferred { new_host_id, new_host_name } => {
+            ServerMessage::HostTransferred {
+                new_host_id,
+                new_host_name,
+            } => {
                 if new_host_id == self.current_player_id {
                     self.active_notification = Some(crate::local::app::NotificationPopup {
                         title: "Host Promotion".to_string(),
@@ -160,7 +163,10 @@ impl App {
                     });
                 }
             }
-            ServerMessage::PlayerKicked { player_id, player_name } => {
+            ServerMessage::PlayerKicked {
+                player_id,
+                player_name,
+            } => {
                 if player_id == self.current_player_id {
                     self.state = AppState::MainMenu;
                     self.network.is_multiplayer = false;
@@ -169,7 +175,7 @@ impl App {
                     self.network.room_code = None;
                     self.paused_from = None;
                     self.stop_local_server();
-                    
+
                     self.active_notification = Some(crate::local::app::NotificationPopup {
                         title: "Kicked".to_string(),
                         message: "You have been kicked from the lobby.".to_string(),
@@ -181,7 +187,10 @@ impl App {
                     });
                 }
             }
-            ServerMessage::PlayerBanned { player_id, player_name } => {
+            ServerMessage::PlayerBanned {
+                player_id,
+                player_name,
+            } => {
                 if player_id == self.current_player_id {
                     self.state = AppState::MainMenu;
                     self.network.is_multiplayer = false;

@@ -89,7 +89,6 @@ impl App {
             is_host: true,
             name: profile.name.clone(),
             skin: profile.skin.clone(),
-            color: "green".to_string(),
             sub_x: 0,
             sub_y: 0,
             is_alive: true,
@@ -163,49 +162,7 @@ impl App {
             lag += current_time.duration_since(last_time);
             last_time = current_time;
 
-            if self.state == AppState::JoinRoomMenu {
-                if let Some(ref s) = udp_socket {
-                    let mut buf = [0; 1024];
-                    while let Ok((amt, src)) = s.recv_from(&mut buf) {
-                        if let Ok(msg) = std::str::from_utf8(&buf[..amt]) {
-                            if msg.starts_with("BOMBEAT_LAN_ROOM:") {
-                                let parts: Vec<&str> = msg.split(':').collect();
-                                if parts.len() == 4 {
-                                    let code = parts[1].to_string();
-                                    let host_name = parts[2].to_string();
-                                    let count: usize = parts[3].parse().unwrap_or(1);
-                                    if let Some(pos) =
-                                        self.network.lan_rooms.iter().position(|r| r.0 == code)
-                                    {
-                                        self.network.lan_rooms[pos] =
-                                            (code, host_name, count, src, Instant::now());
-                                    } else {
-                                        self.network.lan_rooms.push((
-                                            code,
-                                            host_name,
-                                            count,
-                                            src,
-                                            Instant::now(),
-                                        ));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                self.network
-                    .lan_rooms
-                    .retain(|r| r.4.elapsed() < Duration::from_secs(3));
-            }
-
-            if self.network.is_multiplayer {
-                if let Some(mut rx) = self.network.server_rx.take() {
-                    while let Ok(msg) = rx.try_recv() {
-                        self.handle_server_message(msg);
-                    }
-                    self.network.server_rx = Some(rx);
-                }
-            }
+            self.handle_network_tick(&udp_socket);
 
             if self.state == AppState::InGame {
                 if !self.network.is_multiplayer {

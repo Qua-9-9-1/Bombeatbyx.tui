@@ -36,7 +36,6 @@ pub struct Player {
     pub is_host: bool,
     pub name: String,
     pub skin: String,
-    pub color: String,
     pub sub_x: i32,
     pub sub_y: i32,
     pub is_alive: bool,

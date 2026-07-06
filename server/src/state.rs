@@ -10,7 +10,6 @@ pub struct Peer {
     pub id: u32,
     pub name: String,
     pub skin: String,
-    pub color: String,
     pub tx: UnboundedSender<ServerMessage>,
     pub is_ready: bool,
     pub is_spectator: bool,
@@ -55,7 +54,6 @@ impl Room {
                 is_host: Some(p.id) == self.host_id,
                 name: p.name.clone(),
                 skin: p.skin.clone(),
-                color: p.color.clone(),
                 sub_x: 0,
                 sub_y: 0,
                 is_alive: true,
@@ -104,8 +102,3 @@ impl ServerState {
 }
 
 pub type SharedState = Arc<Mutex<ServerState>>;
-
-pub fn get_color_for_id(id: u32) -> String {
-    let colors = ["green", "magenta", "yellow", "blue", "red", "cyan", "white"];
-    colors[(id as usize) % colors.len()].to_string()
-}

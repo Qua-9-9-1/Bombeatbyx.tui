@@ -7,7 +7,12 @@ use ratatui::{
     widgets::{Block, Borders, Clear, Paragraph, Widget},
 };
 
-pub fn draw_confirmation_popup(buffer: &mut Buffer, tui_area: Rect, app: &App, conf: &ConfirmationPopup) {
+pub fn draw_confirmation_popup(
+    buffer: &mut Buffer,
+    tui_area: Rect,
+    app: &App,
+    conf: &ConfirmationPopup,
+) {
     let popup_w = 46;
     let popup_h = 8;
     let popup_x = tui_area.x + (tui_area.width.saturating_sub(popup_w)) / 2;
@@ -29,12 +34,31 @@ pub fn draw_confirmation_popup(buffer: &mut Buffer, tui_area: Rect, app: &App, c
 
     let lines = vec![
         Line::from(""),
-        Line::from(Span::styled(&conf.message, Style::default().fg(Color::White))),
+        Line::from(Span::styled(
+            &conf.message,
+            Style::default().fg(Color::White),
+        )),
         Line::from(""),
         Line::from(vec![
-            Span::styled(if ascii { "[Y] Confirm" } else { "✅ [Y] Confirm" }, Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                if ascii {
+                    "[Y] Confirm"
+                } else {
+                    "✅ [Y] Confirm"
+                },
+                Style::default()
+                    .fg(Color::Green)
+                    .add_modifier(Modifier::BOLD),
+            ),
             Span::styled("   ", Style::default()),
-            Span::styled(if ascii { "[N] Cancel" } else { "❌ [N] Cancel" }, Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                if ascii {
+                    "[N] Cancel"
+                } else {
+                    "❌ [N] Cancel"
+                },
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            ),
         ]),
     ];
 
@@ -46,7 +70,12 @@ pub fn draw_confirmation_popup(buffer: &mut Buffer, tui_area: Rect, app: &App, c
         .render(popup_rect, buffer);
 }
 
-pub fn draw_notification_popup(buffer: &mut Buffer, tui_area: Rect, app: &App, notif: &NotificationPopup) {
+pub fn draw_notification_popup(
+    buffer: &mut Buffer,
+    tui_area: Rect,
+    app: &App,
+    notif: &NotificationPopup,
+) {
     let popup_w = 46;
     let popup_h = 7;
     let popup_x = tui_area.x + (tui_area.width.saturating_sub(popup_w)) / 2;
@@ -68,9 +97,15 @@ pub fn draw_notification_popup(buffer: &mut Buffer, tui_area: Rect, app: &App, n
 
     let lines = vec![
         Line::from(""),
-        Line::from(Span::styled(&notif.message, Style::default().fg(Color::White))),
+        Line::from(Span::styled(
+            &notif.message,
+            Style::default().fg(Color::White),
+        )),
         Line::from(""),
-        Line::from(Span::styled("Press any key to dismiss", Style::default().fg(Color::DarkGray))),
+        Line::from(Span::styled(
+            "Press any key to dismiss",
+            Style::default().fg(Color::DarkGray),
+        )),
     ];
 
     Clear.render(popup_rect, buffer);
