@@ -18,12 +18,12 @@ The project is structured into three crates:
 
 ### A. Shared Logic vs. Render Engine
 - **Spawning and Grid Physics** MUST reside in `common`. The client should only handle inputs and display rendering.
-- For example, player spawn point optimization (furthest-apart dispersion subset selection) is performed by `GameState::spawn_players` in `common/src/game/state.rs`.
+- For example, player spawn point optimization (furthest-apart dispersion subset selection) is performed by `GameState::spawn_players` in `common/src/game/state/spawns.rs`.
 - Do not maintain duplicate/parallel lists of players (e.g. separate client-side lobby lists). Utilize the central `app.game_ctx.state.players` vector for both Lobby screens and active matches.
 
 ### B. Player & Entity State
 - The `Player` struct (in `common/src/game/models.rs`) holds all properties.
-- **Player Colors**: The `color` property is assigned by the server (or locally mocked during offline lobby setups) and is preserved inside `Player::color` during match launch. The client interprets this string to style user nicknames in both the Lobby screen and the gameplay screen.
+- **Player Colors**: Assigning/styling player colors is strictly a client-side layout concern mapped dynamically from the player ID (`player.id`) rather than passing color strings from the server. The `Player` struct does not hold a color field, and the server does not handle colors.
 - **Emotes**: Players can trigger temporary gestures (keys `1` to `4` mapped to `👋`, `✌️`, `🖕`, `👍`). Emotes override player skins on the map for 1.5 seconds (`emote_until` field) and are intercepted instantly to bypass rhythm combo lockouts and spam delays.
 
 ### C. ASCII Fallback Rendering
