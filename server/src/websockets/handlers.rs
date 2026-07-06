@@ -15,11 +15,12 @@ use common::messages::{ClientMessage, ServerMessage};
 pub async fn ws_handler(
     ws: WebSocketUpgrade,
     State(state): State<SharedState>,
+    axum::extract::ConnectInfo(addr): axum::extract::ConnectInfo<std::net::SocketAddr>,
 ) -> impl IntoResponse {
-    ws.on_upgrade(|socket| handle_socket(socket, state))
+    ws.on_upgrade(move |socket| handle_socket(socket, state, addr.ip()))
 }
 
-pub async fn handle_socket(socket: WebSocket, state: SharedState) {
+pub async fn handle_socket(socket: WebSocket, state: SharedState, client_ip: std::net::IpAddr) {
     let (mut ws_write, mut ws_read) = socket.split();
     let (tx, mut rx) = unbounded_channel::<ServerMessage>();
 
@@ -65,6 +66,7 @@ pub async fn handle_socket(socket: WebSocket, state: SharedState) {
                                     tx.clone(),
                                     client_msg,
                                     &state,
+                                    client_ip,
                                 ).await;
                                 if res.is_err() {
                                     break;

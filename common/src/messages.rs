@@ -32,6 +32,9 @@ pub enum ClientMessage {
     LeaveLobby,
     Pong,
     StopGame,
+    TransferHost(u32),
+    KickPlayer(u32),
+    BanPlayer(u32),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -57,5 +60,17 @@ pub enum ServerMessage {
     GameStopped {
         players: Vec<crate::game::models::Player>,
         settings: RoomSettings,
+    },
+    HostTransferred {
+        new_host_id: u32,
+        new_host_name: String,
+    },
+    PlayerKicked {
+        player_id: u32,
+        player_name: String,
+    },
+    PlayerBanned {
+        player_id: u32,
+        player_name: String,
     },
 }

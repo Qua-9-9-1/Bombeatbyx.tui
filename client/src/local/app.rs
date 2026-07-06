@@ -12,6 +12,26 @@ use std::time::{Duration, Instant};
 pub const CELL_W: u16 = 2;
 pub const CELL_H: u16 = 1;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum HostAction {
+    Transfer,
+    Ban,
+}
+
+#[derive(Debug, Clone)]
+pub struct ConfirmationPopup {
+    pub title: String,
+    pub message: String,
+    pub action: HostAction,
+    pub target_id: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct NotificationPopup {
+    pub title: String,
+    pub message: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum AppState {
     MainMenu,
@@ -50,6 +70,9 @@ pub struct App {
     pub join_filter_mode: usize,
     pub paused_from: Option<AppState>,
     pub capturing_key: bool,
+
+    pub active_confirmation: Option<ConfirmationPopup>,
+    pub active_notification: Option<NotificationPopup>,
 }
 
 impl App {
@@ -115,6 +138,9 @@ impl App {
             join_filter_mode: 0,
             paused_from: None,
             capturing_key: false,
+
+            active_confirmation: None,
+            active_notification: None,
         }
     }
 
@@ -213,6 +239,22 @@ impl App {
             tokio::time::sleep(Duration::from_millis(1)).await;
         }
         Ok(())
+    }
+
+    pub fn execute_confirmed_host_action(&mut self, action: HostAction, target_id: u32) {
+        self.lobby_screen.selected_player_id = None;
+        if self.network.is_multiplayer {
+            if let Some(ref tx) = self.network.server_tx {
+                match action {
+                    HostAction::Transfer => {
+                        let _ = tx.send(common::messages::ClientMessage::TransferHost(target_id));
+                    }
+                    HostAction::Ban => {
+                        let _ = tx.send(common::messages::ClientMessage::BanPlayer(target_id));
+                    }
+                }
+            }
+        }
     }
 }
 

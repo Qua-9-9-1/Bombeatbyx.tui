@@ -14,6 +14,27 @@ impl App {
                     continue;
                 }
 
+                if self.active_notification.is_some() {
+                    self.active_notification = None;
+                    return Ok(());
+                }
+
+                if let Some(ref conf) = self.active_confirmation {
+                    match key.code {
+                        KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => {
+                            let action = conf.action;
+                            let target_id = conf.target_id;
+                            self.execute_confirmed_host_action(action, target_id);
+                            self.active_confirmation = None;
+                        }
+                        KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                            self.active_confirmation = None;
+                        }
+                        _ => {}
+                    }
+                    return Ok(());
+                }
+
                 if key.code == KeyCode::Esc {
                     self.handle_esc();
                     return Ok(());

@@ -1,6 +1,7 @@
 use common::game::{GameContext, Player, RoomSettings};
 use common::messages::ServerMessage;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc::UnboundedSender;
@@ -13,6 +14,7 @@ pub struct Peer {
     pub tx: UnboundedSender<ServerMessage>,
     pub is_ready: bool,
     pub is_spectator: bool,
+    pub ip: IpAddr,
 }
 
 pub struct Room {
@@ -25,6 +27,7 @@ pub struct Room {
     pub room_settings: RoomSettings,
     pub game_ctx: Option<GameContext>,
     pub in_game: bool,
+    pub banned_ips: HashSet<IpAddr>,
 }
 
 impl Room {
@@ -39,6 +42,7 @@ impl Room {
             room_settings: RoomSettings::default(),
             game_ctx: None,
             in_game: false,
+            banned_ips: HashSet::new(),
         }
     }
 

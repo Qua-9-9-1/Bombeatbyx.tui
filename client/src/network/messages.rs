@@ -43,6 +43,12 @@ impl App {
                     if let Some(ref mut ctx) = self.game_ctx {
                         ctx.state.players = players;
                         ctx.rhythm = common::game::RhythmEngine::new(settings.bpm);
+
+                        if let Some(sel_id) = self.lobby_screen.selected_player_id {
+                            if !ctx.state.players.iter().any(|p| p.id == sel_id) {
+                                self.lobby_screen.selected_player_id = None;
+                            }
+                        }
                     }
                 }
             }
@@ -140,6 +146,61 @@ impl App {
                 }
                 self.paused_from = None;
                 self.state = AppState::Lobby;
+            }
+            ServerMessage::HostTransferred { new_host_id, new_host_name } => {
+                if new_host_id == self.current_player_id {
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Host Promotion".to_string(),
+                        message: "You are now the host of this lobby!".to_string(),
+                    });
+                } else {
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Host Transferred".to_string(),
+                        message: format!("{} is now the host.", new_host_name),
+                    });
+                }
+            }
+            ServerMessage::PlayerKicked { player_id, player_name } => {
+                if player_id == self.current_player_id {
+                    self.state = AppState::MainMenu;
+                    self.network.is_multiplayer = false;
+                    self.network.server_tx = None;
+                    self.network.server_rx = None;
+                    self.network.room_code = None;
+                    self.paused_from = None;
+                    self.stop_local_server();
+                    
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Kicked".to_string(),
+                        message: "You have been kicked from the lobby.".to_string(),
+                    });
+                } else {
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Kicked".to_string(),
+                        message: format!("{} has been kicked from the lobby.", player_name),
+                    });
+                }
+            }
+            ServerMessage::PlayerBanned { player_id, player_name } => {
+                if player_id == self.current_player_id {
+                    self.state = AppState::MainMenu;
+                    self.network.is_multiplayer = false;
+                    self.network.server_tx = None;
+                    self.network.server_rx = None;
+                    self.network.room_code = None;
+                    self.paused_from = None;
+                    self.stop_local_server();
+
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Banned".to_string(),
+                        message: "You have been banned from the lobby.".to_string(),
+                    });
+                } else {
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Banned".to_string(),
+                        message: format!("{} has been banned from the lobby.", player_name),
+                    });
+                }
             }
         }
     }

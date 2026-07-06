@@ -40,12 +40,22 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         let skin_cell = get_player_skin_cell(&display_skin, ascii);
         let fg_color = get_color_for_id(player.id);
 
+        let is_selected = Some(player.id) == app.lobby_screen.selected_player_id;
+        let prefix = if is_selected {
+            if ascii { "> " } else { "▶ " }
+        } else {
+            "  "
+        };
+
+        let mut name_style = Style::default().fg(fg_color).add_modifier(Modifier::BOLD);
+        if is_selected {
+            name_style = name_style.add_modifier(Modifier::REVERSED);
+        }
+
         let mut spans = vec![
+            Span::styled(prefix, if is_selected { Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD) } else { Style::default() }),
             Span::styled(skin_cell, Style::default()),
-            Span::styled(
-                display_name,
-                Style::default().fg(fg_color).add_modifier(Modifier::BOLD),
-            ),
+            Span::styled(display_name, name_style),
         ];
 
         if player.is_host {
@@ -67,6 +77,18 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
         right_lines.push(Line::from(spans));
         right_lines.push(Line::from(""));
+    }
+
+    if app.lobby_screen.selected_player_id.is_some() {
+        right_lines.push(Line::from(""));
+        right_lines.push(Line::from(vec![
+            Span::styled("T", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+            Span::styled(":Promote ", Style::default().fg(Color::DarkGray)),
+            Span::styled("K", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::styled(":Kick ", Style::default().fg(Color::DarkGray)),
+            Span::styled("B", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::styled(":Ban", Style::default().fg(Color::DarkGray)),
+        ]));
     }
 
     Paragraph::new(right_lines)

@@ -3,11 +3,15 @@ use crossterm::event::KeyCode;
 
 pub struct LobbyScreen {
     pub cursor: usize,
+    pub selected_player_id: Option<u32>,
 }
 
 impl LobbyScreen {
     pub fn new() -> Self {
-        Self { cursor: 0 }
+        Self {
+            cursor: 0,
+            selected_player_id: None,
+        }
     }
 
     pub fn handle_input(

@@ -4,6 +4,8 @@ pub mod lobby_screen;
 pub mod menu;
 pub mod render_rhythm;
 
+pub mod popup;
+
 use crate::local::app::{App, AppState, CELL_H, CELL_W};
 use ratatui::{
     Frame,
@@ -50,6 +52,12 @@ pub fn draw(frame: &mut Frame, app: &App) {
             }
             menu::draw_pause_menu(buffer, tui_area, app);
         }
+    }
+
+    if let Some(ref conf) = app.active_confirmation {
+        popup::draw_confirmation_popup(buffer, tui_area, app, conf);
+    } else if let Some(ref notif) = app.active_notification {
+        popup::draw_notification_popup(buffer, tui_area, app, notif);
     }
 }
 
