@@ -257,6 +257,23 @@ pub fn draw_info_panel(
         }
         7 => {
             info_lines.push(Line::from(Span::styled(
+                "[ PLAYER NAME ]",
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Cyan),
+            )));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Set your nickname."));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from(Span::styled(
+                "Options:",
+                Style::default().add_modifier(Modifier::UNDERLINED),
+            )));
+            info_lines.push(Line::from("A-Z, 0-9, A-Z, underscores"));
+            info_lines.push(Line::from("Max 12 characters."));
+        }
+        8 => {
+            info_lines.push(Line::from(Span::styled(
                 header_skin,
                 Style::default()
                     .add_modifier(Modifier::BOLD)
@@ -283,7 +300,7 @@ pub fn draw_info_panel(
                 info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
             }
         }
-        8 => {
+        9 => {
             info_lines.push(Line::from(Span::styled(
                 header_start,
                 Style::default()
