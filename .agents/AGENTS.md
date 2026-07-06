@@ -68,14 +68,18 @@ AI agents working on this codebase MUST strictly adhere to the following code qu
   - *Example*: Core game simulation logic must never be mixed with user interface or application wiring files.
 - **Cohesive Grouping**: Group functions in separate files based on their domain context, ensuring clean separation of concerns across the workspace.
 
-### D. Rust Specifics & Async (Tokio)
+### D. Data Structures & Sizing
+- **Struct Cohesion & Limit**: Avoid bloated and oversized data structures. If a `struct` accumulates too many fields, you must refactor and split those fields into smaller, specialized sub-structures.
+- **Logical Alignment**: Ensure that any newly created sub-structure maintains strict conceptual coherence, grouping together only variables that naturally belong to the same sub-domain or component state.
+
+### E. Rust Specifics & Async (Tokio)
 - **Do Not Block the Async Runtime**: Never use blocking operations (`std::thread::sleep`, synchronous file I/O, or heavy CPU-bound loops) inside Tokio async tasks. Use `tokio::time::sleep` or `tokio::task::spawn_blocking` if unavoidable.
 - **Strict Compile-Time Warnings**: All crates must compile without warnings. Do not leave unused imports, dead code, or unhandled `Result` values (`unwrap()` is strictly forbidden unless paired with a proper `.expect("context")`).
 
-### E. Network & State Synchronization (Client/Server)
+### F. Network & State Synchronization (Client/Server)
 - **Single Source of Truth**: The Server is the ultimate authority. The Client must never update the global game state directly based on local inputs; it must send an event, wait for the server's broadcast, and apply the state update uniformly.
 - **Deterministic Simulation**: All logic inside the `common` crate must be deterministic. Avoid using `SystemTime::now()` or random number generators (`rand`) directly inside core physics/grid simulation unless the seed is strictly synchronized by the server.
 
-### F. Terminal UI (Ratatui & Crossterm) Safety
+### G. Terminal UI (Ratatui & Crossterm) Safety
 - **No Direct Terminal State Corruption**: Never raw-print (`println!`) to `stdout` while the terminal alternate screen is active. Every visual update must transit through Ratatui's `Frame::render_widget`.
 - **Cross-Platform Compatibility**: Avoid platform-specific system calls (like Windows-only or Linux-only utilities). Use abstraction layers provided by `crossterm` and Rust's standard library to ensure the client binary runs seamlessly across Linux, macOS, and Windows.
