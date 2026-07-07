@@ -79,7 +79,8 @@ impl LobbyScreen {
                 };
             }
             7 => {
-                room_settings.target_score = ((room_settings.target_score as i32) + sign * 1000).clamp(1000, 20000) as u32;
+                room_settings.target_score =
+                    ((room_settings.target_score as i32) + sign * 1000).clamp(1000, 20000) as u32;
             }
             8 => {
                 room_settings.time_limit_mins = match room_settings.time_limit_mins {

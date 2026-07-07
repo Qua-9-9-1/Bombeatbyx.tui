@@ -15,7 +15,10 @@ impl App {
                         self.network.show_private_join_prompt = false;
 
                         let addr = if self.join_filter_mode == 2 {
-                            format!("127.0.0.1:{}", self.network.local_server_port.unwrap_or(27300))
+                            format!(
+                                "127.0.0.1:{}",
+                                self.network.local_server_port.unwrap_or(27300)
+                            )
                         } else {
                             self.profile.server_addr.clone()
                         };
@@ -45,7 +48,14 @@ impl App {
             return;
         }
 
-        let mut filtered_rooms: Vec<(String, String, usize, String, &str, Option<(std::net::SocketAddr, u16)>)> = Vec::new();
+        let mut filtered_rooms: Vec<(
+            String,
+            String,
+            usize,
+            String,
+            &str,
+            Option<(std::net::SocketAddr, u16)>,
+        )> = Vec::new();
         if self.join_filter_mode == 0 {
             for r in &self.network.online_rooms {
                 filtered_rooms.push((

@@ -43,7 +43,9 @@ pub fn draw_game_sidebar(
         let timer_str = format!("Time Left: {:02}:{:02}", mins, secs);
         lines.push(Line::from(vec![Span::styled(
             format!("  {}", timer_str),
-            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
         )]));
         has_meta = true;
     }
@@ -51,13 +53,19 @@ pub fn draw_game_sidebar(
     if mode == common::game::models::GameMode::Score {
         lines.push(Line::from(vec![Span::styled(
             format!("  Target: {}", ctx.state.target_score),
-            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
         )]));
         has_meta = true;
     }
 
     if has_meta {
-        lines.push(Line::from(if ascii { "  ----------------------" } else { "  ──────────────────────" }));
+        lines.push(Line::from(if ascii {
+            "  ----------------------"
+        } else {
+            "  ──────────────────────"
+        }));
     }
     lines.push(Line::from(""));
 

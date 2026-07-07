@@ -57,7 +57,7 @@ pub async fn handle_stop_game(
         if let Some(room) = s.rooms.get_mut(code) {
             let is_host = room.host_id == Some(*player_id);
             if is_host && room.in_game {
-                stop_game_in_room(room);
+                stop_game_in_room(room, None);
             }
         }
     }

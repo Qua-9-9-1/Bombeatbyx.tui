@@ -326,7 +326,8 @@ impl App {
 
                 let target_beat = ctx.rhythm.beat_count;
 
-                ctx.state.handle_action(bot_id, action, accuracy, target_beat);
+                ctx.state
+                    .handle_action(bot_id, action, accuracy, target_beat);
             }
         }
     }

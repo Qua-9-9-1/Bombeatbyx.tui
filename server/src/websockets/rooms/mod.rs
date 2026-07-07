@@ -99,7 +99,7 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
             if room.in_game {
                 let active_players = room.peers.values().filter(|p| !p.is_spectator).count();
                 if active_players <= 1 {
-                    stop_game_in_room(room);
+                    stop_game_in_room(room, None);
                     return;
                 }
             }
@@ -122,7 +122,7 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
     }
 }
 
-pub fn stop_game_in_room(room: &mut Room) {
+pub fn stop_game_in_room(room: &mut Room, victory_state: Option<GameState>) {
     room.in_game = false;
     room.game_ctx = None;
     for peer in room.peers.values_mut() {
@@ -131,7 +131,7 @@ pub fn stop_game_in_room(room: &mut Room) {
     }
     let players = room.get_lobby_players();
     let settings = room.room_settings.clone();
-    room.broadcast(ServerMessage::GameStopped { players, settings });
+    room.broadcast(ServerMessage::GameStopped { players, settings, victory_state });
 }
 
 pub fn start_game_in_room(room: &mut Room) {

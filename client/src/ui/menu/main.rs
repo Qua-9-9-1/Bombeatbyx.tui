@@ -25,7 +25,13 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     let items = if cfg!(debug_assertions) {
         if ascii {
-            vec!["Host Game", "Join Game", "Local Dev Game", "Settings", "Quit"]
+            vec![
+                "Host Game",
+                "Join Game",
+                "Local Dev Game",
+                "Settings",
+                "Quit",
+            ]
         } else {
             vec![
                 "🚀 Host Game",
