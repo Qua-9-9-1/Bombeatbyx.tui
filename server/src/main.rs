@@ -28,10 +28,11 @@ async fn main() {
                 let mut s = loop_state.lock().await;
                 for room in s.rooms.values_mut() {
                     if room.in_game {
+                        let mut should_end = false;
+                        let mut victory_state = None;
+
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
-
-                            let mut should_end = false;
 
                             if let Some(limit_mins) = room.room_settings.time_limit_mins {
                                 if ctx.state.elapsed_time_secs >= limit_mins * 60 {
@@ -58,10 +59,16 @@ async fn main() {
                             }
 
                             if should_end {
-                                stop_game_in_room(room);
-                                continue;
+                                victory_state = Some(ctx.state.clone());
                             }
+                        }
 
+                        if should_end {
+                            stop_game_in_room(room, victory_state);
+                            continue;
+                        }
+
+                        if let Some(ref ctx) = room.game_ctx {
                             updates.push((room.code.clone(), ctx.state.clone()));
                         }
                     }

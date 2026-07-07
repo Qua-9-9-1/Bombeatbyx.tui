@@ -65,7 +65,12 @@ impl App {
             }
         } else {
             if let Some(ref mut ctx) = self.game_ctx {
-                let old_skin = if let Some(p) = ctx.state.players.iter().find(|p| p.id == self.current_player_id) {
+                let old_skin = if let Some(p) = ctx
+                    .state
+                    .players
+                    .iter()
+                    .find(|p| p.id == self.current_player_id)
+                {
                     p.skin.clone()
                 } else {
                     self.profile.skin.clone()

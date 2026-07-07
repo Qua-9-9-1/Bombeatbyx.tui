@@ -60,6 +60,7 @@ pub enum ServerMessage {
     GameStopped {
         players: Vec<crate::game::models::Player>,
         settings: RoomSettings,
+        victory_state: Option<GameState>,
     },
     HostTransferred {
         new_host_id: u32,

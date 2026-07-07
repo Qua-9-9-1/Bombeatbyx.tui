@@ -41,6 +41,7 @@ pub enum AppState {
     PauseMenu,
     HostModal,
     JoinRoomMenu,
+    VictoryScreen,
 }
 
 pub struct App {
@@ -74,6 +75,8 @@ pub struct App {
     pub active_confirmation: Option<ConfirmationPopup>,
     pub active_notification: Option<NotificationPopup>,
     pub is_local_dev_bots: bool,
+    pub victory_final_state: Option<common::game::GameState>,
+    pub victory_start_time: Option<Instant>,
 }
 
 impl App {
@@ -143,6 +146,8 @@ impl App {
             active_confirmation: None,
             active_notification: None,
             is_local_dev_bots: false,
+            victory_final_state: None,
+            victory_start_time: None,
         }
     }
 
@@ -173,23 +178,26 @@ impl App {
                     let mut should_end = false;
                     if let Some(ref mut ctx) = self.game_ctx {
                         has_beat_ticked = ctx.tick_game_logic();
-                        
-                        // 1. Time Limit check
+
                         if let Some(limit_mins) = self.room_settings.time_limit_mins {
                             if ctx.state.elapsed_time_secs >= limit_mins * 60 {
                                 should_end = true;
                             }
                         }
 
-                        // 2. Score Mode check
                         if self.room_settings.mode == common::game::models::GameMode::Score {
-                            if ctx.state.players.iter().any(|p| p.score >= self.room_settings.target_score) {
+                            if ctx
+                                .state
+                                .players
+                                .iter()
+                                .any(|p| p.score >= self.room_settings.target_score)
+                            {
                                 should_end = true;
                             }
                         } else {
-                            // 3. Deathmatch Mode check
                             let total_players = ctx.state.players.len();
-                            let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
+                            let alive_count =
+                                ctx.state.players.iter().filter(|p| p.lives > 0).count();
                             if total_players > 1 && alive_count <= 1 {
                                 should_end = true;
                             } else if total_players <= 1 && alive_count == 0 {
@@ -201,6 +209,7 @@ impl App {
                         self.update_bots();
                     }
                     if should_end && self.game_ctx.is_some() {
+                        let final_state = self.game_ctx.as_ref().unwrap().state.clone();
                         let ctx = common::game::GameContext::new(
                             self.room_settings.width,
                             self.room_settings.height,
@@ -208,7 +217,9 @@ impl App {
                         );
                         self.game_ctx = Some(ctx);
                         self.setup_local_lobby_players();
-                        self.state = AppState::Lobby;
+                        self.victory_final_state = Some(final_state);
+                        self.victory_start_time = Some(Instant::now());
+                        self.state = AppState::VictoryScreen;
                     }
                 } else {
                     if let Some(ref mut ctx) = self.game_ctx {

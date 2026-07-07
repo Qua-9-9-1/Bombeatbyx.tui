@@ -3,6 +3,7 @@ pub mod game_screen;
 pub mod lobby_screen;
 pub mod menu;
 pub mod render_rhythm;
+pub mod victory_screen;
 
 pub mod popup;
 
@@ -51,6 +52,9 @@ pub fn draw(frame: &mut Frame, app: &App) {
                 draw_game_board(buffer, tui_area, app);
             }
             menu::draw_pause_menu(buffer, tui_area, app);
+        }
+        AppState::VictoryScreen => {
+            victory_screen::draw_victory_screen(buffer, tui_area, app);
         }
     }
 

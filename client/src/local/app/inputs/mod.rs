@@ -48,6 +48,17 @@ impl App {
                     AppState::SettingsMenu => self.handle_settings_menu_input(key.code),
                     AppState::HostModal => self.handle_host_modal_input(key.code),
                     AppState::JoinRoomMenu => self.handle_join_room_menu_input(key.code),
+                    AppState::VictoryScreen => {
+                        let elapsed = self
+                            .victory_start_time
+                            .map(|t| t.elapsed())
+                            .unwrap_or(Duration::ZERO);
+                        if elapsed >= Duration::from_millis(3000) {
+                            self.state = AppState::Lobby;
+                            self.victory_final_state = None;
+                            self.victory_start_time = None;
+                        }
+                    }
                 }
             }
         }
@@ -115,6 +126,7 @@ impl App {
                     self.state = AppState::MainMenu;
                 }
             }
+            AppState::VictoryScreen => {}
         }
     }
 }

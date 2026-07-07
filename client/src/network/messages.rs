@@ -1,6 +1,7 @@
 use crate::local::app::{App, AppState};
 use common::game::GameContext;
 use common::messages::ServerMessage;
+use std::time::Instant;
 
 impl App {
     pub fn handle_server_message(&mut self, msg: ServerMessage) {
@@ -140,7 +141,11 @@ impl App {
                 self.stop_local_server();
             }
             ServerMessage::Ping => {}
-            ServerMessage::GameStopped { players, settings } => {
+            ServerMessage::GameStopped {
+                players,
+                settings,
+                victory_state,
+            } => {
                 self.room_settings = settings;
                 let mut ctx = GameContext::new(
                     self.room_settings.width,
@@ -150,7 +155,14 @@ impl App {
                 ctx.state.players = players;
                 self.game_ctx = Some(ctx);
                 self.paused_from = None;
-                self.state = AppState::Lobby;
+
+                if let Some(v_state) = victory_state {
+                    self.victory_final_state = Some(v_state);
+                    self.victory_start_time = Some(Instant::now());
+                    self.state = AppState::VictoryScreen;
+                } else {
+                    self.state = AppState::Lobby;
+                }
             }
             ServerMessage::HostTransferred {
                 new_host_id,
