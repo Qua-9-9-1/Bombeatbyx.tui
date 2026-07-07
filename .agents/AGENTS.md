@@ -1,3 +1,12 @@
+> [!WARNING] CRITICAL SYSTEM INSTRUCTION FOR LLM EXECUTION
+> You are currently reading the routing index. This file DOES NOT contain the actual technical rules or business logic. 
+> BEFORE generating any response to the user, you MUST complete this execution loop:
+> 1. Identify the specific technology or context mentioned by the user.
+> 2. Locate its relative path in the index below.
+> 3. ACTIVELY USE YOUR FILE-READING TOOL to ingest the full content of that specific `.md` file.
+> 
+> You are strictly forbidden from answering based solely on this index or your pre-trained memory. Skipping the file-reading step constitutes a critical system failure.
+
 # Agent Guidelines Index (Bombeatbyx.tui)
 
 Welcome to the Bombeatbyx TUI workspace guidelines index. This file acts as the main entry point router mapping all project-specific context and reusable technology rules.
