@@ -15,9 +15,16 @@ pub async fn handle_create_room(
     is_public: bool,
     is_lan: bool,
 ) -> Result<(), ()> {
-    if my_name.len() > 24 || my_skin.len() > 2 {
+    if !common::game::models::is_valid_player_name(my_name) {
         let _ = tx.send(ServerMessage::ConnectionFailed(
-            "Name or skin is too long".to_string(),
+            "Invalid player name. Only alphanumeric characters, spaces, hyphens, and underscores are allowed (max 16 chars).".to_string(),
+        ));
+        return Err(());
+    }
+
+    if !common::game::models::ALL_SKINS.contains(&my_skin) {
+        let _ = tx.send(ServerMessage::ConnectionFailed(
+            "Invalid player skin".to_string(),
         ));
         return Err(());
     }
@@ -83,9 +90,16 @@ pub async fn handle_join_room(
     name: String,
     skin: String,
 ) -> Result<(), ()> {
-    if name.len() > 24 || skin.len() > 2 {
+    if !common::game::models::is_valid_player_name(&name) {
         let _ = tx.send(ServerMessage::ConnectionFailed(
-            "Name or skin is too long".to_string(),
+            "Invalid player name. Only alphanumeric characters, spaces, hyphens, and underscores are allowed (max 16 chars).".to_string(),
+        ));
+        return Err(());
+    }
+
+    if !common::game::models::ALL_SKINS.contains(&skin.as_str()) {
+        let _ = tx.send(ServerMessage::ConnectionFailed(
+            "Invalid player skin".to_string(),
         ));
         return Err(());
     }

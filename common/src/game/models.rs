@@ -143,3 +143,30 @@ pub fn get_skin_short_code(skin: &str) -> &'static str {
         _ => "PL",
     }
 }
+
+pub fn is_valid_player_name(name: &str) -> bool {
+    let trimmed = name.trim();
+    if trimmed.is_empty() || name.chars().count() > 16 {
+        return false;
+    }
+    name.chars().all(|c| c.is_alphanumeric() || c == ' ' || c == '-' || c == '_')
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_valid_player_name() {
+        assert!(is_valid_player_name("Player1"));
+        assert!(is_valid_player_name("Jean-Michel"));
+        assert!(is_valid_player_name("Aôut_éè"));
+        assert!(is_valid_player_name("Bot_1"));
+        
+        assert!(!is_valid_player_name(""));
+        assert!(!is_valid_player_name("   "));
+        assert!(!is_valid_player_name("PlayerNameIsTooLongToBeValidForThisGame"));
+        assert!(!is_valid_player_name("Player#1"));
+        assert!(!is_valid_player_name("🤖"));
+    }
+}
