@@ -113,7 +113,7 @@ impl ClientSettings {
         let (up, down, left, right, bomb, spell) = preset.keys();
         ClientSettings {
             name: "Newbie".to_string(),
-            skin: "😊".to_string(),
+            skin: "👶".to_string(),
             gauge_skin: GaugeSkin::Simple,
             key_preset: preset,
             key_up: up,

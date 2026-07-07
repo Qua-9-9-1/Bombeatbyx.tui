@@ -1,7 +1,4 @@
-use ratatui::{
-    buffer::Buffer,
-    style::Style,
-};
+use ratatui::{buffer::Buffer, style::Style};
 
 pub fn draw_str_centered(buffer: &mut Buffer, x_center: u16, y: u16, text: &str, style: Style) {
     let len = text.chars().count();

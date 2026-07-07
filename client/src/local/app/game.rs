@@ -196,7 +196,7 @@ impl App {
                 common::game::Player {
                     id: 2,
                     is_host: false,
-                    name: "Bot Alpha 🦊".to_string(),
+                    name: "Bot Alpha".to_string(),
                     skin: skin2,
                     sub_x: 0,
                     sub_y: 0,
@@ -225,7 +225,7 @@ impl App {
                 common::game::Player {
                     id: 3,
                     is_host: false,
-                    name: "Bot Beta 🐧".to_string(),
+                    name: "Bot Beta".to_string(),
                     skin: skin3,
                     sub_x: 0,
                     sub_y: 0,
@@ -254,7 +254,7 @@ impl App {
                 common::game::Player {
                     id: 4,
                     is_host: false,
-                    name: "Bot Gamma 🐸".to_string(),
+                    name: "Bot Gamma".to_string(),
                     skin: skin4,
                     sub_x: 0,
                     sub_y: 0,
