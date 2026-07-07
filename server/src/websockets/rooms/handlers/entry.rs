@@ -15,7 +15,20 @@ pub async fn handle_create_room(
     is_public: bool,
     is_lan: bool,
 ) -> Result<(), ()> {
+    if my_name.len() > 24 || my_skin.len() > 2 {
+        let _ = tx.send(ServerMessage::ConnectionFailed(
+            "Name or skin is too long".to_string(),
+        ));
+        return Err(());
+    }
+
     let mut s = state.lock().await;
+    if s.rooms.len() >= 1000 {
+        let _ = tx.send(ServerMessage::ConnectionFailed(
+            "Server is full (maximum room limit reached)".to_string(),
+        ));
+        return Err(());
+    }
     let code = generate_room_code(&s.rooms);
     let mut room = Room::new(code.clone(), is_public, is_lan);
     let id = 1;
@@ -70,9 +83,16 @@ pub async fn handle_join_room(
     name: String,
     skin: String,
 ) -> Result<(), ()> {
+    if name.len() > 24 || skin.len() > 2 {
+        let _ = tx.send(ServerMessage::ConnectionFailed(
+            "Name or skin is too long".to_string(),
+        ));
+        return Err(());
+    }
+
     *my_name = name.clone();
     *my_skin = skin.clone();
-
+ 
     let mut s = state.lock().await;
     let code_upper = code.to_uppercase();
     if let Some(room) = s.rooms.get_mut(&code_upper) {
