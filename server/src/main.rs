@@ -61,6 +61,33 @@ async fn main() {
         }
     });
 
+    let args: Vec<String> = std::env::args().collect();
+    let mut port = 27300;
+    if args.len() > 1 {
+        if let Ok(p) = args[1].parse::<u16>() {
+            port = p;
+        } else if args.len() > 2 && args[1] == "--port" {
+            if let Ok(p) = args[2].parse::<u16>() {
+                port = p;
+            }
+        }
+    }
+
+    let listener = loop {
+        match tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await {
+            Ok(l) => break (l, port),
+            Err(e) => {
+                println!("Port {} is occupied, trying next...", port);
+                port += 1;
+                if port > 27310 {
+                    panic!("Could not bind TcpListener on ports 27300-27310: {}", e);
+                }
+            }
+        }
+    };
+    let (listener, bound_port) = listener;
+    println!("Listening on ws://localhost:{}/ws", bound_port);
+
     let udp_state = state.clone();
     tokio::spawn(async move {
         let socket = std::net::UdpSocket::bind("0.0.0.0:0").ok();
@@ -86,17 +113,13 @@ async fn main() {
                 }
 
                 for (code, host, count) in broadcast_rooms {
-                    let msg = format!("BOMBEATBYX_LAN_ROOM:{}:{}:{}", code, host, count);
-                    let _ = socket.send_to(msg.as_bytes(), "255.255.255.255:3001");
+                    let msg = format!("BOMBEATBYX_LAN_ROOM:{}:{}:{}:{}", code, host, count, bound_port);
+                    let _ = socket.send_to(msg.as_bytes(), "255.255.255.255:27315");
                 }
             }
         }
     });
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000")
-        .await
-        .expect("failed to bind TcpListener");
-    println!("Listening on ws://localhost:3000/ws");
     axum::serve(listener, app)
         .await
         .expect("failed to serve axum app");

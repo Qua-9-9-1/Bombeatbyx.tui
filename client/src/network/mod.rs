@@ -12,10 +12,11 @@ pub struct NetworkContext {
     pub server_rx: Option<UnboundedReceiver<ServerMessage>>,
     pub network_error: Option<String>,
     pub room_code: Option<String>,
-    pub lan_rooms: Vec<(String, String, usize, std::net::SocketAddr, Instant)>,
+    pub lan_rooms: Vec<(String, String, usize, std::net::SocketAddr, u16, Instant)>,
     pub online_rooms: Vec<RoomInfo>,
     pub show_private_join_prompt: bool,
     pub private_room_code_input: String,
+    pub local_server_port: Option<u16>,
 }
 
 impl NetworkContext {
@@ -30,6 +31,7 @@ impl NetworkContext {
             online_rooms: Vec::new(),
             show_private_join_prompt: false,
             private_room_code_input: String::new(),
+            local_server_port: None,
         }
     }
 }

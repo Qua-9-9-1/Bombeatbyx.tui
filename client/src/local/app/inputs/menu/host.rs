@@ -32,7 +32,8 @@ impl App {
                             self.state = AppState::MainMenu;
                             return;
                         }
-                        let addr = "127.0.0.1:3000".to_string();
+                        let port = self.network.local_server_port.unwrap_or(27300);
+                        let addr = format!("127.0.0.1:{}", port);
                         self.connect_to_server(
                             addr,
                             Some(ClientMessage::CreateRoom { is_public, is_lan }),

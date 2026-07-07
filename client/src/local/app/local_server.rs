@@ -6,6 +6,14 @@ impl App {
             return Ok(());
         }
 
+        let mut port = 27300;
+        for p in 27300..=27310 {
+            if std::net::TcpListener::bind(format!("127.0.0.1:{}", p)).is_ok() {
+                port = p;
+                break;
+            }
+        }
+
         let paths = [
             "target/debug/server.exe",
             "../target/debug/server.exe",
@@ -17,6 +25,7 @@ impl App {
         for path in &paths {
             if std::path::Path::new(path).exists() {
                 if let Ok(child) = std::process::Command::new(path)
+                    .arg(port.to_string())
                     .stdout(std::process::Stdio::null())
                     .stderr(std::process::Stdio::null())
                     .spawn()
@@ -33,10 +42,11 @@ impl App {
             } else {
                 "sh"
             };
+            let run_cmd = format!("cargo run --bin server -- {}", port);
             let args = if cfg!(target_os = "windows") {
-                vec!["/C", "cargo run --bin server"]
+                vec!["/C", &run_cmd]
             } else {
-                vec!["-c", "cargo run --bin server"]
+                vec!["-c", &run_cmd]
             };
 
             if let Ok(child) = std::process::Command::new(shell)
@@ -51,6 +61,8 @@ impl App {
 
         if let Some(child) = spawned {
             self.server_process = Some(child);
+            self.network.local_server_port = Some(port);
+            std::thread::sleep(std::time::Duration::from_millis(150));
             Ok(())
         } else {
             Err("Failed to start server binary".to_string())
