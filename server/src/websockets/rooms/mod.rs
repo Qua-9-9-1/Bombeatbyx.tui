@@ -161,6 +161,7 @@ pub fn start_game_in_room(room: &mut Room) {
     new_state.mode = room.room_settings.mode;
     new_state.target_score = room.room_settings.target_score;
     new_state.time_limit_mins = room.room_settings.time_limit_mins;
+    new_state.countdown = Some(4);
     new_state.spawn_players(players);
 
     let mut ctx = GameContext::new(

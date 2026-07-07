@@ -11,6 +11,10 @@ impl GameState {
         accuracy: BeatAccuracy,
         current_beat: u64,
     ) {
+        if self.countdown.is_some() || self.game_over_countdown.is_some() {
+            return;
+        }
+
         if let GameAction::Emote(index) = action {
             self.trigger_emote(player_id, index);
             return;

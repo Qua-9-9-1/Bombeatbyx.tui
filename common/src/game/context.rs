@@ -21,7 +21,11 @@ impl GameContext {
 
     pub fn tick_game_logic(&mut self) -> bool {
         self.state.tick_respawns();
-        self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
+        if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
+            self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
+        } else {
+            self.start_time = std::time::Instant::now() - std::time::Duration::from_secs(self.state.elapsed_time_secs as u64);
+        }
 
         let has_beat_ticked = self.rhythm.tick_logic();
 
@@ -40,9 +44,25 @@ impl GameContext {
         }
 
         if has_beat_ticked {
+            if let Some(c) = self.state.countdown {
+                if c > 0 {
+                    self.state.countdown = Some(c - 1);
+                } else {
+                    self.state.countdown = None;
+                }
+            } else if let Some(g) = self.state.game_over_countdown {
+                if g > 0 {
+                    self.state.game_over_countdown = Some(g - 1);
+                } else {
+                    self.state.game_over_countdown = Some(0);
+                }
+            }
+
             self.state.tick_beat(current_beat);
-            self.state.tick_bombs_and_explosions();
-            self.state.check_deaths(current_beat);
+            if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
+                self.state.tick_bombs_and_explosions();
+                self.state.check_deaths(current_beat);
+            }
             true
         } else {
             false

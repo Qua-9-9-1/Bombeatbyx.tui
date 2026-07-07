@@ -18,6 +18,8 @@ pub struct GameState {
     pub elapsed_time_secs: u32,
     pub target_score: u32,
     pub time_limit_mins: Option<u32>,
+    pub countdown: Option<u32>,
+    pub game_over_countdown: Option<u32>,
 }
 
 impl GameState {
@@ -48,6 +50,8 @@ impl GameState {
             elapsed_time_secs: 0,
             target_score: 1000,
             time_limit_mins: None,
+            countdown: None,
+            game_over_countdown: None,
         }
     }
 

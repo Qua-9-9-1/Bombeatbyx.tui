@@ -34,6 +34,7 @@ impl App {
             new_state.mode = self.room_settings.mode;
             new_state.target_score = self.room_settings.target_score;
             new_state.time_limit_mins = self.room_settings.time_limit_mins;
+            new_state.countdown = Some(4);
 
             new_state.spawn_players(players);
 

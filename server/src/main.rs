@@ -34,15 +34,16 @@ async fn main() {
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
 
+                            let mut win_condition_met = false;
                             if let Some(limit_mins) = room.room_settings.time_limit_mins {
                                 if ctx.state.elapsed_time_secs >= limit_mins * 60 {
-                                    should_end = true;
+                                    win_condition_met = true;
                                 }
                             }
 
                             if room.room_settings.mode == common::game::models::GameMode::Score {
                                 if ctx.state.players.iter().any(|p| p.score >= room.room_settings.target_score) {
-                                    should_end = true;
+                                    win_condition_met = true;
                                 }
                             } else {
                                 let active_non_spec =
@@ -54,8 +55,16 @@ async fn main() {
                                     .filter(|p| p.lives > 0 && !p.is_spectator)
                                     .count();
                                 if active_non_spec > 1 && alive_count <= 1 {
-                                    should_end = true;
+                                    win_condition_met = true;
                                 }
+                            }
+
+                            if win_condition_met && ctx.state.game_over_countdown.is_none() {
+                                ctx.state.game_over_countdown = Some(4);
+                            }
+
+                            if ctx.state.game_over_countdown == Some(0) {
+                                should_end = true;
                             }
 
                             if should_end {

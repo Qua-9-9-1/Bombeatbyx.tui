@@ -4,6 +4,7 @@ pub mod lobby_screen;
 pub mod menu;
 pub mod render_rhythm;
 pub mod victory_screen;
+pub mod ascii_art_text;
 
 pub mod popup;
 
@@ -14,6 +15,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     widgets::{Paragraph, Widget},
 };
+use crate::ui::ascii_art_text::{draw_countdown_overlay, draw_game_over_overlay};
 
 pub fn draw(frame: &mut Frame, app: &App) {
     let tui_area = frame.area();
@@ -44,12 +46,26 @@ pub fn draw(frame: &mut Frame, app: &App) {
         }
         AppState::InGame => {
             draw_game_board(buffer, tui_area, app);
+            if let Some(ref ctx) = app.game_ctx {
+                if let Some(c) = ctx.state.countdown {
+                    draw_countdown_overlay(buffer, tui_area, c, app.profile.ascii_mode);
+                } else if let Some(g) = ctx.state.game_over_countdown {
+                    draw_game_over_overlay(buffer, tui_area, g, app.profile.ascii_mode);
+                }
+            }
         }
         AppState::PauseMenu => {
             if let Some(AppState::Lobby) = app.paused_from {
                 lobby_screen::draw_lobby(buffer, tui_area, app);
             } else {
                 draw_game_board(buffer, tui_area, app);
+                if let Some(ref ctx) = app.game_ctx {
+                    if let Some(c) = ctx.state.countdown {
+                        draw_countdown_overlay(buffer, tui_area, c, app.profile.ascii_mode);
+                    } else if let Some(g) = ctx.state.game_over_countdown {
+                        draw_game_over_overlay(buffer, tui_area, g, app.profile.ascii_mode);
+                    }
+                }
             }
             menu::draw_pause_menu(buffer, tui_area, app);
         }
@@ -65,7 +81,7 @@ pub fn draw(frame: &mut Frame, app: &App) {
     }
 }
 
-fn draw_game_board(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect, app: &App) {
+pub fn draw_game_board(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect, app: &App) {
     if let Some(ref ctx) = app.game_ctx {
         let min_display_w = 36_u16;
         let min_layout_h = 42_u16;
