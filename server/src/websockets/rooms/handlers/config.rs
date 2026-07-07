@@ -84,3 +84,58 @@ pub async fn handle_toggle_ready(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::{Room, Peer, ServerState};
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+    use tokio::sync::mpsc::unbounded_channel;
+
+    #[tokio::test]
+    async fn toggle_ready_blocks_when_skin_already_taken_by_ready_player() {
+        let state = Arc::new(Mutex::new(ServerState::new()));
+        let mut room = Room::new("TEST".to_string(), true, false);
+        room.host_id = Some(1);
+
+        let (tx, _) = unbounded_channel();
+        let ip = "127.0.0.1".parse::<std::net::IpAddr>().unwrap();
+
+        room.peers.insert(1, Peer {
+            id: 1,
+            name: "Player 1".to_string(),
+            skin: "🤖".to_string(),
+            tx: tx.clone(),
+            is_ready: true,
+            is_spectator: false,
+            ip,
+        });
+
+        room.peers.insert(2, Peer {
+            id: 2,
+            name: "Player 2".to_string(),
+            skin: "🤖".to_string(),
+            tx: tx.clone(),
+            is_ready: false,
+            is_spectator: false,
+            ip,
+        });
+
+        {
+            let mut s = state.lock().await;
+            s.rooms.insert("TEST".to_string(), room);
+        }
+
+        let res = handle_toggle_ready(
+            &Some("TEST".to_string()),
+            &Some(2),
+            &state,
+        ).await;
+
+        assert!(res.is_ok());
+        let s = state.lock().await;
+        let room_after = s.rooms.get("TEST").unwrap();
+        assert!(!room_after.peers.get(&2).unwrap().is_ready);
+    }
+}

@@ -209,4 +209,79 @@ mod tests {
         assert!(!is_valid_player_name("Player#1"));
         assert!(!is_valid_player_name("🤖"));
     }
+
+    #[test]
+    fn try_consume_action_lockout_allows_action_when_no_previous_action() {
+        let mut player = Player {
+            id: 1,
+            is_host: true,
+            name: "Player 1".to_string(),
+            skin: "🤖".to_string(),
+            sub_x: 0,
+            sub_y: 0,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives: 3,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        };
+
+        let allowed = player.try_consume_action_lockout();
+
+        assert!(allowed);
+        assert!(player.last_action_time.is_some());
+    }
+
+    #[test]
+    fn try_consume_action_lockout_blocks_action_when_spam_lockout_active() {
+        let mut player = Player {
+            id: 1,
+            is_host: true,
+            name: "Player 1".to_string(),
+            skin: "🤖".to_string(),
+            sub_x: 0,
+            sub_y: 0,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: Some(Instant::now()),
+            spam_lockout_until: Some(Instant::now() + Duration::from_millis(500)),
+            active_emote: None,
+            emote_until: None,
+            lives: 3,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        };
+
+        let allowed = player.try_consume_action_lockout();
+
+        assert!(!allowed);
+    }
 }

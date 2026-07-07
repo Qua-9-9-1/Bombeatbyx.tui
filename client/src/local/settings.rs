@@ -134,3 +134,25 @@ impl Default for ClientSettings {
         Self::default_with_preset(KeyPreset::detect())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn presets_map_correct_characters() {
+        assert_eq!(KeyPreset::ZQSD.keys(), ('z', 's', 'q', 'd', ' ', 'e'));
+        assert_eq!(KeyPreset::WASD.keys(), ('w', 's', 'a', 'd', ' ', 'e'));
+    }
+
+    #[test]
+    fn apply_preset_updates_settings_keybindings() {
+        let mut settings = ClientSettings::default_with_preset(KeyPreset::WASD);
+
+        settings.apply_preset(KeyPreset::ZQSD);
+
+        assert_eq!(settings.key_preset, KeyPreset::ZQSD);
+        assert_eq!(settings.key_up, 'z');
+        assert_eq!(settings.key_left, 'q');
+    }
+}

@@ -94,3 +94,39 @@ impl RhythmEngine {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn evaluate_accuracy_window_correct_ratings() {
+        let mut engine = RhythmEngine::new(60.0);
+        let interval = engine.beat_interval;
+
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.02);
+        engine.next_beat_time = engine.last_beat_time + interval;
+        assert_eq!(engine.evaluate_accuracy(), BeatAccuracy::Perfect);
+
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.07);
+        engine.next_beat_time = engine.last_beat_time + interval;
+        assert_eq!(engine.evaluate_accuracy(), BeatAccuracy::Great);
+
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.12);
+        engine.next_beat_time = engine.last_beat_time + interval;
+        assert_eq!(engine.evaluate_accuracy(), BeatAccuracy::Ok);
+
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.25);
+        engine.next_beat_time = engine.last_beat_time + interval;
+        assert_eq!(engine.evaluate_accuracy(), BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn bonus_points_returns_correct_values() {
+        assert_eq!(BeatAccuracy::Perfect.bonus_points(), 50);
+        assert_eq!(BeatAccuracy::Great.bonus_points(), 20);
+        assert_eq!(BeatAccuracy::Ok.bonus_points(), 5);
+        assert_eq!(BeatAccuracy::Miss.bonus_points(), 0);
+        assert_eq!(BeatAccuracy::Waiting.bonus_points(), 0);
+    }
+}

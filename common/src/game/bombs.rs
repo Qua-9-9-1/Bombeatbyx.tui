@@ -158,3 +158,91 @@ impl GameState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::game::models::Player;
+    use crate::game::rhythm::BeatAccuracy;
+
+    fn create_test_player(id: u32) -> Player {
+        Player {
+            id,
+            is_host: id == 1,
+            name: format!("Player {}", id),
+            skin: "🤖".to_string(),
+            sub_x: 2,
+            sub_y: 1,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives: 3,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        }
+    }
+
+    #[test]
+    fn try_place_bomb_increases_active_bombs_when_cell_empty() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![create_test_player(1)];
+
+        let placed = state.try_place_bomb(1, BeatAccuracy::Perfect);
+
+        assert!(placed);
+        assert_eq!(state.players[0].active_bombs, 1);
+        let cell_idx = 1 * 5 + 1;
+        assert!(matches!(state.grid[cell_idx], Cell::Bomb { owner_id: 1, .. }));
+    }
+
+    #[test]
+    fn try_place_bomb_fails_when_max_bombs_reached() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.active_bombs = 1;
+        state.players = vec![player];
+
+        let placed = state.try_place_bomb(1, BeatAccuracy::Perfect);
+
+        assert!(!placed);
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_triggers_explosion_on_zero_ticks() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.active_bombs = 1;
+        player.bomb_range = 1;
+        state.players = vec![player];
+
+        let cell_idx = 2 * 5 + 2;
+        state.grid[cell_idx] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert_eq!(state.players[0].active_bombs, 0);
+        assert!(matches!(state.grid[cell_idx], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[2 * 5 + 1], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[2 * 5 + 3], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[1 * 5 + 2], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[3 * 5 + 2], Cell::Explosion { .. }));
+    }
+}

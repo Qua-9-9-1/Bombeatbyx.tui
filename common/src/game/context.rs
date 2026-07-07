@@ -62,3 +62,18 @@ impl GameContext {
             .handle_action(player_id, action, accuracy, target_beat);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tick_game_logic_updates_elapsed_time() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        context.start_time = std::time::Instant::now() - std::time::Duration::from_secs(5);
+
+        context.tick_game_logic();
+
+        assert!(context.state.elapsed_time_secs >= 5);
+    }
+}

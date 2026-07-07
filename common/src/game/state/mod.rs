@@ -64,3 +64,33 @@ impl GameState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn new_game_state_generates_boundary_walls() {
+        let state = GameState::new(5, 5);
+
+        for x in 0..5 {
+            assert_eq!(state.get_cell(x as i32, 0), Cell::Wall);
+            assert_eq!(state.get_cell(x as i32, 4), Cell::Wall);
+        }
+        for y in 0..5 {
+            assert_eq!(state.get_cell(0, y as i32), Cell::Wall);
+            assert_eq!(state.get_cell(4, y as i32), Cell::Wall);
+        }
+        assert_eq!(state.get_cell(1, 1), Cell::Empty);
+    }
+
+    #[test]
+    fn get_cell_returns_wall_for_out_of_bounds() {
+        let state = GameState::new(5, 5);
+
+        assert_eq!(state.get_cell(-1, 2), Cell::Wall);
+        assert_eq!(state.get_cell(5, 2), Cell::Wall);
+        assert_eq!(state.get_cell(2, -1), Cell::Wall);
+        assert_eq!(state.get_cell(2, 5), Cell::Wall);
+    }
+}

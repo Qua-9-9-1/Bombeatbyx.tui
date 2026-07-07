@@ -87,3 +87,25 @@ pub fn get_spawn_points(width: usize, height: usize, count: usize) -> Vec<(usize
 
     selected_subset
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn get_spawn_points_returns_correct_count() {
+        let width = 15;
+        let height = 15;
+
+        let spawns_2 = get_spawn_points(width, height, 2);
+        let spawns_4 = get_spawn_points(width, height, 4);
+
+        assert_eq!(spawns_2.len(), 2);
+        assert_eq!(spawns_4.len(), 4);
+        
+        for &(x, y) in &spawns_4 {
+            assert!(x > 0 && x < width - 1);
+            assert!(y > 0 && y < height - 1);
+        }
+    }
+}

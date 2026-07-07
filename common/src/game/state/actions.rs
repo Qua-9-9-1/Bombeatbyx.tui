@@ -99,3 +99,67 @@ impl GameState {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::game::models::{Player, SecondItem};
+    use crate::game::rhythm::BeatAccuracy;
+
+    fn create_test_player(id: u32) -> Player {
+        Player {
+            id,
+            is_host: id == 1,
+            name: format!("Player {}", id),
+            skin: "🤖".to_string(),
+            sub_x: 2,
+            sub_y: 2,
+            is_alive: true,
+            score: 0,
+            combo: 5,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives: 3,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        }
+    }
+
+    #[test]
+    fn handle_action_resets_combo_on_miss() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![create_test_player(1)];
+
+        state.handle_action(1, GameAction::MoveLeft, BeatAccuracy::Miss, 1);
+
+        assert_eq!(state.players[0].combo, 0);
+        assert_eq!(state.players[0].last_accuracy, BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn trigger_action_2_activates_shield_when_equipped() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.second_item = Some(SecondItem::Shield);
+        state.players = vec![player];
+
+        let success = state.trigger_action_2(1, 10);
+
+        assert!(success);
+        assert_eq!(state.players[0].shield_until_beat, Some(10));
+        assert!(state.players[0].second_item.is_none());
+    }
+}

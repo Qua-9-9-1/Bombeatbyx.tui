@@ -82,3 +82,79 @@ impl GameState {
         true
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::game::models::Player;
+    use crate::game::rhythm::BeatAccuracy;
+
+    fn create_test_player(id: u32, sub_x: i32, sub_y: i32) -> Player {
+        Player {
+            id,
+            is_host: id == 1,
+            name: format!("Player {}", id),
+            skin: "🤖".to_string(),
+            sub_x,
+            sub_y,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives: 3,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        }
+    }
+
+    #[test]
+    fn move_player_updates_coordinates_when_valid() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![create_test_player(1, 2, 1)];
+
+        let moved = state.move_player(1, 2, 0);
+
+        assert!(moved);
+        assert_eq!(state.players[0].sub_x, 4);
+        assert_eq!(state.players[0].sub_y, 1);
+    }
+
+    #[test]
+    fn move_player_fails_when_collision_with_wall() {
+        let mut state = GameState::new(5, 5);
+        state.grid[1 * 5 + 2] = Cell::Wall;
+        state.players = vec![create_test_player(1, 2, 1)];
+
+        let moved = state.move_player(1, 2, 0);
+
+        assert!(!moved);
+        assert_eq!(state.players[0].sub_x, 2);
+    }
+
+    #[test]
+    fn move_player_fails_when_collision_with_other_player() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![
+            create_test_player(1, 2, 1),
+            create_test_player(2, 4, 1),
+        ];
+
+        let moved = state.move_player(1, 2, 0);
+
+        assert!(!moved);
+    }
+}

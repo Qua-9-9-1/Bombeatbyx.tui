@@ -103,3 +103,47 @@ impl ServerState {
 }
 
 pub type SharedState = Arc<Mutex<ServerState>>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tokio::sync::mpsc::unbounded_channel;
+    use std::net::IpAddr;
+
+    #[test]
+    fn get_lobby_players_returns_sorted_list() {
+        let mut room = Room::new("TEST".to_string(), true, false);
+        room.host_id = Some(1);
+        
+        let (tx, _) = unbounded_channel();
+        let ip = "127.0.0.1".parse::<IpAddr>().unwrap();
+
+        room.peers.insert(2, Peer {
+            id: 2,
+            name: "Player 2".to_string(),
+            skin: "🐱".to_string(),
+            tx: tx.clone(),
+            is_ready: true,
+            is_spectator: false,
+            ip,
+        });
+
+        room.peers.insert(1, Peer {
+            id: 1,
+            name: "Player 1".to_string(),
+            skin: "🤖".to_string(),
+            tx: tx.clone(),
+            is_ready: false,
+            is_spectator: false,
+            ip,
+        });
+
+        let players = room.get_lobby_players();
+
+        assert_eq!(players.len(), 2);
+        assert_eq!(players[0].id, 1);
+        assert!(players[0].is_host);
+        assert_eq!(players[1].id, 2);
+        assert!(!players[1].is_host);
+    }
+}
