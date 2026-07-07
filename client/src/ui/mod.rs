@@ -138,3 +138,16 @@ fn enlarge_terminal_message(buffer: &mut ratatui::buffer::Buffer, tui_area: Rect
         .style(Style::default().fg(Color::Red));
     msg.render(tui_area, buffer);
 }
+
+pub fn get_color_for_id(id: u32) -> Color {
+    let colors = [
+        Color::Green,
+        Color::Magenta,
+        Color::Yellow,
+        Color::Blue,
+        Color::Red,
+        Color::Cyan,
+        Color::White,
+    ];
+    colors[(id as usize) % colors.len()]
+}

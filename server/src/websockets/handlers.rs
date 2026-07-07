@@ -27,7 +27,7 @@ pub async fn handle_socket(socket: WebSocket, state: SharedState, client_ip: std
     let mut my_room_code: Option<String> = None;
     let mut my_player_id: Option<u32> = None;
     let mut my_name = "Player".to_string();
-    let mut my_skin = "🤖".to_string();
+    let mut my_skin = common::game::models::ALL_SKINS[0].to_string();
 
     let write_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {

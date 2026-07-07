@@ -180,11 +180,11 @@ impl App {
                     death_beat: None,
                 });
 
-            let all_skins = vec!["🤖", "🐱", "🐸", "🦊", "🐧"];
+            let all_skins = common::game::models::ALL_SKINS;
             let mut available_skins: Vec<String> = all_skins
-                .into_iter()
-                .filter(|&s| s != me.skin)
-                .map(|s| s.to_string())
+                .iter()
+                .filter(|&&s| s != me.skin)
+                .map(|&s| s.to_string())
                 .collect();
 
             let skin2 = available_skins.pop().unwrap_or_else(|| "🦊".to_string());

@@ -80,14 +80,8 @@ pub fn get_player_status_icon(player: &common::game::Player, ascii: bool) -> Str
         }
     } else {
         if ascii {
-            match player.skin.as_str() {
-                "🤖" => "RO ".to_string(),
-                "🐱" => "CA ".to_string(),
-                "🐸" => "FR ".to_string(),
-                "🦊" => "FO ".to_string(),
-                "🐧" => "PE ".to_string(),
-                _ => "PL ".to_string(),
-            }
+            let code = common::game::models::get_skin_short_code(&player.skin);
+            format!("{} ", code)
         } else {
             format!("{} ", player.skin)
         }
@@ -127,14 +121,7 @@ pub fn get_player_symbol(skin: &str, is_alive: bool, ascii: bool) -> &str {
         return if ascii { "XX" } else { "💀" };
     }
     if ascii {
-        match skin {
-            "🤖" => "RO",
-            "🐱" => "CA",
-            "🐸" => "FR",
-            "🦊" => "FO",
-            "🐧" => "PE",
-            _ => "PL",
-        }
+        common::game::models::get_skin_short_code(skin)
     } else {
         skin
     }

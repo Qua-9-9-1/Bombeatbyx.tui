@@ -137,7 +137,7 @@ fn draw_sidebar_player(
     };
 
     let spans = vec![
-        Span::styled(icon, Style::default()),
+        Span::styled(icon, Style::default().fg(fg_color)),
         Span::styled(
             name,
             Style::default().fg(fg_color).add_modifier(Modifier::BOLD),
@@ -198,15 +198,4 @@ fn draw_sidebar_player(
     lines.push(Line::from(""));
 }
 
-fn get_color_for_id(id: u32) -> Color {
-    let colors = [
-        Color::Green,
-        Color::Magenta,
-        Color::Yellow,
-        Color::Blue,
-        Color::Red,
-        Color::Cyan,
-        Color::White,
-    ];
-    colors[(id as usize) % colors.len()]
-}
+use crate::ui::get_color_for_id;

@@ -106,7 +106,7 @@ impl LobbyScreen {
     }
 
     fn modify_local_skin(&mut self, profile_skin: &mut String, increase: bool) {
-        let skins = vec!["🤖", "🐱", "🐸", "🦊", "🐧"];
+        let skins = common::game::models::ALL_SKINS;
         let current_idx = skins.iter().position(|&s| s == profile_skin).unwrap_or(0);
         let new_idx = if increase {
             (current_idx + 1) % skins.len()

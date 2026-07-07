@@ -119,3 +119,27 @@ impl Default for RoomSettings {
         }
     }
 }
+
+pub const ALL_SKINS: &[&str] = &["🤖", "🐱", "🐸", "🦊", "🐧"];
+
+pub fn get_skin_name(skin: &str) -> &'static str {
+    match skin {
+        "🤖" => "Robot",
+        "🐱" => "Cat",
+        "🐸" => "Frog",
+        "🦊" => "Fox",
+        "🐧" => "Penguin",
+        _ => "Player",
+    }
+}
+
+pub fn get_skin_short_code(skin: &str) -> &'static str {
+    match skin {
+        "🤖" => "RO",
+        "🐱" => "CA",
+        "🐸" => "FR",
+        "🦊" => "FO",
+        "🐧" => "PE",
+        _ => "PL",
+    }
+}

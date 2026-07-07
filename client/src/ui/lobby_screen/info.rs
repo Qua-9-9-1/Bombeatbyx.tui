@@ -408,13 +408,12 @@ fn format_bpm_info(bpm: f64, ascii: bool) -> Vec<Line<'static>> {
 
 pub fn get_skin_label(skin: &str, ascii: bool) -> String {
     if ascii {
-        match skin {
-            "🤖" => "Robot [RO]".to_string(),
-            "🐱" => "Cat [CA]".to_string(),
-            "🐸" => "Frog [FR]".to_string(),
-            "🦊" => "Fox [FO]".to_string(),
-            "🐧" => "Penguin [PE]".to_string(),
-            _ => format!("[{}]", skin),
+        let name = common::game::models::get_skin_name(skin);
+        let code = common::game::models::get_skin_short_code(skin);
+        if name == "Player" {
+            format!("[{}]", skin)
+        } else {
+            format!("{} [{}]", name, code)
         }
     } else {
         skin.to_string()

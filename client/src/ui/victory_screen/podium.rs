@@ -113,7 +113,7 @@ pub fn draw_podium_player(
             x_center,
             y_emoji,
             skin_cell.trim(),
-            Style::default(),
+            Style::default().fg(fg_color),
         );
     }
 }

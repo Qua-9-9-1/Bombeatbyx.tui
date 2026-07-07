@@ -67,7 +67,7 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                     Style::default()
                 },
             ),
-            Span::styled(skin_cell, Style::default()),
+            Span::styled(skin_cell, Style::default().fg(fg_color)),
             Span::styled(display_name, name_style),
         ];
 
@@ -120,29 +120,12 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         .render(area, buffer);
 }
 
-fn get_color_for_id(id: u32) -> Color {
-    let colors = [
-        Color::Green,
-        Color::Magenta,
-        Color::Yellow,
-        Color::Blue,
-        Color::Red,
-        Color::Cyan,
-        Color::White,
-    ];
-    colors[(id as usize) % colors.len()]
-}
+use crate::ui::get_color_for_id;
 
 fn get_player_skin_cell(skin: &str, ascii: bool) -> String {
     if ascii {
-        match skin {
-            "🤖" => "[RO] ".to_string(),
-            "🐱" => "[CA] ".to_string(),
-            "🐸" => "[FR] ".to_string(),
-            "🦊" => "[FO] ".to_string(),
-            "🐧" => "[PE] ".to_string(),
-            _ => format!("[{}] ", skin),
-        }
+        let code = common::game::models::get_skin_short_code(skin);
+        format!("[{}] ", code)
     } else {
         format!(" {} ", skin)
     }

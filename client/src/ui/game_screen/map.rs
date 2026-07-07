@@ -257,15 +257,4 @@ fn draw_player(
     }
 }
 
-fn get_color_for_id(id: u32) -> Color {
-    let colors = [
-        Color::Green,
-        Color::Magenta,
-        Color::Yellow,
-        Color::Blue,
-        Color::Red,
-        Color::Cyan,
-        Color::White,
-    ];
-    colors[(id as usize) % colors.len()]
-}
+use crate::ui::get_color_for_id;
