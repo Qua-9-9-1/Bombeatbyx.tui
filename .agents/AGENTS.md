@@ -1,85 +1,36 @@
-# Workspace Guidelines & Context for AI Agents (Bombeatbyx.tui)
+# Agent Guidelines Index (Bombeatbyx.tui)
 
-Welcome to the **Bombeatbyx.tui** codebase. This file contains rules and technical details for future AI coding agents working on this workspace.
+Welcome to the Bombeatbyx TUI workspace guidelines index. This file acts as the main entry point router mapping all project-specific context and reusable technology rules.
 
----
+## 1. Project Context
+* [Business Context](./context/business-context.md) - Gameplay rules, rhythm synchronization, emotes, and ASCII fallback rendering mappings.
+* [Tech Stack](./context/tech-stack.md) - Crate workspace structure, dependencies, and state architecture.
+* [Objectives](./context/objectives.md) - Compilation commands, file organization guidelines, and developer workflow checklists.
 
-## 1. Project Overview
-Bombeatbyx TUI is a rhythm-based multiplayer grid-arena battle game written in Rust using `ratatui` and `crossterm`. Players move, drop bombs, and trigger actions strictly synchronized with a music rhythm/BPM beat.
+## 2. Technology Registry
 
-The project is structured into three crates:
-1. `common`: Core game simulation logic, layouts, physics, and state machines shared between client and server.
-2. `client`: Terminal-based graphical user interface drawing panels, menus, and managing user settings/input loops.
-3. `server`: Server framework managing game lobby states and broadcasting updates to game clients.
+### Languages
+* [Rust Rules](./registry/languages/rust.md) - Toolchain requirements, error handling constraints, memory borrowing, and type safety guidelines.
 
----
+### Frameworks & Libraries
+* [Axum Rules](./registry/frameworks/backend/axum.md) - Route design, extractor order, WebSockets, state safety, and HTTP response handling.
+* [Ratatui Rules](./registry/frameworks/tui/ratatui.md) - TUI rendering loop, responsive layouts, alternate screen restoration, and Crossterm terminal events.
+* [Tokio Rules](./registry/libraries/system/tokio.md) - Async execution constraints, preventing runtime blockages, and channel communications.
 
-## 2. Architecture & Design Principles
+### Formats & Tooling
+* [JSON Format](./registry/formats/json.md) - Best practices for data serialization and API request/response formats.
+* [TOML Format](./registry/formats/toml.md) - Structure and syntax formatting rules for Cargo configuration.
+* [Rust Testing](./registry/tooling/testing/rust-testing.md) - Writing unit tests, integration tests, and running benchmarks.
 
-### A. Shared Logic vs. Render Engine
-- **Spawning and Grid Physics** MUST reside in `common`. The client should only handle inputs and display rendering.
-- For example, player spawn point optimization (furthest-apart dispersion subset selection) is performed by `GameState::spawn_players` in `common/src/game/state/spawns.rs`.
-- Do not maintain duplicate/parallel lists of players (e.g. separate client-side lobby lists). Utilize the central `app.game_ctx.state.players` vector for both Lobby screens and active matches.
+### Infrastructure
+* [CI/CD Rules](./registry/infrastructure/ci-cd.md) - Pipeline architecture, dependency caching, parallel jobs, and artifact immutability.
 
-### B. Player & Entity State
-- The `Player` struct (in `common/src/game/models.rs`) holds all properties.
-- **Player Colors**: Assigning/styling player colors is strictly a client-side layout concern mapped dynamically from the player ID (`player.id`) rather than passing color strings from the server. The `Player` struct does not hold a color field, and the server does not handle colors.
-- **Emotes**: Players can trigger temporary gestures (keys `1` to `4` mapped to `👋`, `✌️`, `🖕`, `👍`). Emotes override player skins on the map for 1.5 seconds (`emote_until` field) and are intercepted instantly to bypass rhythm combo lockouts and spam delays.
+### Architectures
+* [Client-Server Rules](./registry/architectures/client-server.md) - State synchronization, authoritative server guidelines, and protocol design.
 
-### C. ASCII Fallback Rendering
-- The game must remain completely playable on all terminals (even those lacking UTF-8 emoji support).
-- Toggle `ascii_mode` in Settings to run fallbacks.
-- **Fallback Mappings**:
-  - Grid wall: `██` -> `##`
-  - Brick wall: `░░` -> `[]`
-  - Bomb: Animated -> `()`
-  - Fire explosion: `💥`/`🔥` -> `##`/`**`/`::`
-  - Alive player: Emoji -> Two-letter tag (`RO`, `CA`, `FR`, `FO`, `PE`)
-  - Dead player: `💀` -> `XX`
-  - Emotes: Emojis (`👋`, `✌️`, `🖕`, `👍`) -> Distinct two-letter tags avoiding double consecutive letters (`HI`, `VI`, `FU`, `OK`)
-
----
-
-## 3. Development Workflow Checklist
-
-1. **Keep Crates Synchronized**: If you modify structures in `common`, always verify both `client` and `server` compile.
-2. **Run Compilation Check**: Propose or run:
-   ```powershell
-   cargo check --workspace
-   ```
-3. **Preserve Code Readability**: Do not group unrelated helper tasks back into `app.rs`. Leave `game.rs` and inputs processing modularized.
-
-## 4. Coding Standards & Code Style Rules
-
-AI agents working on this codebase MUST strictly adhere to the following code quality and structural guidelines:
-
-### A. Code Style & Readability
-- **No Comments**: Do not write comments inside the code. The code must be self-explanatory through clean naming conventions.
-- **Indentation Limit**: Maximum of 4 levels of nested indentations. If a logic path requires a 5th level, isolate and extract that chunk into a dedicated helper function.
-
-### B. Function Design & Sizing
-- **Length Constraint**: Functions must average between 20 and 40 lines of code. 
-- **Oversizing Rule**: You may exceed 40 lines only if absolutely necessary for continuous logic. Otherwise, break down sequential steps into explicit sub-functions.
-
-### C. Clean Architecture & File Organization
-- **File Size & Directories**: If a single directory or logical module exceeds 2 core source files, group them into a dedicated sub-folder representing that specific module or component.
-- **Strict File Segmentation**: Functions placed inside a file must strictly align with the filename's single responsibility.
-  - *Example*: Network event handling has absolutely nothing to do in an `app.rs` file.
-  - *Example*: Core game simulation logic must never be mixed with user interface or application wiring files.
-- **Cohesive Grouping**: Group functions in separate files based on their domain context, ensuring clean separation of concerns across the workspace.
-
-### D. Data Structures & Sizing
-- **Struct Cohesion & Limit**: Avoid bloated and oversized data structures. If a `struct` accumulates too many fields, you must refactor and split those fields into smaller, specialized sub-structures.
-- **Logical Alignment**: Ensure that any newly created sub-structure maintains strict conceptual coherence, grouping together only variables that naturally belong to the same sub-domain or component state.
-
-### E. Rust Specifics & Async (Tokio)
-- **Do Not Block the Async Runtime**: Never use blocking operations (`std::thread::sleep`, synchronous file I/O, or heavy CPU-bound loops) inside Tokio async tasks. Use `tokio::time::sleep` or `tokio::task::spawn_blocking` if unavoidable.
-- **Strict Compile-Time Warnings**: All crates must compile without warnings. Do not leave unused imports, dead code, or unhandled `Result` values (`unwrap()` is strictly forbidden unless paired with a proper `.expect("context")`).
-
-### F. Network & State Synchronization (Client/Server)
-- **Single Source of Truth**: The Server is the ultimate authority. The Client must never update the global game state directly based on local inputs; it must send an event, wait for the server's broadcast, and apply the state update uniformly.
-- **Deterministic Simulation**: All logic inside the `common` crate must be deterministic. Avoid using `SystemTime::now()` or random number generators (`rand`) directly inside core physics/grid simulation unless the seed is strictly synchronized by the server.
-
-### G. Terminal UI (Ratatui & Crossterm) Safety
-- **No Direct Terminal State Corruption**: Never raw-print (`println!`) to `stdout` while the terminal alternate screen is active. Every visual update must transit through Ratatui's `Frame::render_widget`.
-- **Cross-Platform Compatibility**: Avoid platform-specific system calls (like Windows-only or Linux-only utilities). Use abstraction layers provided by `crossterm` and Rust's standard library to ensure the client binary runs seamlessly across Linux, macOS, and Windows.
+### Core Guidelines
+* [Global Architecture](./registry/core/architecture.md) - File sizes, modularity limits, naming conventions, and SOLID design patterns.
+* [Global Documentation](./registry/core/docs.md) - Comment guidelines, README patterns, and documentation structures.
+* [Global Git Workflow](./registry/core/git-workflow.md) - Branch naming, commit messages, and PR processes.
+* [Global Security](./registry/core/security.md) - Secret management, inputs sanitization, and dependency scanning.
+* [Global Testing](./registry/core/tests.md) - Test categories, assertions, and mock boundaries.
