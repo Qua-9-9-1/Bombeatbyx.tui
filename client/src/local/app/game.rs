@@ -138,4 +138,189 @@ impl App {
             None
         }
     }
+
+    pub(crate) fn setup_local_lobby_players(&mut self) {
+        if let Some(ref mut ctx) = self.game_ctx {
+            let me = ctx
+                .state
+                .players
+                .iter()
+                .find(|p| p.id == self.current_player_id)
+                .cloned()
+                .unwrap_or_else(|| common::game::Player {
+                    id: 1,
+                    is_host: true,
+                    name: self.profile.name.clone(),
+                    skin: self.profile.skin.clone(),
+                    sub_x: 0,
+                    sub_y: 0,
+                    is_alive: true,
+                    score: 0,
+                    combo: 0,
+                    last_acted_beat: None,
+                    last_accuracy: common::game::BeatAccuracy::Waiting,
+                    max_bombs: 1,
+                    active_bombs: 0,
+                    bomb_range: 1,
+                    last_action_time: None,
+                    spam_lockout_until: None,
+                    active_emote: None,
+                    emote_until: None,
+                    lives: self.room_settings.lives,
+                    death_pos: None,
+                    respawn_timer: None,
+                    collected_bonuses: Vec::new(),
+                    is_spectator: false,
+                    second_item: None,
+                    shield_until_beat: None,
+                    is_ready: false,
+                });
+
+            let all_skins = vec!["🤖", "🐱", "🐸", "🦊", "🐧"];
+            let mut available_skins: Vec<String> = all_skins
+                .into_iter()
+                .filter(|&s| s != me.skin)
+                .map(|s| s.to_string())
+                .collect();
+
+            let skin2 = available_skins.pop().unwrap_or_else(|| "🦊".to_string());
+            let skin3 = available_skins.pop().unwrap_or_else(|| "🐧".to_string());
+            let skin4 = available_skins.pop().unwrap_or_else(|| "🐸".to_string());
+
+            ctx.state.players = vec![
+                me,
+                common::game::Player {
+                    id: 2,
+                    is_host: false,
+                    name: "Bot Alpha 🦊".to_string(),
+                    skin: skin2,
+                    sub_x: 0,
+                    sub_y: 0,
+                    is_alive: true,
+                    score: 0,
+                    combo: 0,
+                    last_acted_beat: None,
+                    last_accuracy: common::game::BeatAccuracy::Waiting,
+                    max_bombs: 1,
+                    active_bombs: 0,
+                    bomb_range: 1,
+                    last_action_time: None,
+                    spam_lockout_until: None,
+                    active_emote: None,
+                    emote_until: None,
+                    lives: self.room_settings.lives,
+                    death_pos: None,
+                    respawn_timer: None,
+                    collected_bonuses: Vec::new(),
+                    is_spectator: false,
+                    second_item: None,
+                    shield_until_beat: None,
+                    is_ready: true,
+                },
+                common::game::Player {
+                    id: 3,
+                    is_host: false,
+                    name: "Bot Beta 🐧".to_string(),
+                    skin: skin3,
+                    sub_x: 0,
+                    sub_y: 0,
+                    is_alive: true,
+                    score: 0,
+                    combo: 0,
+                    last_acted_beat: None,
+                    last_accuracy: common::game::BeatAccuracy::Waiting,
+                    max_bombs: 1,
+                    active_bombs: 0,
+                    bomb_range: 1,
+                    last_action_time: None,
+                    spam_lockout_until: None,
+                    active_emote: None,
+                    emote_until: None,
+                    lives: self.room_settings.lives,
+                    death_pos: None,
+                    respawn_timer: None,
+                    collected_bonuses: Vec::new(),
+                    is_spectator: false,
+                    second_item: None,
+                    shield_until_beat: None,
+                    is_ready: true,
+                },
+                common::game::Player {
+                    id: 4,
+                    is_host: false,
+                    name: "Bot Gamma 🐸".to_string(),
+                    skin: skin4,
+                    sub_x: 0,
+                    sub_y: 0,
+                    is_alive: true,
+                    score: 0,
+                    combo: 0,
+                    last_acted_beat: None,
+                    last_accuracy: common::game::BeatAccuracy::Waiting,
+                    max_bombs: 1,
+                    active_bombs: 0,
+                    bomb_range: 1,
+                    last_action_time: None,
+                    spam_lockout_until: None,
+                    active_emote: None,
+                    emote_until: None,
+                    lives: self.room_settings.lives,
+                    death_pos: None,
+                    respawn_timer: None,
+                    collected_bonuses: Vec::new(),
+                    is_spectator: false,
+                    second_item: None,
+                    shield_until_beat: None,
+                    is_ready: true,
+                },
+            ];
+        }
+    }
+
+    pub(crate) fn update_bots(&mut self) {
+        if let Some(ref mut ctx) = self.game_ctx {
+            let bot_ids: Vec<u32> = ctx
+                .state
+                .players
+                .iter()
+                .filter(|p| p.id != self.current_player_id && p.is_alive && !p.is_spectator)
+                .map(|p| p.id)
+                .collect();
+
+            for bot_id in bot_ids {
+                let seed = common::game::spawns::get_pseudo_random_u32();
+                if seed % 100 > 60 {
+                    continue;
+                }
+
+                let action_roll = (seed / 100) % 100;
+                let action = if action_roll < 15 {
+                    common::game::GameAction::PlaceBomb
+                } else if action_roll < 20 {
+                    common::game::GameAction::TriggerSpell
+                } else if action_roll < 25 {
+                    let emote_id = ((seed / 10000) % 4 + 1) as u8;
+                    common::game::GameAction::Emote(emote_id)
+                } else {
+                    let dir_roll = (seed / 10000) % 4;
+                    match dir_roll {
+                        0 => common::game::GameAction::MoveLeft,
+                        1 => common::game::GameAction::MoveRight,
+                        2 => common::game::GameAction::MoveUp,
+                        _ => common::game::GameAction::MoveDown,
+                    }
+                };
+
+                let accuracy = match seed % 3 {
+                    0 => common::game::BeatAccuracy::Perfect,
+                    1 => common::game::BeatAccuracy::Great,
+                    _ => common::game::BeatAccuracy::Ok,
+                };
+
+                let target_beat = ctx.rhythm.beat_count;
+
+                ctx.state.handle_action(bot_id, action, accuracy, target_beat);
+            }
+        }
+    }
 }

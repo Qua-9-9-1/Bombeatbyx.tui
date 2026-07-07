@@ -40,6 +40,8 @@ impl App {
                             self.network.server_rx = None;
                             self.network.room_code = None;
                             self.stop_local_server();
+                            self.paused_from = None;
+                            self.game_ctx = None;
                             self.state = AppState::MainMenu;
                         }
                         _ => {}
@@ -59,6 +61,9 @@ impl App {
                                 self.network.room_code = None;
                                 self.stop_local_server();
                             }
+                            self.is_local_dev_bots = false;
+                            self.paused_from = None;
+                            self.game_ctx = None;
                             self.state = AppState::MainMenu;
                         }
                         _ => {}

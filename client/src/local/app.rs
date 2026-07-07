@@ -73,6 +73,7 @@ pub struct App {
 
     pub active_confirmation: Option<ConfirmationPopup>,
     pub active_notification: Option<NotificationPopup>,
+    pub is_local_dev_bots: bool,
 }
 
 impl App {
@@ -140,6 +141,7 @@ impl App {
 
             active_confirmation: None,
             active_notification: None,
+            is_local_dev_bots: false,
         }
     }
 
@@ -166,12 +168,17 @@ impl App {
 
             if self.state == AppState::InGame {
                 if !self.network.is_multiplayer {
+                    let mut has_beat_ticked = false;
+                    let mut alive_count = 0;
                     if let Some(ref mut ctx) = self.game_ctx {
-                        ctx.tick_game_logic();
-                        let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
-                        if alive_count == 0 {
-                            self.state = AppState::Lobby;
-                        }
+                        has_beat_ticked = ctx.tick_game_logic();
+                        alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
+                    }
+                    if has_beat_ticked && self.is_local_dev_bots {
+                        self.update_bots();
+                    }
+                    if alive_count == 0 && self.game_ctx.is_some() {
+                        self.state = AppState::Lobby;
                     }
                 } else {
                     if let Some(ref mut ctx) = self.game_ctx {

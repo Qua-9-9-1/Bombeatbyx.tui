@@ -65,13 +65,32 @@ impl App {
             }
         } else {
             if let Some(ref mut ctx) = self.game_ctx {
+                let old_skin = if let Some(p) = ctx.state.players.iter().find(|p| p.id == self.current_player_id) {
+                    p.skin.clone()
+                } else {
+                    self.profile.skin.clone()
+                };
+
+                let new_skin = self.profile.skin.clone();
+
+                if self.is_local_dev_bots {
+                    if let Some(bot) = ctx
+                        .state
+                        .players
+                        .iter_mut()
+                        .find(|p| p.id != self.current_player_id && p.skin == new_skin)
+                    {
+                        bot.skin = old_skin;
+                    }
+                }
+
                 if let Some(p) = ctx
                     .state
                     .players
                     .iter_mut()
                     .find(|p| p.id == self.current_player_id)
                 {
-                    p.skin = self.profile.skin.clone();
+                    p.skin = new_skin;
                 }
             }
         }

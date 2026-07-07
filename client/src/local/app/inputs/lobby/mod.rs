@@ -53,6 +53,10 @@ impl App {
                         .find(|p| p.id == self.current_player_id)
                     {
                         p.is_ready = !p.is_ready;
+                        if self.is_local_dev_bots && p.is_ready {
+                            p.is_ready = false;
+                            self.start_game();
+                        }
                     }
                 }
             }

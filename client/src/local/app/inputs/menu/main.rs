@@ -10,6 +10,19 @@ impl App {
                 self.state = AppState::HostModal;
                 self.host_cursor = 0;
             }
+            MainMenuAction::LocalDevGame => {
+                self.is_local_dev_bots = true;
+                self.network.is_multiplayer = false;
+                self.state = AppState::Lobby;
+                self.lobby_screen.cursor = 8;
+                let ctx = common::game::GameContext::new(
+                    self.room_settings.width,
+                    self.room_settings.height,
+                    self.room_settings.bpm,
+                );
+                self.game_ctx = Some(ctx);
+                self.setup_local_lobby_players();
+            }
             MainMenuAction::JoinGame => {
                 self.state = AppState::JoinRoomMenu;
                 self.join_cursor = 0;

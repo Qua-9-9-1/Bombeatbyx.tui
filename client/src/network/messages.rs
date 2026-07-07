@@ -125,6 +125,7 @@ impl App {
                 self.network.server_rx = None;
                 self.network.room_code = None;
                 self.paused_from = None;
+                self.game_ctx = None;
                 self.stop_local_server();
             }
             ServerMessage::ConnectionFailed(err) => {
@@ -135,6 +136,7 @@ impl App {
                 self.network.server_rx = None;
                 self.network.room_code = None;
                 self.paused_from = None;
+                self.game_ctx = None;
                 self.stop_local_server();
             }
             ServerMessage::Ping => {}
@@ -174,6 +176,7 @@ impl App {
                     self.network.server_rx = None;
                     self.network.room_code = None;
                     self.paused_from = None;
+                    self.game_ctx = None;
                     self.stop_local_server();
 
                     self.active_notification = Some(crate::local::app::NotificationPopup {
@@ -198,6 +201,7 @@ impl App {
                     self.network.server_rx = None;
                     self.network.room_code = None;
                     self.paused_from = None;
+                    self.game_ctx = None;
                     self.stop_local_server();
 
                     self.active_notification = Some(crate::local::app::NotificationPopup {
