@@ -17,7 +17,7 @@ impl App {
 
         let is_host = self.is_local_player_host();
 
-        if code == KeyCode::Enter && self.lobby_screen.cursor == 7 {
+        if code == KeyCode::Enter && self.lobby_screen.cursor == 9 {
             self.editing_name = true;
             return;
         }
@@ -64,7 +64,7 @@ impl App {
             if self.network.is_multiplayer {
                 self.sync_lobby_skin();
                 let _ = self.profile.save();
-                if is_host && self.lobby_screen.cursor < 7 {
+                if is_host && self.lobby_screen.cursor < 9 {
                     if let Some(ref tx) = self.network.server_tx {
                         let _ = tx.send(ClientMessage::UpdateSettings(self.room_settings.clone()));
                     }

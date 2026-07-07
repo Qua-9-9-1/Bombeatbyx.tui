@@ -26,23 +26,23 @@ impl LobbyScreen {
                 self.cursor = self.cursor.saturating_sub(1);
             }
             KeyCode::Down | KeyCode::Char('s') => {
-                self.cursor = (self.cursor + 1).min(9);
+                self.cursor = (self.cursor + 1).min(11);
             }
             KeyCode::Left | KeyCode::Char('q') => {
-                if self.cursor == 8 {
+                if self.cursor == 10 {
                     self.modify_local_skin(profile_skin, false);
-                } else if is_host && self.cursor < 7 {
+                } else if is_host && self.cursor < 9 {
                     self.modify_room_setting(room_settings, false);
                 }
             }
             KeyCode::Right | KeyCode::Char('d') => {
-                if self.cursor == 8 {
+                if self.cursor == 10 {
                     self.modify_local_skin(profile_skin, true);
-                } else if is_host && self.cursor < 7 {
+                } else if is_host && self.cursor < 9 {
                     self.modify_room_setting(room_settings, true);
                 }
             }
-            KeyCode::Enter if self.cursor == 9 => {
+            KeyCode::Enter if self.cursor == 11 => {
                 return true;
             }
             _ => {}
@@ -67,7 +67,7 @@ impl LobbyScreen {
                 room_settings.bonus_every =
                     ((room_settings.bonus_every as i32) + sign).clamp(1, 60) as u32
             }
-            5 => room_settings.lives = ((room_settings.lives as i32) + sign).clamp(1, 9) as u8,
+            5 => room_settings.lives = ((room_settings.lives as i32) + sign).clamp(1, 10) as u8,
             6 => {
                 room_settings.mode = match room_settings.mode {
                     common::game::models::GameMode::Deathmatch => {
@@ -75,6 +75,28 @@ impl LobbyScreen {
                     }
                     common::game::models::GameMode::Score => {
                         common::game::models::GameMode::Deathmatch
+                    }
+                };
+            }
+            7 => {
+                room_settings.target_score = ((room_settings.target_score as i32) + sign * 1000).clamp(1000, 20000) as u32;
+            }
+            8 => {
+                room_settings.time_limit_mins = match room_settings.time_limit_mins {
+                    None => {
+                        if increase {
+                            Some(1)
+                        } else {
+                            Some(20)
+                        }
+                    }
+                    Some(m) => {
+                        let new_val = m as i32 + sign;
+                        if new_val < 1 || new_val > 20 {
+                            None
+                        } else {
+                            Some(new_val as u32)
+                        }
                     }
                 };
             }

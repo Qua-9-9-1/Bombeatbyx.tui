@@ -159,6 +159,8 @@ pub fn start_game_in_room(room: &mut Room) {
     new_state.sudden_death = room.room_settings.sudden_death;
     new_state.bonus_every = room.room_settings.bonus_every;
     new_state.mode = room.room_settings.mode;
+    new_state.target_score = room.room_settings.target_score;
+    new_state.time_limit_mins = room.room_settings.time_limit_mins;
     new_state.spawn_players(players);
 
     let mut ctx = GameContext::new(

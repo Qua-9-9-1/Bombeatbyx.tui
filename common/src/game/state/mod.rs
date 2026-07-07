@@ -15,6 +15,9 @@ pub struct GameState {
     pub grid: Vec<Cell>,
     pub players: Vec<Player>,
     pub mode: GameMode,
+    pub elapsed_time_secs: u32,
+    pub target_score: u32,
+    pub time_limit_mins: Option<u32>,
 }
 
 impl GameState {
@@ -42,6 +45,9 @@ impl GameState {
             grid,
             players: Vec::new(),
             mode: GameMode::Deathmatch,
+            elapsed_time_secs: 0,
+            target_score: 1000,
+            time_limit_mins: None,
         }
     }
 

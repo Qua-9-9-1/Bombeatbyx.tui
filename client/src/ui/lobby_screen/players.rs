@@ -37,6 +37,10 @@ pub fn draw_players_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             display_skin = app.profile.skin.clone();
         }
 
+        if display_name.chars().count() > 10 {
+            display_name = display_name.chars().take(8).collect::<String>() + "..";
+        }
+
         let skin_cell = get_player_skin_cell(&display_skin, ascii);
         let fg_color = get_color_for_id(player.id);
 

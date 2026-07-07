@@ -57,6 +57,26 @@ pub fn draw_info_panel(
     } else {
         "❤️ PLAYER LIVES"
     };
+    let header_mode = if ascii {
+        " [ GAME MODE ] "
+    } else {
+        "🏆 GAME MODE"
+    };
+    let header_score = if ascii {
+        " [ SCORE TO WIN ] "
+    } else {
+        "🎯 SCORE TO WIN"
+    };
+    let header_time = if ascii {
+        " [ TIME LIMIT ] "
+    } else {
+        "⏱️ TIME LIMIT"
+    };
+    let header_name = if ascii {
+        " [ PLAYER NAME ] "
+    } else {
+        "📝 PLAYER NAME"
+    };
     let header_skin = if ascii {
         " [ CHARACTER SKIN ] "
     } else {
@@ -235,11 +255,6 @@ pub fn draw_info_panel(
             )));
         }
         6 => {
-            let header_mode = if ascii {
-                " [ GAME MODE ] "
-            } else {
-                "🏆 GAME MODE"
-            };
             info_lines.push(Line::from(Span::styled(
                 header_mode,
                 Style::default()
@@ -257,7 +272,29 @@ pub fn draw_info_panel(
         }
         7 => {
             info_lines.push(Line::from(Span::styled(
-                "[ PLAYER NAME ]",
+                header_score,
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Cyan),
+            )));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Sets the score to reach"));
+            info_lines.push(Line::from("to win the match."));
+        }
+        8 => {
+            info_lines.push(Line::from(Span::styled(
+                header_time,
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Cyan),
+            )));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Sets the time limit for"));
+            info_lines.push(Line::from("the match."));
+        }
+        9 => {
+            info_lines.push(Line::from(Span::styled(
+                header_name,
                 Style::default()
                     .add_modifier(Modifier::BOLD)
                     .fg(Color::Cyan),
@@ -272,7 +309,7 @@ pub fn draw_info_panel(
             info_lines.push(Line::from("A-Z, 0-9, A-Z, underscores"));
             info_lines.push(Line::from("Max 12 characters."));
         }
-        8 => {
+        10 => {
             info_lines.push(Line::from(Span::styled(
                 header_skin,
                 Style::default()
@@ -300,7 +337,7 @@ pub fn draw_info_panel(
                 info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
             }
         }
-        9 => {
+        11 => {
             info_lines.push(Line::from(Span::styled(
                 header_start,
                 Style::default()

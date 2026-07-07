@@ -112,6 +112,7 @@ impl App {
             second_item: None,
             shield_until_beat: None,
             is_ready: false,
+            death_beat: None,
         }];
 
         Self {
@@ -169,15 +170,44 @@ impl App {
             if self.state == AppState::InGame {
                 if !self.network.is_multiplayer {
                     let mut has_beat_ticked = false;
-                    let mut alive_count = 0;
+                    let mut should_end = false;
                     if let Some(ref mut ctx) = self.game_ctx {
                         has_beat_ticked = ctx.tick_game_logic();
-                        alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
+                        
+                        // 1. Time Limit check
+                        if let Some(limit_mins) = self.room_settings.time_limit_mins {
+                            if ctx.state.elapsed_time_secs >= limit_mins * 60 {
+                                should_end = true;
+                            }
+                        }
+
+                        // 2. Score Mode check
+                        if self.room_settings.mode == common::game::models::GameMode::Score {
+                            if ctx.state.players.iter().any(|p| p.score >= self.room_settings.target_score) {
+                                should_end = true;
+                            }
+                        } else {
+                            // 3. Deathmatch Mode check
+                            let total_players = ctx.state.players.len();
+                            let alive_count = ctx.state.players.iter().filter(|p| p.lives > 0).count();
+                            if total_players > 1 && alive_count <= 1 {
+                                should_end = true;
+                            } else if total_players <= 1 && alive_count == 0 {
+                                should_end = true;
+                            }
+                        }
                     }
                     if has_beat_ticked && self.is_local_dev_bots {
                         self.update_bots();
                     }
-                    if alive_count == 0 && self.game_ctx.is_some() {
+                    if should_end && self.game_ctx.is_some() {
+                        let ctx = common::game::GameContext::new(
+                            self.room_settings.width,
+                            self.room_settings.height,
+                            self.room_settings.bpm,
+                        );
+                        self.game_ctx = Some(ctx);
+                        self.setup_local_lobby_players();
                         self.state = AppState::Lobby;
                     }
                 } else {

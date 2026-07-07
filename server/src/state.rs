@@ -76,6 +76,7 @@ impl Room {
                 second_item: None,
                 shield_until_beat: None,
                 is_ready: p.is_ready,
+                death_beat: None,
             })
             .collect();
         players.sort_by_key(|p| p.id);

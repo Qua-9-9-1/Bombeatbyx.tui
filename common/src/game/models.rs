@@ -62,6 +62,7 @@ pub struct Player {
     pub second_item: Option<SecondItem>,
     pub shield_until_beat: Option<u64>,
     pub is_ready: bool,
+    pub death_beat: Option<u64>,
 }
 
 impl Player {
@@ -99,6 +100,8 @@ pub struct RoomSettings {
     pub bonus_every: u32,
     pub lives: u8,
     pub mode: GameMode,
+    pub target_score: u32,
+    pub time_limit_mins: Option<u32>,
 }
 
 impl Default for RoomSettings {
@@ -111,6 +114,8 @@ impl Default for RoomSettings {
             bonus_every: 10,
             lives: 3,
             mode: GameMode::Deathmatch,
+            target_score: 1000,
+            time_limit_mins: None,
         }
     }
 }

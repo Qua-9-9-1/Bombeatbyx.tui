@@ -169,6 +169,7 @@ pub async fn handle_join_room(
                     second_item: None,
                     shield_until_beat: None,
                     is_ready: false,
+                    death_beat: None,
                 });
             }
         }

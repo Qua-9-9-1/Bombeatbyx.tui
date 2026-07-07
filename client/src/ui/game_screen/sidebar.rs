@@ -33,6 +33,34 @@ pub fn draw_game_sidebar(
     let players = &ctx.state.players;
     let mode = ctx.state.mode;
 
+    let mut has_meta = false;
+
+    if let Some(limit) = ctx.state.time_limit_mins {
+        let limit_secs = limit * 60;
+        let remaining = limit_secs.saturating_sub(ctx.state.elapsed_time_secs);
+        let mins = remaining / 60;
+        let secs = remaining % 60;
+        let timer_str = format!("Time Left: {:02}:{:02}", mins, secs);
+        lines.push(Line::from(vec![Span::styled(
+            format!("  {}", timer_str),
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        )]));
+        has_meta = true;
+    }
+
+    if mode == common::game::models::GameMode::Score {
+        lines.push(Line::from(vec![Span::styled(
+            format!("  Target: {}", ctx.state.target_score),
+            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+        )]));
+        has_meta = true;
+    }
+
+    if has_meta {
+        lines.push(Line::from(if ascii { "  ----------------------" } else { "  ──────────────────────" }));
+    }
+    lines.push(Line::from(""));
+
     let mut sorted_players = players.clone();
     sorted_players.sort_by(|a, b| {
         if a.is_spectator != b.is_spectator {
@@ -42,11 +70,24 @@ pub fn draw_game_sidebar(
             return a.id.cmp(&b.id);
         }
         match mode {
-            common::game::models::GameMode::Deathmatch => b
-                .lives
-                .cmp(&a.lives)
-                .then_with(|| b.score.cmp(&a.score))
-                .then_with(|| a.id.cmp(&b.id)),
+            common::game::models::GameMode::Deathmatch => {
+                let a_alive = a.lives > 0;
+                let b_alive = b.lives > 0;
+                if a_alive != b_alive {
+                    b_alive.cmp(&a_alive)
+                } else if a_alive {
+                    b.lives
+                        .cmp(&a.lives)
+                        .then_with(|| b.score.cmp(&a.score))
+                        .then_with(|| a.id.cmp(&b.id))
+                } else {
+                    b.death_beat
+                        .unwrap_or(0)
+                        .cmp(&a.death_beat.unwrap_or(0))
+                        .then_with(|| b.score.cmp(&a.score))
+                        .then_with(|| a.id.cmp(&b.id))
+                }
+            }
             common::game::models::GameMode::Score => b
                 .score
                 .cmp(&a.score)
@@ -74,8 +115,8 @@ fn draw_sidebar_player(
 ) {
     let icon = get_player_status_icon(player, ascii);
     let fg_color = get_color_for_id(player.id);
-    let name = if player.name.len() > 14 {
-        format!("{}..", &player.name[..12])
+    let name = if player.name.chars().count() > 14 {
+        player.name.chars().take(12).collect::<String>() + ".."
     } else {
         player.name.clone()
     };

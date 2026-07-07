@@ -141,6 +141,11 @@ impl GameState {
                 }
                 self.players[i].is_alive = false;
                 self.players[i].lives = self.players[i].lives.saturating_sub(1);
+                if self.players[i].lives == 0 {
+                    if self.players[i].death_beat.is_none() {
+                        self.players[i].death_beat = Some(current_beat);
+                    }
+                }
                 self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
                 self.players[i].respawn_timer =
                     Some(std::time::Instant::now() + std::time::Duration::from_secs(3));

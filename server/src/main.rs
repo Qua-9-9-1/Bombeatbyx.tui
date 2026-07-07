@@ -31,15 +31,33 @@ async fn main() {
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
 
-                            let active_non_spec =
-                                room.peers.values().filter(|p| !p.is_spectator).count();
-                            let alive_count = ctx
-                                .state
-                                .players
-                                .iter()
-                                .filter(|p| p.lives > 0 && !p.is_spectator)
-                                .count();
-                            if active_non_spec > 1 && alive_count <= 1 {
+                            let mut should_end = false;
+
+                            if let Some(limit_mins) = room.room_settings.time_limit_mins {
+                                if ctx.state.elapsed_time_secs >= limit_mins * 60 {
+                                    should_end = true;
+                                }
+                            }
+
+                            if room.room_settings.mode == common::game::models::GameMode::Score {
+                                if ctx.state.players.iter().any(|p| p.score >= room.room_settings.target_score) {
+                                    should_end = true;
+                                }
+                            } else {
+                                let active_non_spec =
+                                    room.peers.values().filter(|p| !p.is_spectator).count();
+                                let alive_count = ctx
+                                    .state
+                                    .players
+                                    .iter()
+                                    .filter(|p| p.lives > 0 && !p.is_spectator)
+                                    .count();
+                                if active_non_spec > 1 && alive_count <= 1 {
+                                    should_end = true;
+                                }
+                            }
+
+                            if should_end {
                                 stop_game_in_room(room);
                                 continue;
                             }

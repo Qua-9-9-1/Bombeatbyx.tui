@@ -111,6 +111,28 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         } else {
             format!("Game Mode     : {:?}", rs.mode)
         },
+        if is_host {
+            format!("Target Score  : < {} >", rs.target_score)
+        } else {
+            format!("Target Score  : {}", rs.target_score)
+        },
+        if is_host {
+            format!(
+                "Time Limit    : < {} >",
+                match rs.time_limit_mins {
+                    None => "OFF".to_string(),
+                    Some(m) => format!("{} mins", m),
+                }
+            )
+        } else {
+            format!(
+                "Time Limit    : {}",
+                match rs.time_limit_mins {
+                    None => "OFF".to_string(),
+                    Some(m) => format!("{} mins", m),
+                }
+            )
+        },
         format!("Your Name     : < {} >", name_display),
         format!("Your Skin     : < {} >", skin_name),
         ready_btn_text,
@@ -159,7 +181,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             center_lines.push(Line::from(""));
         }
 
-        if idx == 7 {
+        if idx == 9 {
             let label = if ascii {
                 "  -- PLAYER PERSONALIZATION --"
             } else {
@@ -175,7 +197,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         }
 
         if idx == cursor {
-            if idx == 9 {
+            if idx == 11 {
                 let color = if skin_taken {
                     Color::Red
                 } else if my_player_ready {
@@ -193,7 +215,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                     Style::default().fg(color).add_modifier(Modifier::BOLD),
                 )));
             } else {
-                let is_editing = idx == 7 && app.editing_name;
+                let is_editing = idx == 9 && app.editing_name;
                 let color = if is_editing {
                     Color::LightGreen
                 } else {
@@ -215,7 +237,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 ]));
             }
         } else {
-            if idx == 9 {
+            if idx == 11 {
                 let color = if skin_taken {
                     Color::Red
                 } else if my_player_ready {
@@ -235,15 +257,15 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
     center_lines.push(Line::from(""));
 
-    let help_desc = if cursor == 7 {
+    let help_desc = if cursor == 9 {
         if app.editing_name {
             "Type name, Backspace to delete, Enter to save"
         } else {
             "Press Enter to edit name"
         }
-    } else if cursor == 8 {
+    } else if cursor == 10 {
         "Press Q/D or Left/Right to change skin"
-    } else if cursor == 9 {
+    } else if cursor == 11 {
         if skin_taken {
             "Change your skin! Someone else is ready with it"
         } else if my_player_ready {

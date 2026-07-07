@@ -32,12 +32,15 @@ impl App {
             new_state.sudden_death = self.room_settings.sudden_death;
             new_state.bonus_every = self.room_settings.bonus_every;
             new_state.mode = self.room_settings.mode;
+            new_state.target_score = self.room_settings.target_score;
+            new_state.time_limit_mins = self.room_settings.time_limit_mins;
 
             new_state.spawn_players(players);
 
             ctx.state = new_state;
             ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
             ctx.last_closed_window_beat = None;
+            ctx.start_time = std::time::Instant::now();
         }
 
         self.state = crate::local::app::AppState::InGame;
@@ -174,6 +177,7 @@ impl App {
                     second_item: None,
                     shield_until_beat: None,
                     is_ready: false,
+                    death_beat: None,
                 });
 
             let all_skins = vec!["🤖", "🐱", "🐸", "🦊", "🐧"];
@@ -216,6 +220,7 @@ impl App {
                     second_item: None,
                     shield_until_beat: None,
                     is_ready: true,
+                    death_beat: None,
                 },
                 common::game::Player {
                     id: 3,
@@ -244,6 +249,7 @@ impl App {
                     second_item: None,
                     shield_until_beat: None,
                     is_ready: true,
+                    death_beat: None,
                 },
                 common::game::Player {
                     id: 4,
@@ -272,6 +278,7 @@ impl App {
                     second_item: None,
                     shield_until_beat: None,
                     is_ready: true,
+                    death_beat: None,
                 },
             ];
         }

@@ -6,6 +6,7 @@ pub struct GameContext {
     pub state: GameState,
     pub rhythm: RhythmEngine,
     pub last_closed_window_beat: Option<u64>,
+    pub start_time: std::time::Instant,
 }
 
 impl GameContext {
@@ -14,11 +15,13 @@ impl GameContext {
             state: GameState::new(width, height),
             rhythm: RhythmEngine::new(bpm),
             last_closed_window_beat: None,
+            start_time: std::time::Instant::now(),
         }
     }
 
     pub fn tick_game_logic(&mut self) -> bool {
         self.state.tick_respawns();
+        self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
 
         let has_beat_ticked = self.rhythm.tick_logic();
 
