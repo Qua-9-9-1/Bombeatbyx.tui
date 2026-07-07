@@ -142,10 +142,13 @@ impl App {
             ServerMessage::Ping => {}
             ServerMessage::GameStopped { players, settings } => {
                 self.room_settings = settings;
-                if let Some(ref mut ctx) = self.game_ctx {
-                    ctx.state.players = players;
-                    ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
-                }
+                let mut ctx = GameContext::new(
+                    self.room_settings.width,
+                    self.room_settings.height,
+                    self.room_settings.bpm,
+                );
+                ctx.state.players = players;
+                self.game_ctx = Some(ctx);
                 self.paused_from = None;
                 self.state = AppState::Lobby;
             }
