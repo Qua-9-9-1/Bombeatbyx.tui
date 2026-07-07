@@ -8,7 +8,7 @@ impl App {
                 let mut buf = [0; 1024];
                 while let Ok((amt, src)) = s.recv_from(&mut buf) {
                     if let Ok(msg) = std::str::from_utf8(&buf[..amt]) {
-                        if msg.starts_with("BOMBEAT_LAN_ROOM:") {
+                        if msg.starts_with("BOMBEATBYX_LAN_ROOM:") {
                             let parts: Vec<&str> = msg.split(':').collect();
                             if parts.len() == 4 {
                                 let code = parts[1].to_string();

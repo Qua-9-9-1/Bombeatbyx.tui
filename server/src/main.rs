@@ -14,7 +14,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/ws", get(websockets::ws_handler))
-        .route("/", get(|| async { "Bombeat TUI Server is running!" }))
+        .route("/", get(|| async { "Bombeatbyx TUI Server is running!" }))
         .with_state(state.clone());
 
     let loop_state = state.clone();
@@ -86,7 +86,7 @@ async fn main() {
                 }
 
                 for (code, host, count) in broadcast_rooms {
-                    let msg = format!("BOMBEAT_LAN_ROOM:{}:{}:{}", code, host, count);
+                    let msg = format!("BOMBEATBYX_LAN_ROOM:{}:{}:{}", code, host, count);
                     let _ = socket.send_to(msg.as_bytes(), "255.255.255.255:3001");
                 }
             }

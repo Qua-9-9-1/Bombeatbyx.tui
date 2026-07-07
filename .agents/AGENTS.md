@@ -1,11 +1,11 @@
-# Workspace Guidelines & Context for AI Agents (Bombeast.tui)
+# Workspace Guidelines & Context for AI Agents (Bombeatbyx.tui)
 
-Welcome to the **Bombeast.tui** codebase. This file contains rules and technical details for future AI coding agents working on this workspace.
+Welcome to the **Bombeatbyx.tui** codebase. This file contains rules and technical details for future AI coding agents working on this workspace.
 
 ---
 
 ## 1. Project Overview
-Bombeast TUI is a rhythm-based multiplayer grid-arena battle game written in Rust using `ratatui` and `crossterm`. Players move, drop bombs, and trigger actions strictly synchronized with a music rhythm/BPM beat.
+Bombeatbyx TUI is a rhythm-based multiplayer grid-arena battle game written in Rust using `ratatui` and `crossterm`. Players move, drop bombs, and trigger actions strictly synchronized with a music rhythm/BPM beat.
 
 The project is structured into three crates:
 1. `common`: Core game simulation logic, layouts, physics, and state machines shared between client and server.
