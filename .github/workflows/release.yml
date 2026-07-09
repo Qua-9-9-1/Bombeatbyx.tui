@@ -27,7 +27,7 @@ jobs:
           if [ "${{ matrix.os }}" == "windows-latest" ]; then
             cp target/release/client.exe dist/
             cp target/release/server.exe dist/
-            cd dist && 7z a ../bombeatbyx -windows.zip * && cd ..
+            cd dist && 7z a ../bombeatbyx-windows.zip * && cd ..
           else
             cp target/release/client dist/
             cp target/release/server dist/
