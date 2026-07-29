@@ -1,4 +1,5 @@
 use crate::local::app::{App, AppState};
+use crate::tui::Tui;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use std::time::Duration;
 
@@ -7,59 +8,65 @@ pub mod lobby;
 pub mod menu;
 
 impl App {
-    pub(crate) fn handle_inputs(&mut self) -> std::io::Result<()> {
+    pub(crate) fn handle_inputs(&mut self, tui: &mut Tui) -> std::io::Result<()> {
         while event::poll(Duration::ZERO)? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Release {
-                    continue;
+            match event::read()? {
+                Event::Resize(w, h) => {
+                    tui.resize(w, h)?;
                 }
-
-                if self.active_notification.is_some() {
-                    self.active_notification = None;
-                    return Ok(());
-                }
-
-                if let Some(ref conf) = self.active_confirmation {
-                    match key.code {
-                        KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => {
-                            let action = conf.action;
-                            let target_id = conf.target_id;
-                            self.execute_confirmed_host_action(action, target_id);
-                            self.active_confirmation = None;
-                        }
-                        KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
-                            self.active_confirmation = None;
-                        }
-                        _ => {}
+                Event::Key(key) => {
+                    if key.kind == KeyEventKind::Release {
+                        continue;
                     }
-                    return Ok(());
-                }
 
-                if key.code == KeyCode::Esc {
-                    self.handle_esc();
-                    return Ok(());
-                }
+                    if self.active_notification.is_some() {
+                        self.active_notification = None;
+                        return Ok(());
+                    }
 
-                match self.state {
-                    AppState::MainMenu => self.handle_main_menu_input(key.code),
-                    AppState::Lobby => self.handle_lobby_input(key.code),
-                    AppState::InGame => self.handle_in_game_input(key.code),
-                    AppState::PauseMenu => self.handle_pause_menu_input(key.code),
-                    AppState::SettingsMenu => self.handle_settings_menu_input(key.code),
-                    AppState::HostModal => self.handle_host_modal_input(key.code),
-                    AppState::JoinRoomMenu => self.handle_join_room_menu_input(key.code),
-                    AppState::VictoryScreen => {
-                        let elapsed = self
-                            .victory_start_time
-                            .map(|t| t.elapsed())
-                            .unwrap_or(Duration::ZERO);
-                        if elapsed >= Duration::from_millis(3000) {
-                            self.state = AppState::Lobby;
-                            self.victory_final_state = None;
-                            self.victory_start_time = None;
+                    if let Some(ref conf) = self.active_confirmation {
+                        match key.code {
+                            KeyCode::Char('y') | KeyCode::Char('Y') | KeyCode::Enter => {
+                                let action = conf.action;
+                                let target_id = conf.target_id;
+                                self.execute_confirmed_host_action(action, target_id);
+                                self.active_confirmation = None;
+                            }
+                            KeyCode::Char('n') | KeyCode::Char('N') | KeyCode::Esc => {
+                                self.active_confirmation = None;
+                            }
+                            _ => {}
+                        }
+                        return Ok(());
+                    }
+
+                    if key.code == KeyCode::Esc {
+                        self.handle_esc();
+                        return Ok(());
+                    }
+
+                    match self.state {
+                        AppState::MainMenu => self.handle_main_menu_input(key.code),
+                        AppState::Lobby => self.handle_lobby_input(key.code),
+                        AppState::InGame => self.handle_in_game_input(key.code),
+                        AppState::PauseMenu => self.handle_pause_menu_input(key.code),
+                        AppState::SettingsMenu => self.handle_settings_menu_input(key.code),
+                        AppState::HostModal => self.handle_host_modal_input(key.code),
+                        AppState::JoinRoomMenu => self.handle_join_room_menu_input(key.code),
+                        AppState::VictoryScreen => {
+                            let elapsed = self
+                                .victory_start_time
+                                .map(|t| t.elapsed())
+                                .unwrap_or(Duration::ZERO);
+                            if elapsed >= Duration::from_millis(3000) {
+                                self.state = AppState::Lobby;
+                                self.victory_final_state = None;
+                                self.victory_start_time = None;
+                            }
                         }
                     }
                 }
+                _ => {}
             }
         }
         Ok(())

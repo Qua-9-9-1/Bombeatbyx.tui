@@ -50,6 +50,16 @@ impl Tui {
     pub fn clear(&mut self) -> io::Result<()> {
         self.terminal.clear()
     }
+
+    pub fn resize(&mut self, w: u16, h: u16) -> io::Result<()> {
+        self.terminal
+            .resize(ratatui::layout::Rect::new(0, 0, w, h))?;
+        self.terminal.clear()
+    }
+
+    pub fn size(&self) -> io::Result<ratatui::layout::Size> {
+        self.terminal.size()
+    }
 }
 
 impl Drop for Tui {

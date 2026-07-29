@@ -236,12 +236,19 @@ impl App {
                     }
                 }
             }
-            self.handle_inputs()?;
+            self.handle_inputs(tui)?;
             if self.state == AppState::InGame && !self.network.is_multiplayer {
                 self.update_physics(tick_rate, &mut lag);
             }
 
             if current_time.duration_since(last_render) >= render_rate {
+                if let Ok((actual_w, actual_h)) = crossterm::terminal::size() {
+                    if let Ok(known) = tui.size() {
+                        if actual_w != known.width || actual_h != known.height {
+                            let _ = tui.resize(actual_w, actual_h);
+                        }
+                    }
+                }
                 if self.state != prev_state {
                     let _ = tui.clear();
                     prev_state = self.state.clone();
