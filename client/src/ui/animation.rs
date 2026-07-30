@@ -155,4 +155,84 @@ impl Animation {
             loop_animation: false,
         }
     }
+
+    pub fn bonus_blinking(
+        b_type: common::game::models::BonusType,
+        ticks_left: u8,
+        ascii: bool,
+    ) -> Self {
+        let sym = match b_type {
+            common::game::models::BonusType::BombQty => {
+                if ascii {
+                    "B+"
+                } else {
+                    "💣"
+                }
+            }
+            common::game::models::BonusType::BombRange => {
+                if ascii {
+                    "R+"
+                } else {
+                    "🔥"
+                }
+            }
+            common::game::models::BonusType::Shield => {
+                if ascii {
+                    "S+"
+                } else {
+                    "🛡️"
+                }
+            }
+        };
+
+        if ticks_left <= 5 {
+            Self {
+                frames: vec![
+                    AnimationFrame {
+                        symbol: sym.to_string(),
+                        fg_color: Color::Yellow,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(100),
+                    },
+                    AnimationFrame {
+                        symbol: sym.to_string(),
+                        fg_color: Color::Red,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(100),
+                    },
+                    AnimationFrame {
+                        symbol: "  ".to_string(),
+                        fg_color: Color::Reset,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(100),
+                    },
+                ],
+                loop_animation: true,
+            }
+        } else {
+            Self {
+                frames: vec![
+                    AnimationFrame {
+                        symbol: sym.to_string(),
+                        fg_color: Color::Cyan,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(250),
+                    },
+                    AnimationFrame {
+                        symbol: sym.to_string(),
+                        fg_color: Color::LightCyan,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(250),
+                    },
+                    AnimationFrame {
+                        symbol: sym.to_string(),
+                        fg_color: Color::Yellow,
+                        bg_color: Color::Indexed(234),
+                        duration: Duration::from_millis(250),
+                    },
+                ],
+                loop_animation: true,
+            }
+        }
+    }
 }

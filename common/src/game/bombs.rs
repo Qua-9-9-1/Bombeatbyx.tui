@@ -61,6 +61,22 @@ impl GameState {
                             Cell::Explosion { ticks_left }
                         };
                     }
+                    Cell::Bonus {
+                        bonus_type,
+                        mut ticks_left,
+                    } => {
+                        if ticks_left > 0 {
+                            ticks_left -= 1;
+                        }
+                        self.grid[idx] = if ticks_left == 0 {
+                            Cell::Empty
+                        } else {
+                            Cell::Bonus {
+                                bonus_type,
+                                ticks_left,
+                            }
+                        };
+                    }
                     _ => {}
                 }
             }
@@ -104,7 +120,7 @@ impl GameState {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
                         break;
                     }
-                    Cell::Empty | Cell::Explosion { .. } | Cell::Bonus(_) => {
+                    Cell::Empty | Cell::Explosion { .. } | Cell::Bonus { .. } => {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
                     }
                     Cell::Bomb {
@@ -244,5 +260,38 @@ mod tests {
         assert!(matches!(state.grid[2 * 5 + 3], Cell::Explosion { .. }));
         assert!(matches!(state.grid[1 * 5 + 2], Cell::Explosion { .. }));
         assert!(matches!(state.grid[3 * 5 + 2], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_despawns_bonus_when_ticks_left_expires() {
+        use crate::game::models::BonusType;
+        let mut state = GameState::new(5, 5);
+        let cell_idx = 1 * 5 + 1;
+        state.grid[cell_idx] = Cell::Bonus {
+            bonus_type: BonusType::BombQty,
+            ticks_left: 1,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert_eq!(state.grid[cell_idx], Cell::Empty);
+    }
+
+    #[test]
+    fn move_player_picks_up_bonus_with_ticks_left() {
+        use crate::game::models::BonusType;
+        let mut state = GameState::new(5, 5);
+        let cell_idx = 1 * 5 + 2;
+        state.grid[cell_idx] = Cell::Bonus {
+            bonus_type: BonusType::BombQty,
+            ticks_left: 10,
+        };
+        state.players = vec![create_test_player(1)];
+
+        let moved = state.move_player(1, 2, 0);
+
+        assert!(moved);
+        assert_eq!(state.players[0].max_bombs, 2);
+        assert_eq!(state.grid[cell_idx], Cell::Empty);
     }
 }

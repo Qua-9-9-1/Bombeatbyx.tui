@@ -163,7 +163,10 @@ impl GameState {
                 1 => BonusType::BombRange,
                 _ => BonusType::Shield,
             };
-            self.grid[idx] = Cell::Bonus(bonus_type);
+            self.grid[idx] = Cell::Bonus {
+                bonus_type,
+                ticks_left: crate::game::models::DEFAULT_BONUS_LIFETIME_TICKS,
+            };
         }
     }
 }

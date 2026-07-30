@@ -155,31 +155,13 @@ fn draw_cell(
             };
             (sym, frame.fg_color, frame.bg_color)
         }
-        Cell::Bonus(b_type) => {
-            let sym = match b_type {
-                common::game::models::BonusType::BombQty => {
-                    if ascii {
-                        "B+"
-                    } else {
-                        "💣"
-                    }
-                }
-                common::game::models::BonusType::BombRange => {
-                    if ascii {
-                        "R+"
-                    } else {
-                        "🔥"
-                    }
-                }
-                common::game::models::BonusType::Shield => {
-                    if ascii {
-                        "S+"
-                    } else {
-                        "🛡️"
-                    }
-                }
-            };
-            (sym.to_string(), Color::Cyan, Color::Indexed(234))
+        Cell::Bonus {
+            bonus_type,
+            ticks_left,
+        } => {
+            let anim = crate::ui::animation::Animation::bonus_blinking(bonus_type, ticks_left, ascii);
+            let frame = anim.get_frame(elapsed);
+            (frame.symbol.clone(), frame.fg_color, frame.bg_color)
         }
     };
 

@@ -21,7 +21,7 @@ impl GameState {
                     let cell_x = (next_x / 2) as usize;
                     let cell_y = next_y as usize;
                     let idx = cell_y * self.width + cell_x;
-                    if let Cell::Bonus(b_type) = self.grid[idx] {
+                    if let Cell::Bonus { bonus_type: b_type, .. } = self.grid[idx] {
                         match b_type {
                             BonusType::BombQty => {
                                 player.max_bombs = player.max_bombs.saturating_add(1);
