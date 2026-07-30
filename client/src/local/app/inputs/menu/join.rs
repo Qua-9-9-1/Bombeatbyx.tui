@@ -123,6 +123,7 @@ impl App {
                 self.network.private_room_code_input.clear();
             }
             KeyCode::Char('r') | KeyCode::Char('R') => {
+                self.network.network_error = None;
                 self.network.lan_rooms.clear();
                 self.network.online_rooms.clear();
                 self.connect_to_server(

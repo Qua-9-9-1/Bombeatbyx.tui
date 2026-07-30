@@ -101,7 +101,19 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         }
     }
 
-    lines.push(Line::from(""));
+    if let Some(ref err) = app.network.network_error {
+        let max_len = 70;
+        let display_err = if err.len() > max_len {
+            format!("{}…", &err[..max_len])
+        } else {
+            err.clone()
+        };
+        lines.push(Line::from(Span::styled(
+            display_err,
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        )));
+        lines.push(Line::from(""));
+    }
 
     let instruct =
         " [Enter] Join selected room   [P] Join room by code   [R] Refresh   [Esc] Back ";

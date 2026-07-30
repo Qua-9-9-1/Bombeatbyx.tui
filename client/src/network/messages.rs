@@ -131,14 +131,20 @@ impl App {
             }
             ServerMessage::ConnectionFailed(err) => {
                 self.network.network_error = Some(err);
-                self.state = AppState::MainMenu;
                 self.network.is_multiplayer = false;
                 self.network.server_tx = None;
                 self.network.server_rx = None;
                 self.network.room_code = None;
-                self.paused_from = None;
-                self.game_ctx = None;
-                self.stop_local_server();
+
+                match self.state {
+                    AppState::JoinRoomMenu | AppState::HostModal => {}
+                    _ => {
+                        self.state = AppState::MainMenu;
+                        self.paused_from = None;
+                        self.game_ctx = None;
+                        self.stop_local_server();
+                    }
+                }
             }
             ServerMessage::Ping => {}
             ServerMessage::GameStopped {

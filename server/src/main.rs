@@ -154,7 +154,10 @@ async fn main() {
         }
     });
 
-    axum::serve(listener, app)
-        .await
-        .expect("failed to serve axum app");
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .expect("failed to serve axum app");
 }
