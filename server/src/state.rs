@@ -29,6 +29,8 @@ pub struct Room {
     pub banned_ips: HashSet<IpAddr>,
     /// Smoothed round-trip time per peer, measured with Ping/Pong.
     pub latencies: HashMap<u32, std::time::Duration>,
+    /// JSON of the last game state sent, to skip identical broadcasts.
+    pub last_broadcast_state: Option<String>,
 }
 
 impl Room {
@@ -45,6 +47,7 @@ impl Room {
             in_game: false,
             banned_ips: HashSet::new(),
             latencies: HashMap::new(),
+            last_broadcast_state: None,
         }
     }
 

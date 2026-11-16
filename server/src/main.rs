@@ -42,8 +42,15 @@ async fn main() {
                             continue;
                         }
 
+                        // Only broadcast when something actually changed: the
+                        // state is identical on most 16 ms ticks between beats.
                         if let Some(ref ctx) = room.game_ctx {
-                            updates.push((room.code.clone(), ctx.state.clone()));
+                            if let Ok(serialized) = serde_json::to_string(&ctx.state) {
+                                if room.last_broadcast_state.as_deref() != Some(serialized.as_str()) {
+                                    room.last_broadcast_state = Some(serialized);
+                                    updates.push((room.code.clone(), ctx.state.clone()));
+                                }
+                            }
                         }
                     }
                 }
