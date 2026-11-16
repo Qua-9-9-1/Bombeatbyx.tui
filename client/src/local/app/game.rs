@@ -17,11 +17,7 @@ impl App {
                 p.max_bombs = 1;
                 p.bomb_range = 1;
                 p.collected_bonuses.clear();
-                p.second_item = if p.id == 2 {
-                    Some(common::game::models::SecondItem::Shield)
-                } else {
-                    None
-                };
+                p.second_item = None;
                 p.shield_until_beat = None;
                 p.combo = 0;
             }
