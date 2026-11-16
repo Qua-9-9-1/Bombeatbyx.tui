@@ -87,6 +87,13 @@ pub const BONUS_PICKUP_POINTS: u32 = 25;
 
 pub const MAX_LIVES: u8 = 9;
 pub const DASH_DISTANCE: u32 = 3;
+
+/// Every `COMBO_STEP` consecutive on-beat actions raise the score multiplier by one.
+pub const COMBO_STEP: u32 = 8;
+pub const MAX_COMBO_MULTIPLIER: u32 = 4;
+/// From this combo, bombs gain one extra range ("Fever").
+pub const FEVER_COMBO: u32 = 16;
+pub const FEVER_BONUS_RANGE: usize = 1;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
@@ -185,6 +192,23 @@ impl Player {
         self.max_bombs = 1;
         self.bomb_range = 1;
         self.pierce = false;
+    }
+
+    pub fn combo_multiplier(&self) -> u32 {
+        (1 + self.combo / COMBO_STEP).min(MAX_COMBO_MULTIPLIER)
+    }
+
+    pub fn is_in_fever(&self) -> bool {
+        self.combo >= FEVER_COMBO
+    }
+
+    /// Range of the next bomb, including the Fever bonus.
+    pub fn effective_bomb_range(&self) -> usize {
+        if self.is_in_fever() {
+            self.bomb_range + FEVER_BONUS_RANGE
+        } else {
+            self.bomb_range
+        }
     }
 
     pub fn is_protected(&self, current_beat: u64) -> bool {
@@ -334,6 +358,32 @@ mod tests {
         assert!(!is_valid_player_name("PlayerNameIsTooLongToBeValidForThisGame"));
         assert!(!is_valid_player_name("Player#1"));
         assert!(!is_valid_player_name("🤖"));
+    }
+
+    #[test]
+    fn combo_multiplier_grows_every_step_and_is_capped() {
+        let mut player = Player::new(1, "Player 1", "🤖", 3);
+
+        let multipliers: Vec<u32> = [0, COMBO_STEP, COMBO_STEP * 2, COMBO_STEP * 50]
+            .iter()
+            .map(|&combo| {
+                player.combo = combo;
+                player.combo_multiplier()
+            })
+            .collect();
+
+        assert_eq!(multipliers, vec![1, 2, 3, MAX_COMBO_MULTIPLIER]);
+    }
+
+    #[test]
+    fn effective_bomb_range_adds_fever_bonus() {
+        let mut player = Player::new(1, "Player 1", "🤖", 3);
+        player.bomb_range = 2;
+        player.combo = FEVER_COMBO;
+
+        let range = player.effective_bomb_range();
+
+        assert_eq!(range, 2 + FEVER_BONUS_RANGE);
     }
 
     #[test]

@@ -1,6 +1,8 @@
 use super::GameState;
 use crate::game::actions::GameAction;
 use crate::game::models::{Cell, SHIELD_DURATION_BEATS, SecondItem};
+
+const MAX_COMBO: u32 = 9999;
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
@@ -38,17 +40,34 @@ impl GameState {
                 return;
             }
 
+            if !player.is_alive {
+                return;
+            }
+
             let success =
                 self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
-            if success {
-                if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
-                    p.last_acted_beat = Some(current_beat);
-                    p.last_accuracy = accuracy.clone();
-                    if accuracy != BeatAccuracy::Ok {
-                        p.combo = (p.combo + 1).min(9999);
-                    }
-                    p.score += accuracy.bonus_points();
+            // An on-beat action keeps the groove even if it fails (e.g. bumping
+            // a wall), but it consumes the beat: one action per beat.
+            if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
+                p.last_acted_beat = Some(current_beat);
+                p.last_accuracy = accuracy.clone();
+                if accuracy != BeatAccuracy::Ok {
+                    p.combo = (p.combo + 1).min(MAX_COMBO);
                 }
+                if success {
+                    let points = accuracy.bonus_points() * p.combo_multiplier();
+                    p.score = p.score.saturating_add(points);
+                }
+            }
+        }
+    }
+
+    /// Resets the combo of every active player who let a beat pass without acting.
+    pub fn reset_idle_combos(&mut self, current_beat: u64) {
+        for player in &mut self.players {
+            let is_active = player.is_alive && !player.is_spectator;
+            if is_active && player.last_acted_beat != Some(current_beat) {
+                player.combo = 0;
             }
         }
     }
@@ -170,6 +189,57 @@ mod tests {
 
         assert_eq!(state.players[0].combo, 0);
         assert_eq!(state.players[0].last_accuracy, BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn handle_action_failed_move_on_beat_keeps_groove_and_consumes_beat() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![create_test_player(1)];
+
+        state.handle_action(1, GameAction::MoveLeft, BeatAccuracy::Perfect, 7);
+
+        assert_eq!(state.players[0].combo, 6);
+        assert_eq!(state.players[0].last_acted_beat, Some(7));
+        assert_eq!(state.players[0].score, 0);
+    }
+
+    #[test]
+    fn handle_action_applies_combo_multiplier_to_rhythm_points() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.combo = crate::game::models::COMBO_STEP - 1;
+        state.players = vec![player];
+
+        state.handle_action(1, GameAction::MoveUp, BeatAccuracy::Perfect, 7);
+
+        assert_eq!(state.players[0].score, BeatAccuracy::Perfect.bonus_points() * 2);
+    }
+
+    #[test]
+    fn handle_action_ignored_for_dead_player() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.is_alive = false;
+        state.players = vec![player];
+
+        state.handle_action(1, GameAction::MoveUp, BeatAccuracy::Perfect, 7);
+
+        assert_eq!(state.players[0].last_acted_beat, None);
+    }
+
+    #[test]
+    fn reset_idle_combos_resets_players_who_skipped_the_beat() {
+        let mut state = GameState::new(5, 5);
+        let mut idle = create_test_player(1);
+        idle.last_acted_beat = Some(6);
+        let mut active = create_test_player(2);
+        active.last_acted_beat = Some(7);
+        state.players = vec![idle, active];
+
+        state.reset_idle_combos(7);
+
+        assert_eq!(state.players[0].combo, 0);
+        assert_eq!(state.players[1].combo, 5);
     }
 
     #[test]

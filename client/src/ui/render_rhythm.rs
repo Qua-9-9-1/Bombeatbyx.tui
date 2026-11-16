@@ -152,14 +152,26 @@ pub fn draw_local_combo(
                 if ascii { "" } else { "🚿" }
             };
 
-            let text = format!("Combo: {} {}", value, emoji);
+            let fever = if player.is_in_fever() {
+                if ascii { "  FEVER! +1 RANGE" } else { "  🔥 FEVER! +1 RANGE" }
+            } else {
+                ""
+            };
+            let text = format!(
+                "Combo: {} {} x{}{}",
+                value,
+                emoji,
+                player.combo_multiplier(),
+                fever
+            );
+            let color = if player.is_in_fever() {
+                Color::Yellow
+            } else {
+                Color::LightRed
+            };
             Paragraph::new(text)
                 .alignment(Alignment::Center)
-                .style(
-                    Style::default()
-                        .fg(Color::LightRed)
-                        .add_modifier(Modifier::BOLD),
-                )
+                .style(Style::default().fg(color).add_modifier(Modifier::BOLD))
                 .render(area, buffer);
         }
     }

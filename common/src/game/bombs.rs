@@ -21,7 +21,7 @@ impl GameState {
                     self.grid[idx] = Cell::Bomb {
                         owner_id: player.id,
                         ticks_left: BOMB_FUSE_BEATS,
-                        range: player.bomb_range.min(u8::MAX as usize) as u8,
+                        range: player.effective_bomb_range().min(u8::MAX as usize) as u8,
                         pierce: player.pierce,
                     };
                     player.active_bombs += 1;

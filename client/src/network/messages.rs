@@ -106,7 +106,9 @@ impl App {
                                             new_state.grid[idx] = common::game::Cell::Bomb {
                                                 owner_id: self.current_player_id,
                                                 ticks_left: common::game::models::BOMB_FUSE_BEATS,
-                                                range: local_p.bomb_range.min(u8::MAX as usize)
+                                                range: local_p
+                                                    .effective_bomb_range()
+                                                    .min(u8::MAX as usize)
                                                     as u8,
                                                 pierce: local_p.pierce,
                                             };

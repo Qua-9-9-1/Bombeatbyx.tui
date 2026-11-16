@@ -49,6 +49,9 @@ impl GameContext {
                         player.last_accuracy = BeatAccuracy::Waiting;
                     }
                 }
+                if is_playing {
+                    self.state.reset_idle_combos(current_beat);
+                }
                 self.last_closed_window_beat = Some(current_beat);
             }
         }
