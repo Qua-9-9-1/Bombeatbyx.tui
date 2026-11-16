@@ -19,7 +19,14 @@ pub async fn process_client_message(
 ) -> Result<(), ()> {
     match client_msg {
         ClientMessage::GetRooms => handle_get_rooms(&tx, state).await?,
-        ClientMessage::CreateRoom { is_public, is_lan } => {
+        ClientMessage::CreateRoom {
+            is_public,
+            is_lan,
+            name,
+            skin,
+        } => {
+            *my_name = name;
+            *my_skin = skin;
             handle_create_room(
                 my_room_code,
                 my_player_id,

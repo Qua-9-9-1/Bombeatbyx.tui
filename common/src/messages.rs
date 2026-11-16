@@ -19,6 +19,8 @@ pub enum ClientMessage {
     CreateRoom {
         is_public: bool,
         is_lan: bool,
+        name: String,
+        skin: String,
     },
     JoinRoom {
         code: String,

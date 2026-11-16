@@ -22,6 +22,12 @@ impl App {
                 2 => {
                     let is_public = self.host_visibility == 0;
                     let is_lan = self.host_mode == 1;
+                    let create_msg = ClientMessage::CreateRoom {
+                        is_public,
+                        is_lan,
+                        name: self.profile.name.clone(),
+                        skin: self.profile.skin.clone(),
+                    };
 
                     self.profile.last_room_settings = self.room_settings.clone();
                     let _ = self.profile.save();
@@ -36,13 +42,13 @@ impl App {
                         let addr = format!("127.0.0.1:{}", port);
                         self.connect_to_server(
                             addr,
-                            Some(ClientMessage::CreateRoom { is_public, is_lan }),
+                            Some(create_msg.clone()),
                         );
                     } else {
                         let addr = self.profile.server_addr.clone();
                         self.connect_to_server(
                             addr,
-                            Some(ClientMessage::CreateRoom { is_public, is_lan }),
+                            Some(create_msg.clone()),
                         );
                     }
                 }
