@@ -1,6 +1,6 @@
 use super::GameState;
 use crate::game::actions::GameAction;
-use crate::game::models::{SHIELD_DURATION_BEATS, SecondItem};
+use crate::game::models::{Cell, SHIELD_DURATION_BEATS, SecondItem};
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
@@ -72,20 +72,51 @@ impl GameState {
     }
 
     pub fn trigger_action_2(&mut self, player_id: u32, current_beat: u64) -> bool {
-        if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
-            if player.is_alive {
-                if let Some(item) = player.second_item {
-                    match item {
-                        SecondItem::Shield => {
-                            player.shield_until_beat = Some(current_beat + SHIELD_DURATION_BEATS);
-                            player.second_item = None;
-                            return true;
-                        }
+        let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) else {
+            return false;
+        };
+        if !player.is_alive {
+            return false;
+        }
+        let Some(item) = player.second_item else {
+            return false;
+        };
+
+        let is_used = match item {
+            SecondItem::Shield => {
+                player.shield_until_beat = Some(current_beat + SHIELD_DURATION_BEATS);
+                true
+            }
+            SecondItem::Detonator => self.detonate_player_bombs(player_id),
+            SecondItem::Dash => self.dash_player(player_id),
+        };
+
+        if is_used {
+            if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
+                p.second_item = None;
+            }
+        }
+        is_used
+    }
+
+    /// Instantly explodes every bomb owned by the player.
+    /// Returns `false` (item kept) when the player has no bomb on the map.
+    pub fn detonate_player_bombs(&mut self, player_id: u32) -> bool {
+        let mut own_bombs = Vec::new();
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if let Cell::Bomb { owner_id, .. } = self.grid[y * self.width + x] {
+                    if owner_id == player_id {
+                        own_bombs.push((x, y));
                     }
                 }
             }
         }
-        false
+        if own_bombs.is_empty() {
+            return false;
+        }
+        self.detonate_chain(own_bombs);
+        true
     }
 
     /// Clears expired emotes so that clients (which never receive `emote_until`)
@@ -139,6 +170,56 @@ mod tests {
 
         assert_eq!(state.players[0].combo, 0);
         assert_eq!(state.players[0].last_accuracy, BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn trigger_action_2_detonator_explodes_own_bombs_immediately() {
+        let mut state = GameState::new(7, 5);
+        let mut player = create_test_player(1);
+        player.second_item = Some(SecondItem::Detonator);
+        player.active_bombs = 1;
+        state.players = vec![player];
+        state.grid[3 * 7 + 5] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 4,
+            range: 1,
+            pierce: false,
+        };
+
+        let used = state.trigger_action_2(1, 3);
+
+        assert!(used);
+        assert!(matches!(state.grid[3 * 7 + 5], Cell::Explosion { .. }));
+        assert_eq!(state.players[0].active_bombs, 0);
+    }
+
+    #[test]
+    fn trigger_action_2_detonator_kept_when_no_bomb_placed() {
+        let mut state = GameState::new(7, 5);
+        let mut player = create_test_player(1);
+        player.second_item = Some(SecondItem::Detonator);
+        state.players = vec![player];
+
+        let used = state.trigger_action_2(1, 3);
+
+        assert!(!used);
+        assert_eq!(state.players[0].second_item, Some(SecondItem::Detonator));
+    }
+
+    #[test]
+    fn trigger_action_2_dash_moves_several_cells_in_facing_direction() {
+        let mut state = GameState::new(11, 5);
+        let mut player = create_test_player(1);
+        player.sub_x = 2;
+        player.sub_y = 1;
+        player.facing = crate::game::models::Direction::Right;
+        player.second_item = Some(SecondItem::Dash);
+        state.players = vec![player];
+
+        let used = state.trigger_action_2(1, 3);
+
+        assert!(used);
+        assert_eq!(state.players[0].sub_x, 8);
     }
 
     #[test]

@@ -70,10 +70,7 @@ impl Player {
         self.death_beat = None;
         self.respawn_timer = None;
         self.active_bombs = 0;
-        self.max_bombs = 1;
-        self.bomb_range = 1;
-        self.collected_bonuses.clear();
-        self.second_item = None;
+        self.reset_power_ups();
         self.shield_until_beat = None;
         self.last_acted_beat = None;
     }

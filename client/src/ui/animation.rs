@@ -161,29 +161,17 @@ impl Animation {
         ticks_left: u8,
         ascii: bool,
     ) -> Self {
-        let sym = match b_type {
-            common::game::models::BonusType::BombQty => {
-                if ascii {
-                    "B+"
-                } else {
-                    "💣"
-                }
-            }
-            common::game::models::BonusType::BombRange => {
-                if ascii {
-                    "R+"
-                } else {
-                    "🔥"
-                }
-            }
-            common::game::models::BonusType::Shield => {
-                if ascii {
-                    "S+"
-                } else {
-                    "🛡️"
-                }
-            }
+        use common::game::models::BonusType;
+        let (ascii_sym, emoji_sym) = match b_type {
+            BonusType::BombQty => ("B+", "💣"),
+            BonusType::BombRange => ("R+", "🔥"),
+            BonusType::Shield => ("S+", "🛡️"),
+            BonusType::Pierce => ("P+", "🔪"),
+            BonusType::ExtraLife => ("L+", "💖"),
+            BonusType::Detonator => ("D+", "🧨"),
+            BonusType::Dash => ("F+", "👟"),
         };
+        let sym = if ascii { ascii_sym } else { emoji_sym };
 
         if ticks_left <= 5 {
             Self {

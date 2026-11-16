@@ -12,6 +12,29 @@ pub enum GameMode {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SecondItem {
     Shield,
+    Detonator,
+    Dash,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum Direction {
+    Up,
+    #[default]
+    Down,
+    Left,
+    Right,
+}
+
+impl Direction {
+    /// Grid-cell delta (x, y) for this direction.
+    pub fn delta(self) -> (i32, i32) {
+        match self {
+            Direction::Up => (0, -1),
+            Direction::Down => (0, 1),
+            Direction::Left => (-1, 0),
+            Direction::Right => (1, 0),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,14 +42,22 @@ pub enum BonusType {
     BombQty,
     BombRange,
     Shield,
+    Pierce,
+    ExtraLife,
+    Detonator,
+    Dash,
 }
 
 impl BonusType {
     /// Relative drop weights: common upgrades first, rare items last.
     const WEIGHTS: &'static [(BonusType, u32)] = &[
-        (BonusType::BombQty, 40),
-        (BonusType::BombRange, 40),
-        (BonusType::Shield, 20),
+        (BonusType::BombQty, 28),
+        (BonusType::BombRange, 28),
+        (BonusType::Shield, 12),
+        (BonusType::Dash, 10),
+        (BonusType::Detonator, 9),
+        (BonusType::Pierce, 8),
+        (BonusType::ExtraLife, 5),
     ];
 
     pub fn roll(rng: &mut GameRng) -> BonusType {
@@ -53,6 +84,9 @@ pub const KILL_POINTS: u32 = 300;
 pub const SELF_KILL_PENALTY: u32 = 150;
 pub const BRICK_POINTS: u32 = 10;
 pub const BONUS_PICKUP_POINTS: u32 = 25;
+
+pub const MAX_LIVES: u8 = 9;
+pub const DASH_DISTANCE: u32 = 3;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
@@ -62,7 +96,7 @@ pub enum Cell {
     Empty,
     Wall,
     Brick,
-    Bomb { owner_id: u32, ticks_left: u8, range: u8 },
+    Bomb { owner_id: u32, ticks_left: u8, range: u8, pierce: bool },
     Explosion { ticks_left: u8, owner_id: u32 },
     Bonus { bonus_type: BonusType, ticks_left: u8 },
 }
@@ -102,6 +136,10 @@ pub struct Player {
     pub death_beat: Option<u64>,
     #[serde(default)]
     pub kills: u32,
+    #[serde(default)]
+    pub pierce: bool,
+    #[serde(default)]
+    pub facing: Direction,
 }
 
 impl Player {
@@ -135,7 +173,18 @@ impl Player {
             is_ready: false,
             death_beat: None,
             kills: 0,
+            pierce: false,
+            facing: Direction::Down,
         }
+    }
+
+    /// Resets every power-up collected during the current life.
+    pub fn reset_power_ups(&mut self) {
+        self.collected_bonuses.clear();
+        self.second_item = None;
+        self.max_bombs = 1;
+        self.bomb_range = 1;
+        self.pierce = false;
     }
 
     pub fn is_protected(&self, current_beat: u64) -> bool {

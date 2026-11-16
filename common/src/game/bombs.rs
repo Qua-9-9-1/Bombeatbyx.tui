@@ -22,6 +22,7 @@ impl GameState {
                         owner_id: player.id,
                         ticks_left: BOMB_FUSE_BEATS,
                         range: player.bomb_range.min(u8::MAX as usize) as u8,
+                        pierce: player.pierce,
                     };
                     player.active_bombs += 1;
                     return true;
@@ -42,14 +43,14 @@ impl GameState {
                         owner_id,
                         mut ticks_left,
                         range,
+                        pierce,
                     } => {
-                        if ticks_left > 0 {
-                            ticks_left -= 1;
-                        }
+                        ticks_left = ticks_left.saturating_sub(1);
                         self.grid[idx] = Cell::Bomb {
                             owner_id,
                             ticks_left,
                             range,
+                            pierce,
                         };
                         if ticks_left == 0 {
                             bombs_to_explode.push((x, y));
@@ -118,10 +119,13 @@ impl GameState {
 
     /// Returns the positions of the other bombs reached by this blast.
     fn explode_bomb(&mut self, bx: usize, by: usize) -> Vec<(usize, usize)> {
-        let (owner_id, range) = match self.grid[by * self.width + bx] {
+        let (owner_id, range, pierce) = match self.grid[by * self.width + bx] {
             Cell::Bomb {
-                owner_id, range, ..
-            } => (owner_id, range as i32),
+                owner_id,
+                range,
+                pierce,
+                ..
+            } => (owner_id, range as i32, pierce),
             _ => return Vec::new(),
         };
 
@@ -156,7 +160,9 @@ impl GameState {
                             let bonus = BonusType::roll(&mut self.rng);
                             self.pending_drops.push((idx, bonus));
                         }
-                        break;
+                        if !pierce {
+                            break;
+                        }
                     }
                     Cell::Empty | Cell::Explosion { .. } | Cell::Bonus { .. } => {
                         self.grid[idx] = fire;
@@ -223,6 +229,7 @@ mod tests {
             owner_id: 1,
             ticks_left: 1,
             range: 1,
+            pierce: false,
         };
 
         state.tick_bombs_and_explosions();
@@ -259,6 +266,25 @@ mod tests {
     }
 
     #[test]
+    fn tick_bombs_and_explosions_pierce_bomb_goes_through_bricks() {
+        let mut state = GameState::new(9, 3);
+        state.players = vec![create_test_player(1)];
+        state.grid[1 * 9 + 2] = Cell::Brick;
+        state.grid[1 * 9 + 3] = Cell::Brick;
+        state.grid[1 * 9 + 1] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 3,
+            pierce: true,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert!(matches!(state.grid[1 * 9 + 3], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[1 * 9 + 4], Cell::Explosion { .. }));
+    }
+
+    #[test]
     fn tick_bombs_and_explosions_awards_points_for_destroyed_brick() {
         let mut state = GameState::new(7, 3);
         state.players = vec![create_test_player(1)];
@@ -267,6 +293,7 @@ mod tests {
             owner_id: 1,
             ticks_left: 1,
             range: 2,
+            pierce: false,
         };
 
         state.tick_bombs_and_explosions();
@@ -298,6 +325,7 @@ mod tests {
             owner_id: 1,
             ticks_left: 1,
             range: 3,
+            pierce: false,
         };
 
         state.tick_bombs_and_explosions();
@@ -313,11 +341,13 @@ mod tests {
             owner_id: 1,
             ticks_left: 1,
             range: 2,
+            pierce: false,
         };
         state.grid[1 * 9 + 3] = Cell::Bomb {
             owner_id: 1,
             ticks_left: 4,
             range: 2,
+            pierce: false,
         };
 
         state.tick_bombs_and_explosions();
@@ -334,11 +364,13 @@ mod tests {
             owner_id: 1,
             ticks_left: 1,
             range: 5,
+            pierce: false,
         };
         state.grid[1 * 9 + 2] = Cell::Bomb {
             owner_id: 1,
             ticks_left: 4,
             range: 1,
+            pierce: false,
         };
 
         state.tick_bombs_and_explosions();

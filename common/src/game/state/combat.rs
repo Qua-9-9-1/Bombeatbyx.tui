@@ -41,10 +41,7 @@ impl GameState {
                 std::time::Instant::now() + std::time::Duration::from_secs(RESPAWN_DELAY_SECS),
             );
             victim.combo = 0;
-            victim.collected_bonuses.clear();
-            victim.second_item = None;
-            victim.max_bombs = 1;
-            victim.bomb_range = 1;
+            victim.reset_power_ups();
         }
 
         match killer_id {

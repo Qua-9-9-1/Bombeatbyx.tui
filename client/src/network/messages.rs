@@ -89,6 +89,8 @@ impl App {
                                 p.bomb_range = local_p.bomb_range;
                                 p.collected_bonuses = local_p.collected_bonuses.clone();
                                 p.second_item = local_p.second_item;
+                                p.pierce = local_p.pierce;
+                                p.facing = local_p.facing;
                                 p.shield_until_beat = local_p.shield_until_beat;
 
                                 if let Some((predicted_beat, common::game::GameAction::PlaceBomb)) =
@@ -106,6 +108,7 @@ impl App {
                                                 ticks_left: common::game::models::BOMB_FUSE_BEATS,
                                                 range: local_p.bomb_range.min(u8::MAX as usize)
                                                     as u8,
+                                                pierce: local_p.pierce,
                                             };
                                         }
                                     }
