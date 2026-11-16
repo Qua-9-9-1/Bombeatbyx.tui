@@ -77,6 +77,7 @@ pub struct App {
     pub is_local_dev_bots: bool,
     pub victory_final_state: Option<common::game::GameState>,
     pub victory_start_time: Option<Instant>,
+    pub solo_paused_at: Option<Instant>,
 }
 
 impl App {
@@ -122,6 +123,7 @@ impl App {
             is_local_dev_bots: false,
             victory_final_state: None,
             victory_start_time: None,
+            solo_paused_at: None,
         }
     }
 
@@ -145,6 +147,9 @@ impl App {
             last_time = current_time;
 
             self.handle_network_tick(&udp_socket);
+            if !self.network.is_multiplayer {
+                self.sync_solo_pause();
+            }
 
             if self.state == AppState::InGame {
                 if !self.network.is_multiplayer {

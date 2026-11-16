@@ -17,6 +17,24 @@ impl App {
         self.state = crate::local::app::AppState::InGame;
     }
 
+    /// Freezes the offline game while the pause menu (or settings opened from
+    /// it) is shown, so beats do not fast-forward on resume.
+    pub(crate) fn sync_solo_pause(&mut self) {
+        let is_paused = self.paused_from == Some(crate::local::app::AppState::InGame)
+            && self.state != crate::local::app::AppState::InGame;
+        if is_paused {
+            self.solo_paused_at.get_or_insert_with(std::time::Instant::now);
+            return;
+        }
+        if let Some(paused_at) = self.solo_paused_at.take() {
+            if self.state == crate::local::app::AppState::InGame {
+                if let Some(ref mut ctx) = self.game_ctx {
+                    ctx.shift_clock(paused_at.elapsed());
+                }
+            }
+        }
+    }
+
     pub(crate) fn update_physics(&mut self, tick_rate: Duration, lag: &mut Duration) {
         while *lag >= tick_rate {
             *lag -= tick_rate;

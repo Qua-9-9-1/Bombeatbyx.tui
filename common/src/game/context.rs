@@ -85,6 +85,25 @@ impl GameContext {
         has_beat_ticked
     }
 
+    /// Shifts every wall-clock deadline forward, as if `paused` never elapsed.
+    /// Used when a local (offline) game is paused.
+    pub fn shift_clock(&mut self, paused: std::time::Duration) {
+        self.rhythm.last_beat_time += paused;
+        self.rhythm.next_beat_time += paused;
+        self.start_time += paused;
+        for player in &mut self.state.players {
+            if let Some(ref mut timer) = player.respawn_timer {
+                *timer += paused;
+            }
+            if let Some(ref mut until) = player.emote_until {
+                *until += paused;
+            }
+            if let Some(ref mut until) = player.spam_lockout_until {
+                *until += paused;
+            }
+        }
+    }
+
     pub fn process_player_action(&mut self, player_id: u32, action: GameAction) {
         let accuracy = self.rhythm.evaluate_accuracy();
         let progress = self.rhythm.progress();
@@ -111,5 +130,18 @@ mod tests {
         context.tick_game_logic();
 
         assert!(context.state.elapsed_time_secs >= 5);
+    }
+
+    #[test]
+    fn shift_clock_prevents_beats_from_catching_up_after_pause() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        let paused = std::time::Duration::from_secs(10);
+        context.rhythm.last_beat_time -= paused;
+        context.rhythm.next_beat_time -= paused;
+
+        context.shift_clock(paused);
+        let has_ticked = context.rhythm.tick_logic();
+
+        assert!(!has_ticked);
     }
 }
