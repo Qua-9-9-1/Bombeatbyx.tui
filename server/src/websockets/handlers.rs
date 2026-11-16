@@ -74,9 +74,11 @@ pub async fn handle_socket(socket: WebSocket, state: SharedState, client_ip: std
                             }
                         }
                     }
-                    _ => {
+                    Some(Ok(Message::Close(_))) | Some(Err(_)) | None => {
                         break;
                     }
+                    // Protocol-level ping/pong and binary frames are not ours to act on.
+                    Some(Ok(_)) => {}
                 }
             }
         }
