@@ -18,3 +18,6 @@ target
 rustc-ice-*.txt
 
 .vscode/
+
+# Local Rust toolchain (rustup/cargo homes), never committed
+.toolchain/
