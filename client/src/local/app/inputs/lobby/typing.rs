@@ -78,7 +78,7 @@ impl App {
 
                 let new_skin = self.profile.skin.clone();
 
-                if self.is_local_dev_bots {
+                if self.is_solo_mode {
                     if let Some(bot) = ctx
                         .state
                         .players

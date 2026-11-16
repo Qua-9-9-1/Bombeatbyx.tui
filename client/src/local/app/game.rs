@@ -1,5 +1,7 @@
 use crate::local::app::App;
 use common::game::GameAction;
+use common::game::ai::{decide_bot_action, roll_bot_accuracy};
+use common::game::models::MAX_BOTS;
 use crossterm::event::KeyCode;
 use std::time::Duration;
 
@@ -158,7 +160,9 @@ impl App {
                 .collect();
 
             let mut players = vec![me];
-            for (id, name) in [(2, "Bot Alpha"), (3, "Bot Beta"), (4, "Bot Gamma")] {
+            for index in 0..self.room_settings.bot_count.min(MAX_BOTS) {
+                let id = index as u32 + 2;
+                let name = BOT_NAMES[index as usize % BOT_NAMES.len()];
                 let skin = available_skins.pop().unwrap_or_else(|| "🤖".to_string());
                 let mut bot = common::game::Player::new(id, name, skin, self.room_settings.lives);
                 bot.is_ready = true;
@@ -168,51 +172,46 @@ impl App {
         }
     }
 
+    /// Lets every AI opponent act once, right on the beat.
     pub(crate) fn update_bots(&mut self) {
-        if let Some(ref mut ctx) = self.game_ctx {
-            let bot_ids: Vec<u32> = ctx
-                .state
-                .players
-                .iter()
-                .filter(|p| p.id != self.current_player_id && p.is_alive && !p.is_spectator)
-                .map(|p| p.id)
-                .collect();
+        let Some(ref mut ctx) = self.game_ctx else {
+            return;
+        };
+        if ctx.state.countdown.is_some() || ctx.state.game_over_countdown.is_some() {
+            return;
+        }
+        let difficulty = self.room_settings.bot_difficulty;
+        let bot_ids: Vec<u32> = ctx
+            .state
+            .players
+            .iter()
+            .filter(|p| p.id != self.current_player_id && p.is_alive && !p.is_spectator)
+            .map(|p| p.id)
+            .collect();
 
-            for bot_id in bot_ids {
-                let seed = common::game::spawns::get_pseudo_random_u32();
-                if seed % 100 > 60 {
-                    continue;
-                }
-
-                let action_roll = (seed / 100) % 100;
-                let action = if action_roll < 15 {
-                    common::game::GameAction::PlaceBomb
-                } else if action_roll < 20 {
-                    common::game::GameAction::TriggerSpell
-                } else if action_roll < 25 {
-                    let emote_id = ((seed / 10000) % 4 + 1) as u8;
-                    common::game::GameAction::Emote(emote_id)
-                } else {
-                    let dir_roll = (seed / 10000) % 4;
-                    match dir_roll {
-                        0 => common::game::GameAction::MoveLeft,
-                        1 => common::game::GameAction::MoveRight,
-                        2 => common::game::GameAction::MoveUp,
-                        _ => common::game::GameAction::MoveDown,
-                    }
-                };
-
-                let accuracy = match seed % 3 {
-                    0 => common::game::BeatAccuracy::Perfect,
-                    1 => common::game::BeatAccuracy::Great,
-                    _ => common::game::BeatAccuracy::Ok,
-                };
-
-                let target_beat = ctx.rhythm.beat_count;
-
+        for bot_id in bot_ids {
+            let target_beat = ctx.rhythm.beat_count;
+            if let Some(action) = decide_bot_action(&ctx.state, bot_id, difficulty, &mut self.bot_rng)
+            {
+                let accuracy = roll_bot_accuracy(difficulty, &mut self.bot_rng);
                 ctx.state
                     .handle_action(bot_id, action, accuracy, target_beat);
+            }
+            if self.bot_rng.chance(BOT_EMOTE_PERCENT) {
+                let emote = (self.bot_rng.below(4) + 1) as u8;
+                ctx.state.trigger_emote(bot_id, emote);
             }
         }
     }
 }
+
+const BOT_NAMES: [&str; 7] = [
+    "Bot Alpha",
+    "Bot Beta",
+    "Bot Gamma",
+    "Bot Delta",
+    "Bot Epsilon",
+    "Bot Zeta",
+    "Bot Eta",
+];
+const BOT_EMOTE_PERCENT: u32 = 1;

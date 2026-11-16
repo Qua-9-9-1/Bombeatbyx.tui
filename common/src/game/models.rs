@@ -282,6 +282,18 @@ pub struct RoomSettings {
     pub mode: GameMode,
     pub target_score: u32,
     pub time_limit_mins: Option<u32>,
+    /// Solo mode only: number of AI opponents.
+    #[serde(default = "default_bot_count")]
+    pub bot_count: u8,
+    /// Solo mode only: AI skill level.
+    #[serde(default)]
+    pub bot_difficulty: BotDifficulty,
+}
+
+pub const MAX_BOTS: u8 = 7;
+
+fn default_bot_count() -> u8 {
+    3
 }
 
 impl Default for RoomSettings {
@@ -296,6 +308,8 @@ impl Default for RoomSettings {
             mode: GameMode::Deathmatch,
             target_score: 1000,
             time_limit_mins: None,
+            bot_count: default_bot_count(),
+            bot_difficulty: BotDifficulty::Normal,
         }
     }
 }

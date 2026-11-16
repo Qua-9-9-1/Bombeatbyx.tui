@@ -1,4 +1,5 @@
-use common::game::models::RoomSettings;
+use crate::screens::lobby::{ROW_BOT_COUNT, ROW_BOT_LEVEL, ROW_NAME, ROW_READY, ROW_SKIN};
+use common::game::models::{MAX_BOTS, RoomSettings};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -293,7 +294,37 @@ pub fn draw_info_panel(
             info_lines.push(Line::from("Sets the time limit for"));
             info_lines.push(Line::from("the match."));
         }
-        9 => {
+        ROW_BOT_COUNT => {
+            info_lines.push(Line::from(Span::styled(
+                if ascii { " [ BOTS ] " } else { "🤖 BOTS" },
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Cyan),
+            )));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Number of AI opponents"));
+            info_lines.push(Line::from(format!("in solo mode (1 to {}).", MAX_BOTS)));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Bots play on the beat too:"));
+            info_lines.push(Line::from("they break bricks, grab"));
+            info_lines.push(Line::from("bonuses and hunt you down."));
+        }
+        ROW_BOT_LEVEL => {
+            info_lines.push(Line::from(Span::styled(
+                if ascii { " [ BOT LEVEL ] " } else { "🧠 BOT LEVEL" },
+                Style::default()
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Cyan),
+            )));
+            info_lines.push(Line::from(""));
+            info_lines.push(Line::from("Easy: slow, clumsy, only"));
+            info_lines.push(Line::from("breaks bricks."));
+            info_lines.push(Line::from("Normal: hunts players and"));
+            info_lines.push(Line::from("uses items."));
+            info_lines.push(Line::from("Hard: near-perfect rhythm,"));
+            info_lines.push(Line::from("aggressive and careful."));
+        }
+        ROW_NAME => {
             info_lines.push(Line::from(Span::styled(
                 header_name,
                 Style::default()
@@ -310,7 +341,7 @@ pub fn draw_info_panel(
             info_lines.push(Line::from("A-Z, 0-9, A-Z, underscores"));
             info_lines.push(Line::from("Max 12 characters."));
         }
-        10 => {
+        ROW_SKIN => {
             info_lines.push(Line::from(Span::styled(
                 header_skin,
                 Style::default()
@@ -338,7 +369,7 @@ pub fn draw_info_panel(
                 info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
             }
         }
-        11 => {
+        ROW_READY => {
             info_lines.push(Line::from(Span::styled(
                 header_start,
                 Style::default()

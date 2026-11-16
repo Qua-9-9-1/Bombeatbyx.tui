@@ -2,6 +2,7 @@ pub mod actions;
 pub mod typing;
 
 use crate::local::app::App;
+use crate::screens::lobby::ROW_NAME;
 use common::messages::ClientMessage;
 use crossterm::event::KeyCode;
 
@@ -17,15 +18,17 @@ impl App {
 
         let is_host = self.is_local_player_host();
 
-        if code == KeyCode::Enter && self.lobby_screen.cursor == 9 {
+        if code == KeyCode::Enter && self.lobby_screen.cursor == ROW_NAME {
             self.editing_name = true;
             return;
         }
 
+        let previous_bot_count = self.room_settings.bot_count;
         if self.lobby_screen.handle_input(
             &mut self.room_settings,
             &mut self.profile.skin,
             is_host,
+            self.is_solo_mode,
             code,
         ) {
             let skin_taken = if let Some(ref ctx) = self.game_ctx {
@@ -53,7 +56,7 @@ impl App {
                         .find(|p| p.id == self.current_player_id)
                     {
                         p.is_ready = !p.is_ready;
-                        if self.is_local_dev_bots && p.is_ready {
+                        if self.is_solo_mode && p.is_ready {
                             p.is_ready = false;
                             self.start_game();
                         }
@@ -64,13 +67,17 @@ impl App {
             if self.network.is_multiplayer {
                 self.sync_lobby_skin();
                 let _ = self.profile.save();
-                if is_host && self.lobby_screen.cursor < 9 {
+                if is_host && self.lobby_screen.cursor < ROW_NAME {
                     if let Some(ref tx) = self.network.server_tx {
                         let _ = tx.send(ClientMessage::UpdateSettings(self.room_settings.clone()));
                     }
                 }
             } else {
+                if self.room_settings.bot_count != previous_bot_count {
+                    self.setup_local_lobby_players();
+                }
                 self.sync_lobby_skin();
+                self.profile.last_room_settings = self.room_settings.clone();
                 let _ = self.profile.save();
             }
         }

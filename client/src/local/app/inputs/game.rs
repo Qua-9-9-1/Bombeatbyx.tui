@@ -61,7 +61,7 @@ impl App {
                                 self.network.room_code = None;
                                 self.stop_local_server();
                             }
-                            self.is_local_dev_bots = false;
+                            self.is_solo_mode = false;
                             self.paused_from = None;
                             self.game_ctx = None;
                             self.state = AppState::MainMenu;

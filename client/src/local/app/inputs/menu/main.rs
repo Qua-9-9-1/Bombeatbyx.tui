@@ -1,4 +1,5 @@
 use crate::local::app::{App, AppState};
+use crate::screens::lobby::ROW_READY;
 use crate::screens::main_menu::MainMenuAction;
 use crossterm::event::KeyCode;
 
@@ -6,14 +7,15 @@ impl App {
     pub(crate) fn handle_main_menu_input(&mut self, code: KeyCode) {
         match self.main_menu_screen.handle_input(code) {
             MainMenuAction::HostGame => {
+                self.is_solo_mode = false;
                 self.state = AppState::HostModal;
                 self.host_cursor = 0;
             }
-            MainMenuAction::LocalDevGame => {
-                self.is_local_dev_bots = true;
+            MainMenuAction::SoloGame => {
+                self.is_solo_mode = true;
                 self.network.is_multiplayer = false;
                 self.state = AppState::Lobby;
-                self.lobby_screen.cursor = 8;
+                self.lobby_screen.cursor = ROW_READY;
                 let ctx = common::game::GameContext::new(
                     self.room_settings.width,
                     self.room_settings.height,
@@ -23,6 +25,7 @@ impl App {
                 self.setup_local_lobby_players();
             }
             MainMenuAction::JoinGame => {
+                self.is_solo_mode = false;
                 self.state = AppState::JoinRoomMenu;
                 self.join_cursor = 0;
                 self.join_filter_mode = 0;

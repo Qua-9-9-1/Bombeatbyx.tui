@@ -23,30 +23,16 @@ pub fn draw_main_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::Cyan));
 
-    let items = if cfg!(debug_assertions) {
-        if ascii {
-            vec![
-                "Host Game",
-                "Join Game",
-                "Local Dev Game",
-                "Settings",
-                "Quit",
-            ]
-        } else {
-            vec![
-                "🚀 Host Game",
-                "🌐 Join Game",
-                "🤖 Local Dev Game",
-                "⚙️  Settings",
-                "❌ Quit",
-            ]
-        }
+    let items = if ascii {
+        vec!["Host Game", "Join Game", "Solo vs Bots", "Settings", "Quit"]
     } else {
-        if ascii {
-            vec!["Host Game", "Join Game", "Settings", "Quit"]
-        } else {
-            vec!["🚀 Host Game", "🌐 Join Game", "⚙️  Settings", "❌ Quit"]
-        }
+        vec![
+            "🚀 Host Game",
+            "🌐 Join Game",
+            "🤖 Solo vs Bots",
+            "⚙️  Settings",
+            "❌ Quit",
+        ]
     };
 
     let subtitle = if ascii {

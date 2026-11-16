@@ -1,5 +1,6 @@
 use super::info::get_skin_label;
 use crate::local::app::App;
+use crate::screens::lobby::{ROW_NAME, ROW_READY, ROW_SKIN, is_bot_row};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -133,12 +134,14 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 }
             )
         },
+        format!("Bots          : < {} >", rs.bot_count),
+        format!("Bot Level     : < {} >", rs.bot_difficulty.label()),
         format!("Your Name     : < {} >", name_display),
         format!("Your Skin     : < {} >", skin_name),
         ready_btn_text,
     ];
 
-    let mut center_lines = vec![Line::from("")];
+    let mut center_lines = vec![];
     if is_host {
         let label = if ascii {
             "  == HOST SETTINGS (Q/D to adjust) =="
@@ -160,12 +163,14 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
             Style::default().fg(Color::DarkGray),
         )));
     }
-    center_lines.push(Line::from(""));
 
     let arrow_l = if ascii { " => " } else { " ► " };
     let arrow_r = if ascii { " <= " } else { " ◄" };
 
     for (idx, item) in items.iter().enumerate() {
+        if is_bot_row(idx) && !app.is_solo_mode {
+            continue;
+        }
         if idx == 0 {
             let label = if ascii {
                 "  -- GAME CONFIGURATION --"
@@ -178,10 +183,9 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                     .fg(Color::Yellow)
                     .add_modifier(Modifier::BOLD),
             )));
-            center_lines.push(Line::from(""));
         }
 
-        if idx == 9 {
+        if idx == ROW_NAME {
             let label = if ascii {
                 "  -- PLAYER PERSONALIZATION --"
             } else {
@@ -193,11 +197,10 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                     .fg(Color::Magenta)
                     .add_modifier(Modifier::BOLD),
             )));
-            center_lines.push(Line::from(""));
         }
 
         if idx == cursor {
-            if idx == 11 {
+            if idx == ROW_READY {
                 let color = if skin_taken {
                     Color::Red
                 } else if my_player_ready {
@@ -215,7 +218,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                     Style::default().fg(color).add_modifier(Modifier::BOLD),
                 )));
             } else {
-                let is_editing = idx == 9 && app.editing_name;
+                let is_editing = idx == ROW_NAME && app.editing_name;
                 let color = if is_editing {
                     Color::LightGreen
                 } else {
@@ -237,7 +240,7 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
                 ]));
             }
         } else {
-            if idx == 11 {
+            if idx == ROW_READY {
                 let color = if skin_taken {
                     Color::Red
                 } else if my_player_ready {
@@ -257,15 +260,15 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
 
     center_lines.push(Line::from(""));
 
-    let help_desc = if cursor == 9 {
+    let help_desc = if cursor == ROW_NAME {
         if app.editing_name {
             "Type name, Backspace to delete, Enter to save"
         } else {
             "Press Enter to edit name"
         }
-    } else if cursor == 10 {
+    } else if cursor == ROW_SKIN {
         "Press Q/D or Left/Right to change skin"
-    } else if cursor == 11 {
+    } else if cursor == ROW_READY {
         if skin_taken {
             "Change your skin! Someone else is ready with it"
         } else if my_player_ready {

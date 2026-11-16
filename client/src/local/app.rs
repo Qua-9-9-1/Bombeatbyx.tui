@@ -74,10 +74,11 @@ pub struct App {
 
     pub active_confirmation: Option<ConfirmationPopup>,
     pub active_notification: Option<NotificationPopup>,
-    pub is_local_dev_bots: bool,
+    pub is_solo_mode: bool,
     pub victory_final_state: Option<common::game::GameState>,
     pub victory_start_time: Option<Instant>,
     pub solo_paused_at: Option<Instant>,
+    pub bot_rng: common::game::spawns::GameRng,
 }
 
 impl App {
@@ -120,10 +121,11 @@ impl App {
 
             active_confirmation: None,
             active_notification: None,
-            is_local_dev_bots: false,
+            is_solo_mode: false,
             victory_final_state: None,
             victory_start_time: None,
             solo_paused_at: None,
+            bot_rng: common::game::spawns::GameRng::from_time(),
         }
     }
 
@@ -159,7 +161,7 @@ impl App {
                         has_beat_ticked = ctx.tick_game_logic();
                         should_end = ctx.state.update_match_end();
                     }
-                    if has_beat_ticked && self.is_local_dev_bots {
+                    if has_beat_ticked && self.is_solo_mode {
                         self.update_bots();
                     }
                     if should_end && self.game_ctx.is_some() {

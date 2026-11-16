@@ -1,5 +1,18 @@
-use common::game::models::RoomSettings;
+use common::game::models::{GameMode, MAX_BOTS, RoomSettings};
 use crossterm::event::KeyCode;
+
+/// Lobby rows, top to bottom. Rows before `ROW_NAME` are host-only room settings;
+/// the bot rows only exist in solo mode.
+pub const ROW_TIME_LIMIT: usize = 8;
+pub const ROW_BOT_COUNT: usize = 9;
+pub const ROW_BOT_LEVEL: usize = 10;
+pub const ROW_NAME: usize = 11;
+pub const ROW_SKIN: usize = 12;
+pub const ROW_READY: usize = 13;
+
+pub fn is_bot_row(row: usize) -> bool {
+    row == ROW_BOT_COUNT || row == ROW_BOT_LEVEL
+}
 
 pub struct LobbyScreen {
     pub cursor: usize,
@@ -19,35 +32,47 @@ impl LobbyScreen {
         room_settings: &mut RoomSettings,
         profile_skin: &mut String,
         is_host: bool,
+        has_bots: bool,
         code: KeyCode,
     ) -> bool {
         match code {
-            KeyCode::Up | KeyCode::Char('z') => {
-                self.cursor = self.cursor.saturating_sub(1);
-            }
-            KeyCode::Down | KeyCode::Char('s') => {
-                self.cursor = (self.cursor + 1).min(11);
-            }
+            KeyCode::Up | KeyCode::Char('z') => self.move_cursor(-1, has_bots),
+            KeyCode::Down | KeyCode::Char('s') => self.move_cursor(1, has_bots),
             KeyCode::Left | KeyCode::Char('q') => {
-                if self.cursor == 10 {
-                    self.modify_local_skin(profile_skin, false);
-                } else if is_host && self.cursor < 9 {
-                    self.modify_room_setting(room_settings, false);
-                }
+                self.adjust(room_settings, profile_skin, is_host, false)
             }
             KeyCode::Right | KeyCode::Char('d') => {
-                if self.cursor == 10 {
-                    self.modify_local_skin(profile_skin, true);
-                } else if is_host && self.cursor < 9 {
-                    self.modify_room_setting(room_settings, true);
-                }
+                self.adjust(room_settings, profile_skin, is_host, true)
             }
-            KeyCode::Enter if self.cursor == 11 => {
-                return true;
-            }
+            KeyCode::Enter if self.cursor == ROW_READY => return true,
             _ => {}
         }
         false
+    }
+
+    fn move_cursor(&mut self, step: i32, has_bots: bool) {
+        let mut row = self.cursor as i32;
+        loop {
+            row = (row + step).clamp(0, ROW_READY as i32);
+            if has_bots || !is_bot_row(row as usize) {
+                break;
+            }
+        }
+        self.cursor = row as usize;
+    }
+
+    fn adjust(
+        &mut self,
+        room_settings: &mut RoomSettings,
+        profile_skin: &mut String,
+        is_host: bool,
+        increase: bool,
+    ) {
+        if self.cursor == ROW_SKIN {
+            self.modify_local_skin(profile_skin, increase);
+        } else if is_host && self.cursor < ROW_NAME {
+            self.modify_room_setting(room_settings, increase);
+        }
     }
 
     fn modify_room_setting(&mut self, room_settings: &mut RoomSettings, increase: bool) {
@@ -70,35 +95,32 @@ impl LobbyScreen {
             5 => room_settings.lives = ((room_settings.lives as i32) + sign).clamp(1, 10) as u8,
             6 => {
                 room_settings.mode = match room_settings.mode {
-                    common::game::models::GameMode::Deathmatch => {
-                        common::game::models::GameMode::Score
-                    }
-                    common::game::models::GameMode::Score => {
-                        common::game::models::GameMode::Deathmatch
-                    }
+                    GameMode::Deathmatch => GameMode::Score,
+                    GameMode::Score => GameMode::Deathmatch,
                 };
             }
             7 => {
                 room_settings.target_score =
                     ((room_settings.target_score as i32) + sign * 1000).clamp(1000, 20000) as u32;
             }
-            8 => {
+            ROW_TIME_LIMIT => {
                 room_settings.time_limit_mins = match room_settings.time_limit_mins {
-                    None => {
-                        if increase {
-                            Some(1)
-                        } else {
-                            Some(20)
-                        }
-                    }
+                    None => Some(if increase { 1 } else { 20 }),
                     Some(m) => {
                         let new_val = m as i32 + sign;
-                        if new_val < 1 || new_val > 20 {
-                            None
-                        } else {
-                            Some(new_val as u32)
-                        }
+                        (1..=20).contains(&new_val).then_some(new_val as u32)
                     }
+                };
+            }
+            ROW_BOT_COUNT => {
+                room_settings.bot_count =
+                    ((room_settings.bot_count as i32) + sign).clamp(1, MAX_BOTS as i32) as u8;
+            }
+            ROW_BOT_LEVEL => {
+                room_settings.bot_difficulty = if increase {
+                    room_settings.bot_difficulty.next()
+                } else {
+                    room_settings.bot_difficulty.previous()
                 };
             }
             _ => {}
