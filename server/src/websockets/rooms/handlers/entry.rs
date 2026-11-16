@@ -90,6 +90,21 @@ pub async fn handle_join_room(
     name: String,
     skin: String,
 ) -> Result<(), ()> {
+    // A peer already in a room re-sends JoinRoom to update its name/skin.
+    if let (Some(current_code), Some(player_id)) = (my_room_code.clone(), *my_player_id) {
+        return handle_profile_update(
+            &current_code,
+            player_id,
+            my_name,
+            my_skin,
+            state,
+            &code,
+            name,
+            skin,
+        )
+        .await;
+    }
+
     if !common::game::models::is_valid_player_name(&name) {
         let _ = tx.send(ServerMessage::ConnectionFailed(
             "Invalid player name. Only alphanumeric characters, spaces, hyphens, and underscores are allowed (max 16 chars).".to_string(),
@@ -115,20 +130,6 @@ pub async fn handle_join_room(
                 "You are banned from this room".to_string(),
             ));
             return Err(());
-        }
-
-        if let Some(player_id) = *my_player_id {
-            if let Some(peer) = room.peers.get_mut(&player_id) {
-                peer.name = name;
-                peer.skin = skin;
-                peer.is_ready = false;
-            }
-            let players = room.get_lobby_players();
-            room.broadcast(ServerMessage::LobbyUpdate {
-                players,
-                settings: room.room_settings.clone(),
-            });
-            return Ok(());
         }
 
         if room.peers.len() >= 8 {
@@ -190,5 +191,44 @@ pub async fn handle_join_room(
         ));
         return Err(());
     }
+    Ok(())
+}
+
+/// Name/skin change of a peer already in a room. Invalid values are ignored
+/// (never a disconnect: the client sends this while the name is being typed),
+/// and only the peer's own room can be targeted.
+async fn handle_profile_update(
+    current_code: &str,
+    player_id: u32,
+    my_name: &mut String,
+    my_skin: &mut String,
+    state: &SharedState,
+    requested_code: &str,
+    name: String,
+    skin: String,
+) -> Result<(), ()> {
+    let is_valid = requested_code.eq_ignore_ascii_case(current_code)
+        && common::game::models::is_valid_player_name(&name)
+        && common::game::models::ALL_SKINS.contains(&skin.as_str());
+    if !is_valid {
+        return Ok(());
+    }
+
+    let mut s = state.lock().await;
+    let Some(room) = s.rooms.get_mut(current_code) else {
+        return Ok(());
+    };
+    if let Some(peer) = room.peers.get_mut(&player_id) {
+        peer.name = name.clone();
+        peer.skin = skin.clone();
+        peer.is_ready = false;
+    }
+    *my_name = name;
+    *my_skin = skin;
+    let players = room.get_lobby_players();
+    room.broadcast(ServerMessage::LobbyUpdate {
+        players,
+        settings: room.room_settings.clone(),
+    });
     Ok(())
 }
