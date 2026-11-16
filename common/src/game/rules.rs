@@ -24,3 +24,11 @@ pub const FEVER_BONUS_RANGE: usize = 1;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
+
+/// Room settings bounds, enforced by the lobby UI and re-checked by the server.
+pub const MAP_SIZE_RANGE: std::ops::RangeInclusive<usize> = 7..=29;
+pub const BPM_RANGE: std::ops::RangeInclusive<f64> = 40.0..=220.0;
+pub const BONUS_EVERY_RANGE: std::ops::RangeInclusive<u32> = 1..=60;
+pub const LIVES_RANGE: std::ops::RangeInclusive<u8> = 1..=10;
+pub const TARGET_SCORE_RANGE: std::ops::RangeInclusive<u32> = 1000..=20000;
+pub const TIME_LIMIT_RANGE: std::ops::RangeInclusive<u32> = 1..=20;

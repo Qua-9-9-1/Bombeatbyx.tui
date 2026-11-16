@@ -14,7 +14,8 @@ pub async fn handle_update_settings(
         if let Some(room) = s.rooms.get_mut(code) {
             let is_host = room.host_id == *my_player_id;
             if is_host && !room.in_game {
-                room.room_settings = settings;
+                // Never trust client values: an invalid size or BPM would panic the server.
+                room.room_settings = settings.sanitized();
                 if let Some(pid) = my_player_id.as_ref() {
                     if let Some(host_peer) = room.peers.get_mut(pid) {
                         host_peer.is_ready = false;

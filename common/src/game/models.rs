@@ -250,6 +250,42 @@ impl Default for RoomSettings {
     }
 }
 
+fn clamp_odd(value: usize, range: std::ops::RangeInclusive<usize>) -> usize {
+    let clamped = value.clamp(*range.start(), *range.end());
+    if clamped % 2 == 0 { clamped - 1 } else { clamped }
+}
+
+impl RoomSettings {
+    /// Returns a copy with every field forced into its valid range.
+    /// Settings received from the network must always go through this.
+    pub fn sanitized(&self) -> Self {
+        let bpm = if self.bpm.is_finite() {
+            self.bpm.clamp(*BPM_RANGE.start(), *BPM_RANGE.end())
+        } else {
+            Self::default().bpm
+        };
+        Self {
+            width: clamp_odd(self.width, MAP_SIZE_RANGE),
+            height: clamp_odd(self.height, MAP_SIZE_RANGE),
+            bpm,
+            sudden_death: self.sudden_death,
+            bonus_every: self
+                .bonus_every
+                .clamp(*BONUS_EVERY_RANGE.start(), *BONUS_EVERY_RANGE.end()),
+            lives: self.lives.clamp(*LIVES_RANGE.start(), *LIVES_RANGE.end()),
+            mode: self.mode,
+            target_score: self
+                .target_score
+                .clamp(*TARGET_SCORE_RANGE.start(), *TARGET_SCORE_RANGE.end()),
+            time_limit_mins: self
+                .time_limit_mins
+                .map(|m| m.clamp(*TIME_LIMIT_RANGE.start(), *TIME_LIMIT_RANGE.end())),
+            bot_count: self.bot_count.clamp(1, MAX_BOTS),
+            bot_difficulty: self.bot_difficulty,
+        }
+    }
+}
+
 #[cfg(test)]
 #[path = "models_tests.rs"]
 mod tests;

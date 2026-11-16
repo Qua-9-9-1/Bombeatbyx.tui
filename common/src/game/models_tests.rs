@@ -46,3 +46,42 @@ fn try_consume_action_lockout_blocks_action_when_spam_lockout_active() {
 
     assert!(!allowed);
 }
+
+#[test]
+fn sanitized_clamps_dangerous_values_into_valid_ranges() {
+    let hostile = RoomSettings {
+        width: 1,
+        height: 10_000,
+        bpm: 0.0,
+        bonus_every: 0,
+        lives: 0,
+        target_score: 0,
+        time_limit_mins: Some(0),
+        bot_count: 200,
+        ..RoomSettings::default()
+    };
+
+    let safe = hostile.sanitized();
+
+    assert_eq!(safe.width, *MAP_SIZE_RANGE.start());
+    assert_eq!(safe.height, *MAP_SIZE_RANGE.end());
+    assert_eq!(safe.bpm, *BPM_RANGE.start());
+    assert_eq!(safe.bonus_every, 1);
+    assert_eq!(safe.lives, 1);
+    assert_eq!(safe.time_limit_mins, Some(1));
+    assert_eq!(safe.bot_count, MAX_BOTS);
+}
+
+#[test]
+fn sanitized_makes_map_size_odd_and_replaces_nan_bpm() {
+    let settings = RoomSettings {
+        width: 16,
+        bpm: f64::NAN,
+        ..RoomSettings::default()
+    };
+
+    let safe = settings.sanitized();
+
+    assert_eq!(safe.width, 15);
+    assert_eq!(safe.bpm, RoomSettings::default().bpm);
+}
