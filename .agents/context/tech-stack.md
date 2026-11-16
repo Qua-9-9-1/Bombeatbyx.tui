@@ -9,14 +9,28 @@ The codebase is structured as a Cargo workspace with three distinct crates:
 ### A. `common` (Core logic & Simulation)
 * **Responsibility:** Implements the **pure, deterministic game simulation** — grid layout, player physics, beat/rhythm logic, bomb explosions, bonus spawning, and all state machines shared between client and server.
 * **Key Types:**
-  - [`GameState`](file:///c:/Users/stage1/Documents/other/Bombeast.tui/common/src/game/state/mod.rs) — Authoritative snapshot of all game data (grid, players, timers, BPM, mode, countdowns).
-  - [`GameContext`](file:///c:/Users/stage1/Documents/other/Bombeast.tui/common/src/game/mod.rs) — Wraps `GameState` with a rhythm clock (`RhythmEngine`) and exposes `tick_game_logic()`.
-  - [`Player`](file:///c:/Users/stage1/Documents/other/Bombeast.tui/common/src/game/models.rs) — All per-player properties (lives, combo, beat accuracy, bonuses, items, emotes).
-  - `GameMode` — `Deathmatch` | `Score`.
-  - `BeatAccuracy` — `Perfect` | `Good` | `Miss` | `Waiting`.
+  - `GameState` (`common/src/game/state/mod.rs`) — Authoritative snapshot of all game data (grid, players, timers, BPM, mode, countdowns, `current_beat`). Server-only fields (`pending_drops`, `rng`) are `#[serde(skip)]`.
+  - `GameContext` (`common/src/game/context.rs`) — Wraps `GameState` with a rhythm clock (`RhythmEngine`), exposes `new_match()`, `tick_game_logic()` and `shift_clock()`.
+  - `Player` (`common/src/game/models.rs`) — Per-player properties. **Always build one with `Player::new(id, name, skin, lives)`**, never with a struct literal; new fields need `#[serde(default)]`.
+  - `RoomSettings` — Lobby configuration; new fields need `#[serde(default)]` because it is persisted in the client `config.json`.
+  - `GameMode` — `Deathmatch` | `Score`. `BeatAccuracy` — `Perfect` | `Great` | `Ok` | `Miss` | `Waiting`.
   - `GameAction` — The exhaustive enum of all actions a player can submit in a beat.
+  - `GameRng` (`common/src/game/spawns.rs`) — Seedable PRNG. Use `GameRng::seeded` in tests, `from_time` in game code.
   - `ClientMessage` / `ServerMessage` — Serializable WebSocket protocol messages.
-* **Spawn logic:** `GameState::spawn_players` in [spawns.rs](file:///c:/Users/stage1/Documents/other/Bombeast.tui/common/src/game/state/spawns.rs) selects a dispersed subset of spawn points furthest apart.
+* **Module map (`common/src/game/`):**
+  | File | Responsibility |
+  | :--- | :--- |
+  | `rules.rs` | All gameplay tuning constants |
+  | `models.rs`, `bonuses.rs`, `skins.rs` | Data types (re-exported from `models`) |
+  | `bombs.rs` | Bomb placement, fuse ticking, blasts, chain reactions, brick drops |
+  | `physics.rs` | Movement, facing, bonus pickup, dash |
+  | `state/actions.rs` | Action dispatch, combo bookkeeping, items, emotes |
+  | `state/combat.rs` | Deaths, kill credit, points |
+  | `state/match_flow.rs` | Match setup and end conditions |
+  | `state/spawns.rs` | Spawns, respawns, brick generation, random bonuses |
+  | `state/sudden_death.rs` | Shrinking arena |
+  | `ai/` | Bot brain (danger map, pathfinding, goals, simulation tests) |
+* **Tests:** large test modules live in sibling `*_tests.rs` files (`#[path = "..."] mod tests;`) to keep source files under 300 lines.
 * **Dependencies:** `serde` (+ `serde_json` for message serialization shared with consumers).
 
 ---
@@ -36,7 +50,8 @@ The codebase is structured as a Cargo workspace with three distinct crates:
   - Player color assignment is a **client-side** concern derived from `player.id` — never sent from the server.
   - State reading uses `app.game_ctx.state.players` as the single source of truth for both lobby and in-game screens. No parallel player lists.
   - In **multiplayer mode**, the server tick drives `GameState`; the client only calls `ctx.rhythm.tick_logic()` locally for rhythm display.
-  - In **local/offline mode**, the client runs the full `ctx.tick_game_logic()` loop itself.
+  - In **local/offline mode** (solo vs bots), the client runs the full `ctx.tick_game_logic()` loop itself and calls `update_bots()` on each beat.
+  - Lobby rows are indexed by the `ROW_*` constants in `client/src/screens/lobby.rs`; never use raw cursor numbers.
 * **Dependencies:** `ratatui`, `crossterm`, `tokio`, `tokio-tungstenite` (WebSocket client), `serde_json`, `color-eyre`.
 
 ---

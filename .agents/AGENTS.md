@@ -12,7 +12,8 @@
 Welcome to the Bombeatbyx TUI workspace guidelines index. This file acts as the main entry point router mapping all project-specific context and reusable technology rules.
 
 ## 1. Project Context
-* [Business Context](./context/business-context.md) - Gameplay rules, rhythm synchronization, emotes, and ASCII fallback rendering mappings.
+* [Business Context](./context/business-context.md) - Gameplay rules (rhythm, combo, bombs, bricks, scoring, bonuses, sudden death), AI bots and solo mode, emotes, and ASCII fallback rendering mappings.
+* [Roadmap](./context/roadmap.md) - Gameplay feature ideas not implemented yet, with their prerequisites.
 * [Tech Stack](./context/tech-stack.md) - Crate workspace structure, dependencies, and state architecture.
 * [Objectives](./context/objectives.md) - Compilation commands, file organization guidelines, and developer workflow checklists.
 

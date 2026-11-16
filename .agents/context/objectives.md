@@ -11,6 +11,11 @@ Whenever structs or logic inside the `common` crate are modified, ensure that bo
   cargo check --workspace
   ```
 * All crates must compile **without warnings**. Avoid unused imports, dead code, or unhandled `Result`/`Option` returns.
+* Run `cargo test --workspace` before committing. Gameplay changes must come with unit tests in `common`; AI changes must keep `ai/simulation_tests.rs` green.
+* If no local Rust toolchain is available, use Docker (edition 2024 needs Rust >= 1.85):
+  ```powershell
+  docker run --rm -v "${PWD}:/app" -v bombeast-target:/app/target -w /app rust:1.88 cargo test --workspace
+  ```
 
 ## 3. Code Organization and Modularization
 * **Preserve Code Readability:** Helper tasks must not be grouped back into `app.rs`. Leave `game.rs` and the input event loops separate and modular.
@@ -30,7 +35,10 @@ Whenever structs or logic inside the `common` crate are modified, ensure that bo
 * **Spectator separation:** Spectators (`is_spectator: true`) must not receive `GameStarted` as active players and must not be able to submit `Action` messages that affect the game.
 
 ## 6. File Organization Checklist (Before Committing)
-- [ ] `cargo check --workspace` passes with zero warnings.
+- [ ] `cargo check --workspace` passes with zero warnings and `cargo test --workspace` is green.
+- [ ] Gameplay tuning values added to `common/src/game/rules.rs`, not hardcoded.
+- [ ] `business-context.md` updated when a game rule changes.
+- [ ] Commit messages follow `registry/core/git-workflow.md` (English, one line, `[ADD]`/`[EDIT]`/`[FIX]`/`[DEL]`).
 - [ ] Modified `common` structs reflected in both `client` and `server` usage sites.
 - [ ] No game logic added directly in `app.rs` — belongs in `game.rs` or a dedicated module.
 - [ ] No network handling added in UI/render files.
