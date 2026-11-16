@@ -62,6 +62,26 @@ impl Room {
         players
     }
 
+    /// Changes the host everywhere (room, running game) and tells every peer.
+    pub fn set_host(&mut self, new_host_id: u32) {
+        self.host_id = Some(new_host_id);
+        if let Some(ref mut ctx) = self.game_ctx {
+            for player in &mut ctx.state.players {
+                player.is_host = player.id == new_host_id;
+            }
+            ctx.state.host_player_id = Some(new_host_id);
+        }
+        let new_host_name = self
+            .peers
+            .get(&new_host_id)
+            .map(|p| p.name.clone())
+            .unwrap_or_default();
+        self.broadcast(ServerMessage::HostTransferred {
+            new_host_id,
+            new_host_name,
+        });
+    }
+
     pub fn broadcast(&self, msg: ServerMessage) {
         for peer in self.peers.values() {
             let _ = peer.tx.send(msg.clone());
@@ -124,5 +144,36 @@ mod tests {
         assert!(players[0].is_host);
         assert_eq!(players[1].id, 2);
         assert!(!players[1].is_host);
+    }
+
+    #[test]
+    fn set_host_updates_running_game_and_notifies_peers() {
+        let mut room = Room::new("TEST".to_string(), true, false);
+        let (tx, mut rx) = unbounded_channel();
+        let ip = "127.0.0.1".parse::<IpAddr>().unwrap();
+        for id in [1, 2] {
+            room.peers.insert(id, Peer {
+                id,
+                name: format!("Player {}", id),
+                skin: "🤖".to_string(),
+                tx: tx.clone(),
+                is_ready: true,
+                is_spectator: false,
+                ip,
+            });
+        }
+        room.host_id = Some(1);
+        let players = room.get_lobby_players();
+        room.game_ctx = Some(GameContext::new_match(&room.room_settings, players));
+
+        room.set_host(2);
+
+        let ctx = room.game_ctx.as_ref().unwrap();
+        assert!(ctx.state.players.iter().find(|p| p.id == 2).unwrap().is_host);
+        assert!(!ctx.state.players.iter().find(|p| p.id == 1).unwrap().is_host);
+        assert!(matches!(
+            rx.try_recv(),
+            Ok(ServerMessage::HostTransferred { new_host_id: 2, .. })
+        ));
     }
 }

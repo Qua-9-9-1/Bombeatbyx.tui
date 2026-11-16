@@ -101,7 +101,9 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
             remove_room = true;
         } else {
             if room.host_id == Some(player_id) {
-                room.host_id = room.peers.keys().min().copied();
+                if let Some(new_host_id) = room.peers.keys().min().copied() {
+                    room.set_host(new_host_id);
+                }
             }
             if room.in_game {
                 let active_players = room.peers.values().filter(|p| !p.is_spectator).count();
