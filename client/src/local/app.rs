@@ -59,7 +59,8 @@ pub struct App {
     pub settings_cursor: usize,
     pub editing_name: bool,
 
-    pub last_local_action: Option<(u64, common::game::GameAction)>,
+    /// Last action predicted locally online: (target beat, action, when).
+    pub last_local_action: Option<(u64, common::game::GameAction, Instant)>,
 
     pub network: crate::network::NetworkContext,
 

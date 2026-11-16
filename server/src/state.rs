@@ -27,6 +27,8 @@ pub struct Room {
     pub game_ctx: Option<GameContext>,
     pub in_game: bool,
     pub banned_ips: HashSet<IpAddr>,
+    /// Smoothed round-trip time per peer, measured with Ping/Pong.
+    pub latencies: HashMap<u32, std::time::Duration>,
 }
 
 impl Room {
@@ -42,7 +44,15 @@ impl Room {
             game_ctx: None,
             in_game: false,
             banned_ips: HashSet::new(),
+            latencies: HashMap::new(),
         }
+    }
+
+    /// One-way network delay estimate for a peer (half its round-trip time).
+    pub fn one_way_latency(&self, peer_id: u32) -> std::time::Duration {
+        self.latencies
+            .get(&peer_id)
+            .map_or(std::time::Duration::ZERO, |rtt| *rtt / 2)
     }
 
     pub fn get_lobby_players(&self) -> Vec<Player> {

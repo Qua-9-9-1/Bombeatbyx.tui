@@ -92,6 +92,7 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
     let mut remove_room = false;
     if let Some(room) = s.rooms.get_mut(code) {
         room.peers.remove(&player_id);
+        room.latencies.remove(&player_id);
 
         if let Some(ref mut ctx) = room.game_ctx {
             ctx.state.players.retain(|p| p.id != player_id);

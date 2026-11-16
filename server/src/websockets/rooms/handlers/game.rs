@@ -38,8 +38,9 @@ pub async fn handle_action(
         let mut s = state.lock().await;
         if let Some(room) = s.rooms.get_mut(code) {
             if room.in_game {
+                let latency = room.one_way_latency(*player_id);
                 if let Some(ref mut ctx) = room.game_ctx {
-                    ctx.process_player_action(*player_id, action);
+                    ctx.process_player_action_with_latency(*player_id, action, latency);
                 }
             }
         }

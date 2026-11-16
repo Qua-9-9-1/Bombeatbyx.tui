@@ -98,12 +98,14 @@ async fn run_connection(
                     continue;
                 };
                 match serde_json::from_str::<ServerMessage>(&text) {
-                    Ok(ServerMessage::Ping) => {
-                        if let Some(pong) = encode(&ClientMessage::Pong) {
-                            let _ = ws_write.send(pong).await;
-                        }
-                    }
                     Ok(server_msg) => {
+                        // Answer heartbeats immediately (RTT accuracy), then let
+                        // the app read the measured RTT they carry.
+                        if matches!(server_msg, ServerMessage::Ping { .. }) {
+                            if let Some(pong) = encode(&ClientMessage::Pong) {
+                                let _ = ws_write.send(pong).await;
+                            }
+                        }
                         if tx_to_app.send(server_msg).is_err() {
                             break;
                         }

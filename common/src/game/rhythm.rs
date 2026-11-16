@@ -76,22 +76,61 @@ impl RhythmEngine {
     }
 
     pub fn evaluate_accuracy(&self) -> BeatAccuracy {
-        let progress = self.progress();
-        let distance = if progress > 0.5 {
-            1.0 - progress
-        } else {
-            progress
-        };
+        self.timing_at(Instant::now()).1
+    }
 
-        if distance <= 0.04 {
-            BeatAccuracy::Perfect
-        } else if distance <= 0.09 {
-            BeatAccuracy::Great
-        } else if distance <= 0.15 {
-            BeatAccuracy::Ok
+    /// Beat targeted by an input made at `at` and how accurate it was.
+    /// `at` may be slightly in the past (latency compensation), up to one beat.
+    pub fn timing_at(&self, at: Instant) -> (u64, BeatAccuracy) {
+        let (base_beat, base_time) = if at >= self.last_beat_time {
+            (self.beat_count, self.last_beat_time)
         } else {
-            BeatAccuracy::Miss
+            (
+                self.beat_count.saturating_sub(1),
+                self.last_beat_time
+                    .checked_sub(self.beat_interval)
+                    .unwrap_or(self.last_beat_time),
+            )
+        };
+        let elapsed = at.saturating_duration_since(base_time).as_secs_f64();
+        let progress = (elapsed / self.beat_interval.as_secs_f64()).clamp(0.0, 1.0);
+        let target_beat = if progress > 0.5 { base_beat + 1 } else { base_beat };
+        (target_beat, accuracy_from_progress(progress))
+    }
+
+    /// Realigns the clock on an authoritative beat that started `since_beat` ago.
+    /// Drift below `tolerance` is ignored to avoid jitter. Returns `true` if it moved.
+    pub fn align(&mut self, beat: u64, since_beat: Duration, tolerance: Duration) -> bool {
+        let now = Instant::now();
+        if self.beat_count == beat {
+            let local_since = now.saturating_duration_since(self.last_beat_time);
+            let drift = local_since.abs_diff(since_beat);
+            if drift <= tolerance {
+                return false;
+            }
         }
+        self.beat_count = beat;
+        self.last_beat_time = now.checked_sub(since_beat).unwrap_or(now);
+        self.next_beat_time = self.last_beat_time + self.beat_interval;
+        true
+    }
+}
+
+fn accuracy_from_progress(progress: f64) -> BeatAccuracy {
+    let distance = if progress > 0.5 {
+        1.0 - progress
+    } else {
+        progress
+    };
+
+    if distance <= 0.04 {
+        BeatAccuracy::Perfect
+    } else if distance <= 0.09 {
+        BeatAccuracy::Great
+    } else if distance <= 0.15 {
+        BeatAccuracy::Ok
+    } else {
+        BeatAccuracy::Miss
     }
 }
 
@@ -119,6 +158,60 @@ mod tests {
         engine.last_beat_time = Instant::now() - interval.mul_f64(0.25);
         engine.next_beat_time = engine.last_beat_time + interval;
         assert_eq!(engine.evaluate_accuracy(), BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn timing_at_past_instant_targets_previous_beat_late_window() {
+        let mut engine = RhythmEngine::new(60.0);
+        let interval = engine.beat_interval;
+        engine.beat_count = 10;
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.05);
+        engine.next_beat_time = engine.last_beat_time + interval;
+        let input_time = engine.last_beat_time - interval.mul_f64(0.02);
+
+        let (target, accuracy) = engine.timing_at(input_time);
+
+        assert_eq!(target, 10);
+        assert_eq!(accuracy, BeatAccuracy::Perfect);
+    }
+
+    #[test]
+    fn timing_at_late_in_beat_targets_next_beat() {
+        let mut engine = RhythmEngine::new(60.0);
+        let interval = engine.beat_interval;
+        engine.beat_count = 4;
+        engine.last_beat_time = Instant::now() - interval.mul_f64(0.97);
+        engine.next_beat_time = engine.last_beat_time + interval;
+
+        let (target, accuracy) = engine.timing_at(Instant::now());
+
+        assert_eq!(target, 5);
+        assert_eq!(accuracy, BeatAccuracy::Perfect);
+    }
+
+    #[test]
+    fn align_ignores_drift_within_tolerance() {
+        let mut engine = RhythmEngine::new(60.0);
+        engine.beat_count = 3;
+        let before = engine.last_beat_time;
+
+        let has_moved = engine.align(3, Duration::from_millis(5), Duration::from_millis(25));
+
+        assert!(!has_moved);
+        assert_eq!(engine.last_beat_time, before);
+    }
+
+    #[test]
+    fn align_jumps_to_authoritative_beat() {
+        let mut engine = RhythmEngine::new(60.0);
+        engine.beat_count = 3;
+
+        let has_moved = engine.align(7, Duration::from_millis(40), Duration::from_millis(25));
+
+        assert!(has_moved);
+        assert_eq!(engine.beat_count, 7);
+        let since = Instant::now().duration_since(engine.last_beat_time);
+        assert!(since >= Duration::from_millis(40) && since < Duration::from_millis(200));
     }
 
     #[test]

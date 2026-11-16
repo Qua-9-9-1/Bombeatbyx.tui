@@ -2,6 +2,10 @@ use super::actions::GameAction;
 use super::models::{Player, RoomSettings};
 use super::rhythm::{BeatAccuracy, RhythmEngine};
 use super::state::GameState;
+use std::time::{Duration, Instant};
+
+/// Upper bound of the latency compensation applied to a player's input.
+pub const MAX_LATENCY_COMPENSATION: Duration = Duration::from_millis(150);
 
 pub struct GameContext {
     pub state: GameState,
@@ -105,13 +109,21 @@ impl GameContext {
     }
 
     pub fn process_player_action(&mut self, player_id: u32, action: GameAction) {
-        let accuracy = self.rhythm.evaluate_accuracy();
-        let progress = self.rhythm.progress();
-        let target_beat = if progress > 0.5 {
-            self.rhythm.beat_count + 1
-        } else {
-            self.rhythm.beat_count
-        };
+        self.process_player_action_with_latency(player_id, action, Duration::ZERO);
+    }
+
+    /// Judges the action at the moment the player pressed the key: reception
+    /// time minus the one-way network delay (capped so it cannot be abused).
+    pub fn process_player_action_with_latency(
+        &mut self,
+        player_id: u32,
+        action: GameAction,
+        one_way_latency: Duration,
+    ) {
+        let compensation = one_way_latency.min(MAX_LATENCY_COMPENSATION);
+        let now = Instant::now();
+        let pressed_at = now.checked_sub(compensation).unwrap_or(now);
+        let (target_beat, accuracy) = self.rhythm.timing_at(pressed_at);
 
         self.state
             .handle_action(player_id, action, accuracy, target_beat);
@@ -130,6 +142,43 @@ mod tests {
         context.tick_game_logic();
 
         assert!(context.state.elapsed_time_secs >= 5);
+    }
+
+    #[test]
+    fn process_player_action_with_latency_judges_input_at_press_time() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        context.state.players = vec![crate::game::models::Player::new(1, "P1", "🤖", 3)];
+        let interval = context.rhythm.beat_interval;
+        context.rhythm.beat_count = 8;
+        // Received 100 ms after the beat, but pressed 80 ms earlier (latency).
+        context.rhythm.last_beat_time = Instant::now() - interval.mul_f64(0.10);
+        context.rhythm.next_beat_time = context.rhythm.last_beat_time + interval;
+
+        context.process_player_action_with_latency(
+            1,
+            GameAction::MoveDown,
+            Duration::from_millis(80),
+        );
+
+        assert_eq!(context.state.players[0].last_accuracy, BeatAccuracy::Perfect);
+    }
+
+    #[test]
+    fn process_player_action_with_latency_caps_compensation() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        context.state.players = vec![crate::game::models::Player::new(1, "P1", "🤖", 3)];
+        let interval = context.rhythm.beat_interval;
+        context.rhythm.beat_count = 8;
+        context.rhythm.last_beat_time = Instant::now() - interval.mul_f64(0.40);
+        context.rhythm.next_beat_time = context.rhythm.last_beat_time + interval;
+
+        context.process_player_action_with_latency(
+            1,
+            GameAction::MoveDown,
+            Duration::from_millis(390),
+        );
+
+        assert_eq!(context.state.players[0].last_accuracy, BeatAccuracy::Miss);
     }
 
     #[test]
