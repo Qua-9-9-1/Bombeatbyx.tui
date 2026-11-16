@@ -1,102 +1,147 @@
 use crate::local::app::App;
 use common::messages::{ClientMessage, ServerMessage};
+use futures_util::{SinkExt, StreamExt};
+use std::time::Duration;
+use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio_tungstenite::tungstenite::Message;
+
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+/// The server pings every 3 s: this much silence means the link is dead.
+const INACTIVITY_TIMEOUT: Duration = Duration::from_secs(12);
+
+fn to_ws_url(addr: String) -> String {
+    let mut ws_url = if addr.starts_with("ws://") || addr.starts_with("wss://") {
+        addr
+    } else {
+        format!("ws://{}", addr)
+    };
+    if !ws_url.ends_with("/ws") {
+        if !ws_url.ends_with('/') {
+            ws_url.push('/');
+        }
+        ws_url.push_str("ws");
+    }
+    ws_url
+}
+
+fn encode(msg: &ClientMessage) -> Option<Message> {
+    serde_json::to_string(msg)
+        .ok()
+        .map(|json| Message::Text(json.into()))
+}
 
 impl App {
     pub fn connect_to_server(&mut self, addr: String, pending_msg: Option<ClientMessage>) {
         self.network.network_error = None;
-        let mut ws_url = if addr.starts_with("ws://") || addr.starts_with("wss://") {
-            addr
-        } else {
-            format!("ws://{}", addr)
-        };
-        if !ws_url.ends_with("/ws") {
-            if ws_url.ends_with('/') {
-                ws_url.push_str("ws");
-            } else {
-                ws_url.push_str("/ws");
-            }
-        }
+        let ws_url = to_ws_url(addr);
 
         let (tx_to_app, rx_from_ws) = tokio::sync::mpsc::unbounded_channel();
-        let (tx_to_ws, mut rx_from_app) = tokio::sync::mpsc::unbounded_channel::<ClientMessage>();
+        let (tx_to_ws, rx_from_app) = tokio::sync::mpsc::unbounded_channel::<ClientMessage>();
 
         self.network.server_tx = Some(tx_to_ws);
         self.network.server_rx = Some(rx_from_ws);
         self.network.is_multiplayer = true;
 
-        tokio::spawn(async move {
-            use futures_util::{SinkExt, StreamExt};
-            let connect_result = tokio_tungstenite::connect_async(&ws_url).await;
+        tokio::spawn(run_connection(ws_url, pending_msg, tx_to_app, rx_from_app));
+    }
+}
 
-            let ws_stream = match connect_result {
-                Ok((stream, _)) => stream,
-                Err(e) => {
-                    let _ = tx_to_app.send(ServerMessage::ConnectionFailed(e.to_string()));
-                    return;
-                }
-            };
+async fn run_connection(
+    ws_url: String,
+    pending_msg: Option<ClientMessage>,
+    tx_to_app: UnboundedSender<ServerMessage>,
+    mut rx_from_app: UnboundedReceiver<ClientMessage>,
+) {
+    let connect = tokio::time::timeout(CONNECT_TIMEOUT, tokio_tungstenite::connect_async(&ws_url));
+    let ws_stream = match connect.await {
+        Ok(Ok((stream, _))) => stream,
+        Ok(Err(e)) => {
+            let _ = tx_to_app.send(ServerMessage::ConnectionFailed(e.to_string()));
+            return;
+        }
+        Err(_) => {
+            let _ = tx_to_app.send(ServerMessage::ConnectionFailed(format!(
+                "Server did not answer within {} s ({})",
+                CONNECT_TIMEOUT.as_secs(),
+                ws_url
+            )));
+            return;
+        }
+    };
 
-            let (mut ws_write, mut ws_read) = ws_stream.split();
+    let (mut ws_write, mut ws_read) = ws_stream.split();
+    if let Some(frame) = pending_msg.as_ref().and_then(encode) {
+        let _ = ws_write.send(frame).await;
+    }
 
-            if let Some(msg) = pending_msg {
-                if let Ok(json_str) = serde_json::to_string(&msg) {
-                    let _ = ws_write
-                        .send(tokio_tungstenite::tungstenite::Message::Text(
-                            json_str.into(),
-                        ))
-                        .await;
-                }
-            }
+    let lost = |reason: &str| ServerMessage::ConnectionFailed(format!("Connection lost: {}", reason));
 
-            loop {
-                tokio::select! {
-                    Some(msg_res) = ws_read.next() => {
-                        match msg_res {
-                            Ok(tokio_tungstenite::tungstenite::Message::Text(text)) => {
-                                if let Ok(server_msg) = serde_json::from_str::<ServerMessage>(&text) {
-                                     if let ServerMessage::Ping = server_msg {
-                                         if let Ok(json_str) = serde_json::to_string(&ClientMessage::Pong) {
-                                             let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
-                                         }
-                                     } else if tx_to_app.send(server_msg).is_err() {
-                                         break;
-                                     }
-                                }
-                            }
-                            Ok(tokio_tungstenite::tungstenite::Message::Close(_)) => {
-                                let _ = tx_to_app.send(ServerMessage::GameEnded);
-                                break;
-                            }
-                            Err(_) => {
-                                let _ = tx_to_app.send(ServerMessage::GameEnded);
-                                break;
-                            }
-                            _ => {}
+    loop {
+        tokio::select! {
+            incoming = tokio::time::timeout(INACTIVITY_TIMEOUT, ws_read.next()) => {
+                let frame = match incoming {
+                    Err(_) => {
+                        let _ = tx_to_app.send(lost("server stopped responding"));
+                        break;
+                    }
+                    Ok(None) | Ok(Some(Ok(Message::Close(_)))) => {
+                        let _ = tx_to_app.send(lost("server closed the connection"));
+                        break;
+                    }
+                    Ok(Some(Err(e))) => {
+                        let _ = tx_to_app.send(lost(&e.to_string()));
+                        break;
+                    }
+                    Ok(Some(Ok(frame))) => frame,
+                };
+                let Message::Text(text) = frame else {
+                    continue;
+                };
+                match serde_json::from_str::<ServerMessage>(&text) {
+                    Ok(ServerMessage::Ping) => {
+                        if let Some(pong) = encode(&ClientMessage::Pong) {
+                            let _ = ws_write.send(pong).await;
                         }
                     }
-                    res = rx_from_app.recv() => {
-                        match res {
-                            Some(client_msg) => {
-                                let is_leave = matches!(client_msg, ClientMessage::LeaveLobby);
-                                if let Ok(json_str) = serde_json::to_string(&client_msg) {
-                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
-                                }
-                                if is_leave {
-                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
-                                    break;
-                                }
-                            }
-                            None => {
-                                if let Ok(json_str) = serde_json::to_string(&ClientMessage::LeaveLobby) {
-                                    let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Text(json_str.into())).await;
-                                }
-                                let _ = ws_write.send(tokio_tungstenite::tungstenite::Message::Close(None)).await;
-                                break;
-                            }
+                    Ok(server_msg) => {
+                        if tx_to_app.send(server_msg).is_err() {
+                            break;
                         }
                     }
+                    Err(_) => {}
                 }
             }
-        });
+            outgoing = rx_from_app.recv() => {
+                // `None` = the app dropped the connection: leave politely.
+                let client_msg = outgoing.unwrap_or(ClientMessage::LeaveLobby);
+                let is_leave = matches!(client_msg, ClientMessage::LeaveLobby);
+                if let Some(frame) = encode(&client_msg) {
+                    let _ = ws_write.send(frame).await;
+                }
+                if is_leave {
+                    let _ = ws_write.send(Message::Close(None)).await;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn to_ws_url_adds_scheme_and_path() {
+        let url = to_ws_url("127.0.0.1:27300".to_string());
+
+        assert_eq!(url, "ws://127.0.0.1:27300/ws");
+    }
+
+    #[test]
+    fn to_ws_url_keeps_existing_scheme_and_path() {
+        let url = to_ws_url("wss://play.example.com/ws".to_string());
+
+        assert_eq!(url, "wss://play.example.com/ws");
     }
 }
