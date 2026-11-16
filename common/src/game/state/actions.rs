@@ -88,6 +88,18 @@ impl GameState {
         false
     }
 
+    /// Clears expired emotes so that clients (which never receive `emote_until`)
+    /// stop displaying them.
+    pub fn tick_emotes(&mut self) {
+        let now = std::time::Instant::now();
+        for player in &mut self.players {
+            if player.emote_until.is_some_and(|until| now >= until) {
+                player.active_emote = None;
+                player.emote_until = None;
+            }
+        }
+    }
+
     pub fn trigger_emote(&mut self, player_id: u32, index: u8) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
             let emote = match index {
@@ -127,6 +139,19 @@ mod tests {
 
         assert_eq!(state.players[0].combo, 0);
         assert_eq!(state.players[0].last_accuracy, BeatAccuracy::Miss);
+    }
+
+    #[test]
+    fn tick_emotes_clears_expired_emote() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.active_emote = Some("👋".to_string());
+        player.emote_until = Some(std::time::Instant::now() - std::time::Duration::from_millis(1));
+        state.players = vec![player];
+
+        state.tick_emotes();
+
+        assert!(state.players[0].active_emote.is_none());
     }
 
     #[test]

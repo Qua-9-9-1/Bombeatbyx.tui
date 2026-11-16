@@ -205,10 +205,11 @@ fn draw_player(
         let p_screen_y = play_zone_y + player.sub_y as u16;
         let mut sym = get_player_symbol(&player.skin, player.is_alive, ascii);
         if let Some(ref emote) = player.active_emote {
-            if let Some(until) = player.emote_until {
-                if std::time::Instant::now() < until {
-                    sym = get_emote_symbol(emote, ascii);
-                }
+            let not_expired = player
+                .emote_until
+                .is_none_or(|until| std::time::Instant::now() < until);
+            if not_expired {
+                sym = get_emote_symbol(emote, ascii);
             }
         }
         let style = if player.is_protected(current_beat) {

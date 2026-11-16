@@ -28,6 +28,7 @@ impl GameContext {
 
     pub fn tick_game_logic(&mut self) -> bool {
         self.state.tick_respawns();
+        self.state.tick_emotes();
         if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
             self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
         } else {
