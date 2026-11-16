@@ -155,7 +155,7 @@ impl GameState {
             let cell = self.get_cell(cx, cy);
 
             if let Cell::Explosion { .. } = cell {
-                if self.players[i].shield_until_beat == Some(current_beat) {
+                if self.players[i].is_protected(current_beat) {
                     continue;
                 }
                 self.players[i].is_alive = false;
@@ -239,6 +239,44 @@ mod tests {
         assert!(matches!(state.grid[2 * 5 + 3], Cell::Explosion { .. }));
         assert!(matches!(state.grid[1 * 5 + 2], Cell::Explosion { .. }));
         assert!(matches!(state.grid[3 * 5 + 2], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn check_deaths_kills_player_standing_in_fire() {
+        let mut state = GameState::new(5, 5);
+        state.players = vec![create_test_player(1)];
+        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
+
+        state.check_deaths(10);
+
+        assert!(!state.players[0].is_alive);
+        assert_eq!(state.players[0].lives, 2);
+    }
+
+    #[test]
+    fn check_deaths_spares_player_with_active_shield_for_several_beats() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.shield_until_beat = Some(12);
+        state.players = vec![player];
+        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
+
+        state.check_deaths(12);
+
+        assert!(state.players[0].is_alive);
+    }
+
+    #[test]
+    fn check_deaths_kills_player_after_shield_expired() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.shield_until_beat = Some(12);
+        state.players = vec![player];
+        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
+
+        state.check_deaths(13);
+
+        assert!(!state.players[0].is_alive);
     }
 
     #[test]

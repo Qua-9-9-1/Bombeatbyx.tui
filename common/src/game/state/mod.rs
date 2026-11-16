@@ -21,6 +21,8 @@ pub struct GameState {
     pub time_limit_mins: Option<u32>,
     pub countdown: Option<u32>,
     pub game_over_countdown: Option<u32>,
+    #[serde(default)]
+    pub current_beat: u64,
 }
 
 impl GameState {
@@ -53,6 +55,7 @@ impl GameState {
             time_limit_mins: None,
             countdown: None,
             game_over_countdown: None,
+            current_beat: 0,
         }
     }
 

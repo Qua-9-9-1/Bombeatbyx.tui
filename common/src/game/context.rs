@@ -37,7 +37,9 @@ impl GameContext {
         let has_beat_ticked = self.rhythm.tick_logic();
 
         let current_beat = self.rhythm.beat_count;
+        self.state.current_beat = current_beat;
         let progress = self.rhythm.progress();
+        let is_playing = self.state.countdown.is_none() && self.state.game_over_countdown.is_none();
 
         if progress > 0.15 && progress <= 0.5 {
             if self.last_closed_window_beat != Some(current_beat) {
@@ -65,15 +67,17 @@ impl GameContext {
                 }
             }
 
-            self.state.tick_beat(current_beat);
-            if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
+            if is_playing {
+                self.state.tick_beat(current_beat);
                 self.state.tick_bombs_and_explosions();
-                self.state.check_deaths(current_beat);
             }
-            true
-        } else {
-            false
         }
+
+        // Checked every tick so that walking into a live blast is lethal too.
+        if is_playing {
+            self.state.check_deaths(current_beat);
+        }
+        has_beat_ticked
     }
 
     pub fn process_player_action(&mut self, player_id: u32, action: GameAction) {

@@ -22,6 +22,8 @@ pub enum BonusType {
 
 pub const DEFAULT_BONUS_LIFETIME_TICKS: u8 = 20;
 pub const BOMB_FUSE_BEATS: u8 = 4;
+pub const SHIELD_DURATION_BEATS: u64 = 3;
+pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -99,6 +101,11 @@ impl Player {
             is_ready: false,
             death_beat: None,
         }
+    }
+
+    pub fn is_protected(&self, current_beat: u64) -> bool {
+        self.shield_until_beat
+            .is_some_and(|until| current_beat <= until)
     }
 
     pub fn try_consume_action_lockout(&mut self) -> bool {

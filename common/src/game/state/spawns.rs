@@ -1,5 +1,5 @@
 use super::GameState;
-use crate::game::models::{BonusType, Cell, Player};
+use crate::game::models::{BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS};
 use crate::game::spawns::{get_pseudo_random_u32, get_spawn_points};
 
 impl GameState {
@@ -51,6 +51,8 @@ impl GameState {
                     self.players[idx].sub_y = ry as i32;
                     self.players[idx].is_alive = true;
                     self.players[idx].active_bombs = 0;
+                    self.players[idx].shield_until_beat =
+                        Some(self.current_beat + RESPAWN_PROTECTION_BEATS);
                 }
             }
         }
@@ -229,5 +231,19 @@ mod tests {
         assert_eq!(state.players[0].active_bombs, 0);
         assert!(state.players[0].respawn_timer.is_none());
         assert!(state.players[0].death_pos.is_none());
+    }
+
+    #[test]
+    fn tick_respawns_grants_temporary_spawn_protection() {
+        let mut state = GameState::new(15, 15);
+        state.current_beat = 40;
+        let mut player = create_test_player(1, false, false);
+        player.respawn_timer = Some(std::time::Instant::now() - std::time::Duration::from_secs(1));
+        state.players = vec![player];
+
+        state.tick_respawns();
+
+        assert!(state.players[0].is_protected(40 + RESPAWN_PROTECTION_BEATS));
+        assert!(!state.players[0].is_protected(41 + RESPAWN_PROTECTION_BEATS));
     }
 }

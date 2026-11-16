@@ -1,6 +1,6 @@
 use super::GameState;
 use crate::game::actions::GameAction;
-use crate::game::models::SecondItem;
+use crate::game::models::{SHIELD_DURATION_BEATS, SecondItem};
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
@@ -77,7 +77,7 @@ impl GameState {
                 if let Some(item) = player.second_item {
                     match item {
                         SecondItem::Shield => {
-                            player.shield_until_beat = Some(current_beat);
+                            player.shield_until_beat = Some(current_beat + SHIELD_DURATION_BEATS);
                             player.second_item = None;
                             return true;
                         }
@@ -139,7 +139,10 @@ mod tests {
         let success = state.trigger_action_2(1, 10);
 
         assert!(success);
-        assert_eq!(state.players[0].shield_until_beat, Some(10));
+        assert_eq!(
+            state.players[0].shield_until_beat,
+            Some(10 + SHIELD_DURATION_BEATS)
+        );
         assert!(state.players[0].second_item.is_none());
     }
 }
