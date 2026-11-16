@@ -21,13 +21,14 @@ pub enum BonusType {
 }
 
 pub const DEFAULT_BONUS_LIFETIME_TICKS: u8 = 20;
+pub const BOMB_FUSE_BEATS: u8 = 4;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
     Empty,
     Wall,
     Brick,
-    Bomb { owner_id: u32, ticks_left: u8 },
+    Bomb { owner_id: u32, ticks_left: u8, range: u8 },
     Explosion { ticks_left: u8 },
     Bonus { bonus_type: BonusType, ticks_left: u8 },
 }

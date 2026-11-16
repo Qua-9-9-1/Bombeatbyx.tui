@@ -1,4 +1,4 @@
-use crate::game::models::Cell;
+use crate::game::models::{BOMB_FUSE_BEATS, Cell};
 use crate::game::rhythm::BeatAccuracy;
 use crate::game::state::GameState;
 
@@ -15,11 +15,10 @@ impl GameState {
                 let idx = grid_y * self.width + grid_x;
 
                 if self.grid[idx] == Cell::Empty {
-                    let ticks = 4;
-
                     self.grid[idx] = Cell::Bomb {
                         owner_id: player.id,
-                        ticks_left: ticks,
+                        ticks_left: BOMB_FUSE_BEATS,
+                        range: player.bomb_range.min(u8::MAX as usize) as u8,
                     };
                     player.active_bombs += 1;
                     return true;
@@ -39,6 +38,7 @@ impl GameState {
                     Cell::Bomb {
                         owner_id,
                         mut ticks_left,
+                        range,
                     } => {
                         if ticks_left > 0 {
                             ticks_left -= 1;
@@ -46,9 +46,10 @@ impl GameState {
                         self.grid[idx] = Cell::Bomb {
                             owner_id,
                             ticks_left,
+                            range,
                         };
                         if ticks_left == 0 {
-                            bombs_to_explode.push((x, y, owner_id));
+                            bombs_to_explode.push((x, y));
                         }
                     }
                     Cell::Explosion { mut ticks_left } => {
@@ -82,32 +83,38 @@ impl GameState {
             }
         }
 
-        for (bx, by, owner_id) in bombs_to_explode {
-            self.explode_bomb(bx, by, owner_id);
+        self.detonate_chain(bombs_to_explode);
+    }
+
+    /// Explodes every listed bomb and, in the same tick, every bomb caught in
+    /// one of the resulting blasts (chain reaction).
+    pub fn detonate_chain(&mut self, mut pending: Vec<(usize, usize)>) {
+        while let Some((bx, by)) = pending.pop() {
+            pending.extend(self.explode_bomb(bx, by));
         }
     }
 
-    fn explode_bomb(&mut self, bx: usize, by: usize, owner_id: u32) {
-        let range = self
-            .players
-            .iter()
-            .find(|p| p.id == owner_id)
-            .map(|p| p.bomb_range)
-            .unwrap_or(2);
+    /// Returns the positions of the other bombs reached by this blast.
+    fn explode_bomb(&mut self, bx: usize, by: usize) -> Vec<(usize, usize)> {
+        let (owner_id, range) = match self.grid[by * self.width + bx] {
+            Cell::Bomb {
+                owner_id, range, ..
+            } => (owner_id, range as i32),
+            _ => return Vec::new(),
+        };
 
         if let Some(p) = self.players.iter_mut().find(|p| p.id == owner_id) {
-            if p.active_bombs > 0 {
-                p.active_bombs -= 1;
-            }
+            p.active_bombs = p.active_bombs.saturating_sub(1);
         }
 
         self.grid[by * self.width + bx] = Cell::Explosion { ticks_left: 1 };
+        let mut chained = Vec::new();
         let directions = [(0, -1), (0, 1), (-1, 0), (1, 0)];
 
         for (dx, dy) in directions {
             for i in 1..=range {
-                let tx = bx as i32 + dx * (i as i32);
-                let ty = by as i32 + dy * (i as i32);
+                let tx = bx as i32 + dx * i;
+                let ty = by as i32 + dy * i;
 
                 if tx < 0 || tx >= self.width as i32 || ty < 0 || ty >= self.height as i32 {
                     break;
@@ -123,18 +130,14 @@ impl GameState {
                     Cell::Empty | Cell::Explosion { .. } | Cell::Bonus { .. } => {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
                     }
-                    Cell::Bomb {
-                        owner_id: other_owner,
-                        ..
-                    } => {
-                        self.grid[idx] = Cell::Bomb {
-                            owner_id: other_owner,
-                            ticks_left: 0,
-                        };
+                    Cell::Bomb { .. } => {
+                        chained.push((tx as usize, ty as usize));
+                        break;
                     }
                 }
             }
         }
+        chained
     }
 
     pub fn check_deaths(&mut self, current_beat: u64) {
@@ -225,6 +228,7 @@ mod tests {
         state.grid[cell_idx] = Cell::Bomb {
             owner_id: 1,
             ticks_left: 1,
+            range: 1,
         };
 
         state.tick_bombs_and_explosions();
@@ -235,6 +239,77 @@ mod tests {
         assert!(matches!(state.grid[2 * 5 + 3], Cell::Explosion { .. }));
         assert!(matches!(state.grid[1 * 5 + 2], Cell::Explosion { .. }));
         assert!(matches!(state.grid[3 * 5 + 2], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn try_place_bomb_locks_owner_range_at_placement() {
+        let mut state = GameState::new(5, 5);
+        let mut player = create_test_player(1);
+        player.bomb_range = 3;
+        state.players = vec![player];
+
+        state.try_place_bomb(1, BeatAccuracy::Perfect);
+
+        assert!(matches!(state.grid[1 * 5 + 1], Cell::Bomb { range: 3, .. }));
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_uses_bomb_range_not_current_owner_range() {
+        let mut state = GameState::new(9, 3);
+        let mut player = create_test_player(1);
+        player.bomb_range = 1;
+        player.active_bombs = 1;
+        state.players = vec![player];
+        state.grid[1 * 9 + 1] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 3,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert!(matches!(state.grid[1 * 9 + 4], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_chains_other_bombs_in_same_tick() {
+        let mut state = GameState::new(9, 3);
+        state.players = vec![create_test_player(1)];
+        state.grid[1 * 9 + 1] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 2,
+        };
+        state.grid[1 * 9 + 3] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 4,
+            range: 2,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert!(matches!(state.grid[1 * 9 + 3], Cell::Explosion { .. }));
+        assert!(matches!(state.grid[1 * 9 + 5], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_blast_stops_at_chained_bomb() {
+        let mut state = GameState::new(9, 3);
+        state.players = vec![create_test_player(1)];
+        state.grid[1 * 9 + 1] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 5,
+        };
+        state.grid[1 * 9 + 2] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 4,
+            range: 1,
+        };
+
+        state.tick_bombs_and_explosions();
+
+        assert_eq!(state.grid[1 * 9 + 4], Cell::Empty);
     }
 
     #[test]
