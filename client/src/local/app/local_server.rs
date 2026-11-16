@@ -1,4 +1,37 @@
 use crate::local::app::App;
+use std::path::PathBuf;
+use std::time::{Duration, Instant};
+
+const SERVER_STARTUP_TIMEOUT: Duration = Duration::from_secs(5);
+const SERVER_STARTUP_POLL: Duration = Duration::from_millis(50);
+
+/// Places where the server binary may live, most likely first: next to the
+/// client executable (release zip), then the cargo target directories.
+fn server_binary_candidates() -> Vec<PathBuf> {
+    let file_name = format!("server{}", std::env::consts::EXE_SUFFIX);
+    let mut candidates = Vec::new();
+    if let Some(dir) = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(PathBuf::from))
+    {
+        candidates.push(dir.join(&file_name));
+    }
+    for profile_dir in ["target/release", "../target/release", "target/debug", "../target/debug"] {
+        candidates.push(PathBuf::from(profile_dir).join(&file_name));
+    }
+    candidates
+}
+
+/// Blocks until the freshly spawned server accepts TCP connections (or gives up).
+fn wait_until_listening(port: u16) {
+    let started = Instant::now();
+    while started.elapsed() < SERVER_STARTUP_TIMEOUT {
+        if std::net::TcpStream::connect(("127.0.0.1", port)).is_ok() {
+            return;
+        }
+        std::thread::sleep(SERVER_STARTUP_POLL);
+    }
+}
 
 impl App {
     pub fn start_local_server(&mut self) -> Result<(), String> {
@@ -14,16 +47,9 @@ impl App {
             }
         }
 
-        let paths = [
-            "target/debug/server.exe",
-            "../target/debug/server.exe",
-            "target/release/server.exe",
-            "../target/release/server.exe",
-        ];
-
         let mut spawned = None;
-        for path in &paths {
-            if std::path::Path::new(path).exists() {
+        for path in &server_binary_candidates() {
+            if path.exists() {
                 if let Ok(child) = std::process::Command::new(path)
                     .arg(port.to_string())
                     .stdout(std::process::Stdio::null())
@@ -62,7 +88,7 @@ impl App {
         if let Some(child) = spawned {
             self.server_process = Some(child);
             self.network.local_server_port = Some(port);
-            std::thread::sleep(std::time::Duration::from_millis(150));
+            wait_until_listening(port);
             Ok(())
         } else {
             Err("Failed to start server binary".to_string())
