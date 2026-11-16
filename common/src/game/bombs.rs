@@ -1,4 +1,6 @@
-use crate::game::models::{BOMB_FUSE_BEATS, Cell};
+use crate::game::models::{
+    BOMB_FUSE_BEATS, BRICK_BONUS_DROP_PERCENT, BRICK_BONUS_LIFETIME_TICKS, BonusType, Cell,
+};
 use crate::game::rhythm::BeatAccuracy;
 use crate::game::state::GameState;
 
@@ -57,7 +59,7 @@ impl GameState {
                             ticks_left -= 1;
                         }
                         self.grid[idx] = if ticks_left == 0 {
-                            Cell::Empty
+                            self.take_pending_drop(idx)
                         } else {
                             Cell::Explosion { ticks_left }
                         };
@@ -94,6 +96,19 @@ impl GameState {
         }
     }
 
+    fn take_pending_drop(&mut self, idx: usize) -> Cell {
+        match self.pending_drops.iter().position(|&(i, _)| i == idx) {
+            Some(pos) => {
+                let (_, bonus_type) = self.pending_drops.swap_remove(pos);
+                Cell::Bonus {
+                    bonus_type,
+                    ticks_left: BRICK_BONUS_LIFETIME_TICKS,
+                }
+            }
+            None => Cell::Empty,
+        }
+    }
+
     /// Returns the positions of the other bombs reached by this blast.
     fn explode_bomb(&mut self, bx: usize, by: usize) -> Vec<(usize, usize)> {
         let (owner_id, range) = match self.grid[by * self.width + bx] {
@@ -125,6 +140,10 @@ impl GameState {
                     Cell::Wall => break,
                     Cell::Brick => {
                         self.grid[idx] = Cell::Explosion { ticks_left: 1 };
+                        if self.rng.chance(BRICK_BONUS_DROP_PERCENT) {
+                            let bonus = BonusType::roll(&mut self.rng);
+                            self.pending_drops.push((idx, bonus));
+                        }
                         break;
                     }
                     Cell::Empty | Cell::Explosion { .. } | Cell::Bonus { .. } => {
@@ -239,6 +258,26 @@ mod tests {
         assert!(matches!(state.grid[2 * 5 + 3], Cell::Explosion { .. }));
         assert!(matches!(state.grid[1 * 5 + 2], Cell::Explosion { .. }));
         assert!(matches!(state.grid[3 * 5 + 2], Cell::Explosion { .. }));
+    }
+
+    #[test]
+    fn tick_bombs_and_explosions_reveals_hidden_bonus_when_fire_dies_out() {
+        use crate::game::models::BonusType;
+        let mut state = GameState::new(5, 5);
+        let idx = 1 * 5 + 3;
+        state.grid[idx] = Cell::Explosion { ticks_left: 1 };
+        state.pending_drops.push((idx, BonusType::BombRange));
+
+        state.tick_bombs_and_explosions();
+
+        assert!(matches!(
+            state.grid[idx],
+            Cell::Bonus {
+                bonus_type: BonusType::BombRange,
+                ..
+            }
+        ));
+        assert!(state.pending_drops.is_empty());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 use super::GameState;
 use crate::game::models::{BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS, SPAWN_SAFE_RADIUS};
-use crate::game::spawns::{GameRng, get_pseudo_random_u32, get_spawn_points};
+use crate::game::spawns::{GameRng, get_spawn_points};
 
 impl GameState {
     pub fn spawn_players(&mut self, mut players: Vec<Player>) {
@@ -184,13 +184,8 @@ impl GameState {
             }
         }
         if !empty_cells.is_empty() {
-            let seed = get_pseudo_random_u32();
-            let idx = empty_cells[(seed as usize) % empty_cells.len()];
-            let bonus_type = match seed % 3 {
-                0 => BonusType::BombQty,
-                1 => BonusType::BombRange,
-                _ => BonusType::Shield,
-            };
+            let idx = empty_cells[self.rng.below(empty_cells.len())];
+            let bonus_type = BonusType::roll(&mut self.rng);
             self.grid[idx] = Cell::Bonus {
                 bonus_type,
                 ticks_left: crate::game::models::DEFAULT_BONUS_LIFETIME_TICKS,

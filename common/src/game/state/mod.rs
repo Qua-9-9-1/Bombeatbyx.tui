@@ -2,7 +2,8 @@ pub mod actions;
 pub mod match_flow;
 pub mod spawns;
 
-use crate::game::models::{Cell, GameMode, Player};
+use crate::game::models::{BonusType, Cell, GameMode, Player};
+use crate::game::spawns::GameRng;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -23,6 +24,11 @@ pub struct GameState {
     pub game_over_countdown: Option<u32>,
     #[serde(default)]
     pub current_beat: u64,
+    /// Bonuses hidden in destroyed bricks, revealed when the fire on their cell dies out.
+    #[serde(skip)]
+    pub pending_drops: Vec<(usize, BonusType)>,
+    #[serde(skip)]
+    pub rng: GameRng,
 }
 
 impl GameState {
@@ -56,6 +62,8 @@ impl GameState {
             countdown: None,
             game_over_countdown: None,
             current_beat: 0,
+            pending_drops: Vec::new(),
+            rng: GameRng::from_time(),
         }
     }
 

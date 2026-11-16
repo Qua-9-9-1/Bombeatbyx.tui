@@ -51,6 +51,12 @@ impl GameRng {
     }
 }
 
+impl Default for GameRng {
+    fn default() -> Self {
+        Self::from_time()
+    }
+}
+
 pub fn get_spawn_points(width: usize, height: usize, count: usize) -> Vec<(usize, usize)> {
     let mut candidates = vec![
         (1, 1),

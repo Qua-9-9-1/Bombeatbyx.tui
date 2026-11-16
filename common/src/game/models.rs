@@ -1,4 +1,5 @@
 use crate::game::rhythm::BeatAccuracy;
+use crate::game::spawns::GameRng;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
@@ -18,6 +19,27 @@ pub enum BonusType {
     BombQty,
     BombRange,
     Shield,
+}
+
+impl BonusType {
+    /// Relative drop weights: common upgrades first, rare items last.
+    const WEIGHTS: &'static [(BonusType, u32)] = &[
+        (BonusType::BombQty, 40),
+        (BonusType::BombRange, 40),
+        (BonusType::Shield, 20),
+    ];
+
+    pub fn roll(rng: &mut GameRng) -> BonusType {
+        let total: u32 = Self::WEIGHTS.iter().map(|(_, w)| w).sum();
+        let mut pick = rng.next_u32() % total;
+        for &(bonus, weight) in Self::WEIGHTS {
+            if pick < weight {
+                return bonus;
+            }
+            pick -= weight;
+        }
+        BonusType::BombQty
+    }
 }
 
 pub const DEFAULT_BONUS_LIFETIME_TICKS: u8 = 20;
