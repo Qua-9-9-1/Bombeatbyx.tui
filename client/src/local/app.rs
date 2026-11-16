@@ -6,7 +6,7 @@ use crate::local::settings::ClientSettings;
 use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
 use crate::tui::Tui;
 use crate::ui;
-use common::game::{BeatAccuracy, GameContext, Player, RoomSettings};
+use common::game::{GameContext, Player, RoomSettings};
 use std::time::{Duration, Instant};
 
 pub const CELL_W: u16 = 2;
@@ -88,35 +88,9 @@ impl App {
         let mut ctx =
             GameContext::new(room_settings.width, room_settings.height, room_settings.bpm);
 
-        ctx.state.players = vec![Player {
-            id: 1,
-            is_host: true,
-            name: profile.name.clone(),
-            skin: profile.skin.clone(),
-            sub_x: 0,
-            sub_y: 0,
-            is_alive: true,
-            score: 0,
-            combo: 0,
-            last_acted_beat: None,
-            last_accuracy: BeatAccuracy::Waiting,
-            max_bombs: 1,
-            active_bombs: 0,
-            bomb_range: 1,
-            last_action_time: None,
-            spam_lockout_until: None,
-            active_emote: None,
-            emote_until: None,
-            lives: room_settings.lives,
-            death_pos: None,
-            respawn_timer: None,
-            collected_bonuses: Vec::new(),
-            is_spectator: false,
-            second_item: None,
-            shield_until_beat: None,
-            is_ready: false,
-            death_beat: None,
-        }];
+        let mut me = Player::new(1, profile.name.clone(), profile.skin.clone(), room_settings.lives);
+        me.is_host = true;
+        ctx.state.players = vec![me];
 
         Self {
             state: AppState::MainMenu,

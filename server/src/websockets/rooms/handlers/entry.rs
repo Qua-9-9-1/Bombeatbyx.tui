@@ -156,35 +156,10 @@ pub async fn handle_join_room(
 
         if is_spectator {
             if let Some(ref mut ctx) = room.game_ctx {
-                ctx.state.players.push(common::game::Player {
-                    id,
-                    is_host: false,
-                    name: name.clone(),
-                    skin: skin.clone(),
-                    sub_x: 0,
-                    sub_y: 0,
-                    is_alive: false,
-                    score: 0,
-                    combo: 0,
-                    max_bombs: 1,
-                    active_bombs: 0,
-                    bomb_range: 1,
-                    last_acted_beat: None,
-                    last_accuracy: common::game::BeatAccuracy::Waiting,
-                    last_action_time: None,
-                    spam_lockout_until: None,
-                    active_emote: None,
-                    emote_until: None,
-                    lives: 0,
-                    death_pos: None,
-                    respawn_timer: None,
-                    collected_bonuses: Vec::new(),
-                    is_spectator: true,
-                    second_item: None,
-                    shield_until_beat: None,
-                    is_ready: false,
-                    death_beat: None,
-                });
+                let mut spectator = common::game::Player::new(id, name.clone(), skin.clone(), 0);
+                spectator.is_alive = false;
+                spectator.is_spectator = true;
+                ctx.state.players.push(spectator);
             }
         }
 

@@ -49,34 +49,13 @@ impl Room {
         let mut players: Vec<Player> = self
             .peers
             .values()
-            .map(|p| Player {
-                id: p.id,
-                is_host: Some(p.id) == self.host_id,
-                name: p.name.clone(),
-                skin: p.skin.clone(),
-                sub_x: 0,
-                sub_y: 0,
-                is_alive: true,
-                score: 0,
-                combo: 0,
-                max_bombs: 1,
-                active_bombs: 0,
-                bomb_range: 1,
-                last_acted_beat: None,
-                last_accuracy: common::game::BeatAccuracy::Waiting,
-                last_action_time: None,
-                spam_lockout_until: None,
-                active_emote: None,
-                emote_until: None,
-                lives: self.room_settings.lives,
-                death_pos: None,
-                respawn_timer: None,
-                collected_bonuses: Vec::new(),
-                is_spectator: p.is_spectator,
-                second_item: None,
-                shield_until_beat: None,
-                is_ready: p.is_ready,
-                death_beat: None,
+            .map(|p| {
+                let mut player =
+                    Player::new(p.id, p.name.clone(), p.skin.clone(), self.room_settings.lives);
+                player.is_host = Some(p.id) == self.host_id;
+                player.is_spectator = p.is_spectator;
+                player.is_ready = p.is_ready;
+                player
             })
             .collect();
         players.sort_by_key(|p| p.id);

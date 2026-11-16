@@ -68,6 +68,38 @@ pub struct Player {
 }
 
 impl Player {
+    pub fn new(id: u32, name: impl Into<String>, skin: impl Into<String>, lives: u8) -> Self {
+        Self {
+            id,
+            is_host: false,
+            name: name.into(),
+            skin: skin.into(),
+            sub_x: 0,
+            sub_y: 0,
+            is_alive: true,
+            score: 0,
+            combo: 0,
+            max_bombs: 1,
+            active_bombs: 0,
+            bomb_range: 1,
+            last_acted_beat: None,
+            last_accuracy: BeatAccuracy::Waiting,
+            last_action_time: None,
+            spam_lockout_until: None,
+            active_emote: None,
+            emote_until: None,
+            lives,
+            death_pos: None,
+            respawn_timer: None,
+            collected_bonuses: Vec::new(),
+            is_spectator: false,
+            second_item: None,
+            shield_until_beat: None,
+            is_ready: false,
+            death_beat: None,
+        }
+    }
+
     pub fn try_consume_action_lockout(&mut self) -> bool {
         let now = Instant::now();
 
@@ -214,35 +246,7 @@ mod tests {
 
     #[test]
     fn try_consume_action_lockout_allows_action_when_no_previous_action() {
-        let mut player = Player {
-            id: 1,
-            is_host: true,
-            name: "Player 1".to_string(),
-            skin: "🤖".to_string(),
-            sub_x: 0,
-            sub_y: 0,
-            is_alive: true,
-            score: 0,
-            combo: 0,
-            max_bombs: 1,
-            active_bombs: 0,
-            bomb_range: 1,
-            last_acted_beat: None,
-            last_accuracy: BeatAccuracy::Waiting,
-            last_action_time: None,
-            spam_lockout_until: None,
-            active_emote: None,
-            emote_until: None,
-            lives: 3,
-            death_pos: None,
-            respawn_timer: None,
-            collected_bonuses: Vec::new(),
-            is_spectator: false,
-            second_item: None,
-            shield_until_beat: None,
-            is_ready: false,
-            death_beat: None,
-        };
+        let mut player = Player::new(1, "Player 1", "🤖", 3);
 
         let allowed = player.try_consume_action_lockout();
 
@@ -252,35 +256,9 @@ mod tests {
 
     #[test]
     fn try_consume_action_lockout_blocks_action_when_spam_lockout_active() {
-        let mut player = Player {
-            id: 1,
-            is_host: true,
-            name: "Player 1".to_string(),
-            skin: "🤖".to_string(),
-            sub_x: 0,
-            sub_y: 0,
-            is_alive: true,
-            score: 0,
-            combo: 0,
-            max_bombs: 1,
-            active_bombs: 0,
-            bomb_range: 1,
-            last_acted_beat: None,
-            last_accuracy: BeatAccuracy::Waiting,
-            last_action_time: Some(Instant::now()),
-            spam_lockout_until: Some(Instant::now() + Duration::from_millis(500)),
-            active_emote: None,
-            emote_until: None,
-            lives: 3,
-            death_pos: None,
-            respawn_timer: None,
-            collected_bonuses: Vec::new(),
-            is_spectator: false,
-            second_item: None,
-            shield_until_beat: None,
-            is_ready: false,
-            death_beat: None,
-        };
+        let mut player = Player::new(1, "Player 1", "🤖", 3);
+        player.last_action_time = Some(Instant::now());
+        player.spam_lockout_until = Some(Instant::now() + Duration::from_millis(500));
 
         let allowed = player.try_consume_action_lockout();
 

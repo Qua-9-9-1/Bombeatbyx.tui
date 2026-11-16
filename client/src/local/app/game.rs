@@ -151,34 +151,15 @@ impl App {
                 .iter()
                 .find(|p| p.id == self.current_player_id)
                 .cloned()
-                .unwrap_or_else(|| common::game::Player {
-                    id: 1,
-                    is_host: true,
-                    name: self.profile.name.clone(),
-                    skin: self.profile.skin.clone(),
-                    sub_x: 0,
-                    sub_y: 0,
-                    is_alive: true,
-                    score: 0,
-                    combo: 0,
-                    last_acted_beat: None,
-                    last_accuracy: common::game::BeatAccuracy::Waiting,
-                    max_bombs: 1,
-                    active_bombs: 0,
-                    bomb_range: 1,
-                    last_action_time: None,
-                    spam_lockout_until: None,
-                    active_emote: None,
-                    emote_until: None,
-                    lives: self.room_settings.lives,
-                    death_pos: None,
-                    respawn_timer: None,
-                    collected_bonuses: Vec::new(),
-                    is_spectator: false,
-                    second_item: None,
-                    shield_until_beat: None,
-                    is_ready: false,
-                    death_beat: None,
+                .unwrap_or_else(|| {
+                    let mut p = common::game::Player::new(
+                        1,
+                        self.profile.name.clone(),
+                        self.profile.skin.clone(),
+                        self.room_settings.lives,
+                    );
+                    p.is_host = true;
+                    p
                 });
 
             let all_skins = common::game::models::ALL_SKINS;
@@ -188,100 +169,14 @@ impl App {
                 .map(|&s| s.to_string())
                 .collect();
 
-            let skin2 = available_skins.pop().unwrap_or_else(|| "🦊".to_string());
-            let skin3 = available_skins.pop().unwrap_or_else(|| "🐧".to_string());
-            let skin4 = available_skins.pop().unwrap_or_else(|| "🐸".to_string());
-
-            ctx.state.players = vec![
-                me,
-                common::game::Player {
-                    id: 2,
-                    is_host: false,
-                    name: "Bot Alpha".to_string(),
-                    skin: skin2,
-                    sub_x: 0,
-                    sub_y: 0,
-                    is_alive: true,
-                    score: 0,
-                    combo: 0,
-                    last_acted_beat: None,
-                    last_accuracy: common::game::BeatAccuracy::Waiting,
-                    max_bombs: 1,
-                    active_bombs: 0,
-                    bomb_range: 1,
-                    last_action_time: None,
-                    spam_lockout_until: None,
-                    active_emote: None,
-                    emote_until: None,
-                    lives: self.room_settings.lives,
-                    death_pos: None,
-                    respawn_timer: None,
-                    collected_bonuses: Vec::new(),
-                    is_spectator: false,
-                    second_item: None,
-                    shield_until_beat: None,
-                    is_ready: true,
-                    death_beat: None,
-                },
-                common::game::Player {
-                    id: 3,
-                    is_host: false,
-                    name: "Bot Beta".to_string(),
-                    skin: skin3,
-                    sub_x: 0,
-                    sub_y: 0,
-                    is_alive: true,
-                    score: 0,
-                    combo: 0,
-                    last_acted_beat: None,
-                    last_accuracy: common::game::BeatAccuracy::Waiting,
-                    max_bombs: 1,
-                    active_bombs: 0,
-                    bomb_range: 1,
-                    last_action_time: None,
-                    spam_lockout_until: None,
-                    active_emote: None,
-                    emote_until: None,
-                    lives: self.room_settings.lives,
-                    death_pos: None,
-                    respawn_timer: None,
-                    collected_bonuses: Vec::new(),
-                    is_spectator: false,
-                    second_item: None,
-                    shield_until_beat: None,
-                    is_ready: true,
-                    death_beat: None,
-                },
-                common::game::Player {
-                    id: 4,
-                    is_host: false,
-                    name: "Bot Gamma".to_string(),
-                    skin: skin4,
-                    sub_x: 0,
-                    sub_y: 0,
-                    is_alive: true,
-                    score: 0,
-                    combo: 0,
-                    last_acted_beat: None,
-                    last_accuracy: common::game::BeatAccuracy::Waiting,
-                    max_bombs: 1,
-                    active_bombs: 0,
-                    bomb_range: 1,
-                    last_action_time: None,
-                    spam_lockout_until: None,
-                    active_emote: None,
-                    emote_until: None,
-                    lives: self.room_settings.lives,
-                    death_pos: None,
-                    respawn_timer: None,
-                    collected_bonuses: Vec::new(),
-                    is_spectator: false,
-                    second_item: None,
-                    shield_until_beat: None,
-                    is_ready: true,
-                    death_beat: None,
-                },
-            ];
+            let mut players = vec![me];
+            for (id, name) in [(2, "Bot Alpha"), (3, "Bot Beta"), (4, "Bot Gamma")] {
+                let skin = available_skins.pop().unwrap_or_else(|| "🤖".to_string());
+                let mut bot = common::game::Player::new(id, name, skin, self.room_settings.lives);
+                bot.is_ready = true;
+                players.push(bot);
+            }
+            ctx.state.players = players;
         }
     }
 

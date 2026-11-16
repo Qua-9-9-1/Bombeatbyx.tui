@@ -111,35 +111,11 @@ mod tests {
     use crate::game::rhythm::BeatAccuracy;
 
     fn create_test_player(id: u32) -> Player {
-        Player {
-            id,
-            is_host: id == 1,
-            name: format!("Player {}", id),
-            skin: "🤖".to_string(),
-            sub_x: 2,
-            sub_y: 2,
-            is_alive: true,
-            score: 0,
-            combo: 5,
-            max_bombs: 1,
-            active_bombs: 0,
-            bomb_range: 1,
-            last_acted_beat: None,
-            last_accuracy: BeatAccuracy::Waiting,
-            last_action_time: None,
-            spam_lockout_until: None,
-            active_emote: None,
-            emote_until: None,
-            lives: 3,
-            death_pos: None,
-            respawn_timer: None,
-            collected_bonuses: Vec::new(),
-            is_spectator: false,
-            second_item: None,
-            shield_until_beat: None,
-            is_ready: false,
-            death_beat: None,
-        }
+        let mut player = Player::new(id, format!("Player {}", id), "🤖", 3);
+        player.sub_x = 2;
+        player.sub_y = 2;
+        player.combo = 5;
+        player
     }
 
     #[test]
