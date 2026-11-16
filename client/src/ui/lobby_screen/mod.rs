@@ -1,4 +1,5 @@
 pub mod info;
+pub mod info_settings;
 pub mod players;
 pub mod rules;
 

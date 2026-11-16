@@ -1,7 +1,6 @@
+use super::info_settings::setting_lines;
 use crate::screens::lobby::{ROW_BOT_COUNT, ROW_BOT_LEVEL, ROW_NAME, ROW_READY, ROW_SKIN};
-use common::game::models::{
-    BONUS_PICKUP_POINTS, BRICK_POINTS, KILL_POINTS, MAX_BOTS, RoomSettings, SELF_KILL_PENALTY,
-};
+use common::game::models::{MAX_BOTS, RoomSettings};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -28,427 +27,119 @@ pub fn draw_info_panel(
         .borders(Borders::ALL)
         .style(Style::default().fg(Color::Yellow));
 
-    let mut info_lines = vec![Line::from("")];
-
-    let header_width = if ascii {
-        " [ MAP WIDTH ] "
+    let mut info_lines = vec![blank()];
+    info_lines.extend(if cursor < ROW_BOT_COUNT {
+        setting_lines(cursor, rs, ascii)
     } else {
-        "🗺️  MAP WIDTH"
-    };
-    let header_height = if ascii {
-        " [ MAP HEIGHT ] "
-    } else {
-        "🗺️  MAP HEIGHT"
-    };
-    let header_bpm = if ascii {
-        " [ BPM / TEMPO ] "
-    } else {
-        "⚡ BPM / TEMPO"
-    };
-    let header_sudden = if ascii {
-        " [ SUDDEN DEATH ] "
-    } else {
-        "💀 SUDDEN DEATH"
-    };
-    let header_bonus = if ascii {
-        " [ BONUS SPAWN ] "
-    } else {
-        "🎁 BONUS SPAWN"
-    };
-    let header_lives = if ascii {
-        " [ PLAYER LIVES ] "
-    } else {
-        "❤️ PLAYER LIVES"
-    };
-    let header_mode = if ascii {
-        " [ GAME MODE ] "
-    } else {
-        "🏆 GAME MODE"
-    };
-    let header_score = if ascii {
-        " [ SCORE TO WIN ] "
-    } else {
-        "🎯 SCORE TO WIN"
-    };
-    let header_time = if ascii {
-        " [ TIME LIMIT ] "
-    } else {
-        "⏱️ TIME LIMIT"
-    };
-    let header_name = if ascii {
-        " [ PLAYER NAME ] "
-    } else {
-        "📝 PLAYER NAME"
-    };
-    let header_skin = if ascii {
-        " [ CHARACTER SKIN ] "
-    } else {
-        "🎭 CHARACTER SKIN"
-    };
-    let header_start = if ascii {
-        " [ START MATCH ] "
-    } else {
-        "🚀 START MATCH"
-    };
-
-    match cursor {
-        0 => {
-            info_lines.push(Line::from(Span::styled(
-                header_width,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Defines the width of the"));
-            info_lines.push(Line::from("game arena grid."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Rule:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from("Must be odd (7 to 29)."));
-            info_lines.push(Line::from("Larger maps provide more"));
-            info_lines.push(Line::from("space to evade explosions."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Example:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "15 (Standard grid width)",
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-        1 => {
-            info_lines.push(Line::from(Span::styled(
-                header_height,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Defines the height of the"));
-            info_lines.push(Line::from("game arena grid."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Rule:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from("Must be odd (7 to 29)."));
-            info_lines.push(Line::from("Standard is 15x15."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Example:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "15 (Standard grid height)",
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-        2 => {
-            info_lines.push(Line::from(Span::styled(
-                header_bpm,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Controls the speed of the"));
-            info_lines.push(Line::from("rhythm beat count."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Current Speed Meter:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-
-            let pulse_lines = format_bpm_info(rs.bpm, ascii);
-            info_lines.extend(pulse_lines);
-
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Tip:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "Higher BPM requires faster",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "inputs to get PERFECT accuracy.",
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-        3 => {
-            info_lines.push(Line::from(Span::styled(
-                header_sudden,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("If active, after 2 minutes"));
-            info_lines.push(Line::from("(or half the time limit),"));
-            info_lines.push(Line::from("walls close in one cell per"));
-            info_lines.push(Line::from("beat, spiralling inward."));
-            info_lines.push(Line::from("Crushed players lose a life."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Example:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "True: High-stress endgame",
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-        4 => {
-            info_lines.push(Line::from(Span::styled(
-                header_bonus,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(format!(
-                "A random bonus every {} beats,",
-                rs.bonus_every
-            )));
-            info_lines.push(Line::from("plus hidden ones in bricks."));
-            info_lines.push(Line::from(""));
-            let (bomb, fire, pierce, life) = if ascii {
-                ("B+", "R+", "P+", "L+")
-            } else {
-                ("💣", "🔥", "🔪", "💖")
-            };
-            let (shield, detonator, dash) = if ascii {
-                ("S+", "D+", "F+")
-            } else {
-                ("🛡️", "🧨", "👟")
-            };
-            info_lines.push(Line::from(format!("{} +1 bomb  {} +1 range", bomb, fire)));
-            info_lines.push(Line::from(format!("{} pierce   {} +1 life", pierce, life)));
-            info_lines.push(Line::from(Span::styled(
-                "Item (E key):",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from(format!("{} shield {} detonate", shield, detonator)));
-            info_lines.push(Line::from(format!("{} dash 3 cells", dash)));
-        }
-        5 => {
-            info_lines.push(Line::from(Span::styled(
-                header_lives,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Specifies the number of lives"));
-            info_lines.push(Line::from("each player has in the game."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Lives:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from(format!(
-                "Each player starts with {} lives.",
-                rs.lives
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Example:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                format!("You can die {} time(s).", rs.lives),
-                Style::default().fg(Color::DarkGray),
-            )));
-        }
-        6 => {
-            info_lines.push(Line::from(Span::styled(
-                header_mode,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Toggles the rules for"));
-            info_lines.push(Line::from("victory in the match."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Deathmatch: Last player"));
-            info_lines.push(Line::from("standing with lives wins."));
-            info_lines.push(Line::from("Score: first to the target."));
-            info_lines.push(Line::from(format!("Kill +{} | Brick +{}", KILL_POINTS, BRICK_POINTS)));
-            info_lines.push(Line::from(format!(
-                "Bonus +{} | Suicide -{}",
-                BONUS_PICKUP_POINTS, SELF_KILL_PENALTY
-            )));
-            info_lines.push(Line::from("On-beat moves x combo mult."));
-        }
-        7 => {
-            info_lines.push(Line::from(Span::styled(
-                header_score,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Sets the score to reach"));
-            info_lines.push(Line::from("to win the match."));
-        }
-        8 => {
-            info_lines.push(Line::from(Span::styled(
-                header_time,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Sets the time limit for"));
-            info_lines.push(Line::from("the match."));
-        }
-        ROW_BOT_COUNT => {
-            info_lines.push(Line::from(Span::styled(
-                if ascii { " [ BOTS ] " } else { "🤖 BOTS" },
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Number of AI opponents"));
-            info_lines.push(Line::from(format!("in solo mode (1 to {}).", MAX_BOTS)));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Bots play on the beat too:"));
-            info_lines.push(Line::from("they break bricks, grab"));
-            info_lines.push(Line::from("bonuses and hunt you down."));
-        }
-        ROW_BOT_LEVEL => {
-            info_lines.push(Line::from(Span::styled(
-                if ascii { " [ BOT LEVEL ] " } else { "🧠 BOT LEVEL" },
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Easy: slow, clumsy, only"));
-            info_lines.push(Line::from("breaks bricks."));
-            info_lines.push(Line::from("Normal: hunts players and"));
-            info_lines.push(Line::from("uses items."));
-            info_lines.push(Line::from("Hard: near-perfect rhythm,"));
-            info_lines.push(Line::from("aggressive and careful."));
-        }
-        ROW_NAME => {
-            info_lines.push(Line::from(Span::styled(
-                header_name,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Set your nickname."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Options:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from("A-Z, 0-9, A-Z, underscores"));
-            info_lines.push(Line::from("Max 12 characters."));
-        }
-        ROW_SKIN => {
-            info_lines.push(Line::from(Span::styled(
-                header_skin,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Cyan),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(if ascii {
-                "Select your character skin."
-            } else {
-                "Select your emoji skin."
-            }));
-            info_lines.push(Line::from("This is how other players"));
-            info_lines.push(Line::from("will see you on the map."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Options:",
-                Style::default().add_modifier(Modifier::UNDERLINED),
-            )));
-            info_lines.push(Line::from(format!(
-                "{} skins, Q/D to browse.",
-                common::game::models::ALL_SKINS.len()
-            )));
-            info_lines.push(Line::from("A skin can't be shared by"));
-            info_lines.push(Line::from("two ready players."));
-        }
-        ROW_READY => {
-            info_lines.push(Line::from(Span::styled(
-                header_start,
-                Style::default()
-                    .add_modifier(Modifier::BOLD)
-                    .fg(Color::Green),
-            )));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Launches the local match."));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Press Enter to join the"));
-            info_lines.push(Line::from("arena now!"));
-        }
-        _ => {}
-    }
+        player_lines(cursor, ascii)
+    });
 
     Paragraph::new(info_lines)
         .block(info_block)
         .render(area, buffer);
 }
 
-fn format_bpm_info(bpm: f64, ascii: bool) -> Vec<Line<'static>> {
-    let elapsed_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or(std::time::Duration::ZERO)
-        .as_millis();
-    let beat_duration_ms = (60.0 / bpm * 1000.0) as u128;
-    let progress = (elapsed_ms % beat_duration_ms) as f64 / beat_duration_ms as f64;
-
-    let anim = crate::ui::animation::Animation::heart_beating(bpm);
-    let frame = anim.get_frame(std::time::Duration::from_millis(elapsed_ms as u64));
-
-    let pulse_symbol = if ascii {
-        if frame.symbol.contains("❤️") {
-            "<3 [BOOM]"
-        } else if frame.symbol.contains("💖") {
-            "<3 [boom]"
-        } else {
-            ".. [TICK]"
-        }
-    } else {
-        &frame.symbol
-    };
-
-    let gauge_width = 18;
-    let cursor_pos = (progress * gauge_width as f64) as usize;
-    let mut bar = vec!['-'; gauge_width];
-    if cursor_pos < gauge_width {
-        bar[cursor_pos] = if ascii { 'X' } else { '●' };
-    }
-    let pulse_bar = bar.iter().collect::<String>();
-
-    vec![
-        Line::from(vec![
-            Span::styled("Pulse: ", Style::default()),
-            Span::styled(
-                pulse_symbol.to_string(),
+fn player_lines(cursor: usize, ascii: bool) -> Vec<Line<'static>> {
+    match cursor {
+        ROW_BOT_COUNT => vec![
+            header("[ BOTS ]", "🤖 BOTS", ascii),
+            blank(),
+            text("Number of AI opponents"),
+            text(format!("in solo mode (1 to {}).", MAX_BOTS)),
+            blank(),
+            text("Bots play on the beat too:"),
+            text("they break bricks, grab"),
+            text("bonuses and hunt you down."),
+        ],
+        ROW_BOT_LEVEL => vec![
+            header("[ BOT LEVEL ]", "🧠 BOT LEVEL", ascii),
+            blank(),
+            text("Easy: slow, clumsy, only"),
+            text("breaks bricks."),
+            text("Normal: hunts players and"),
+            text("uses items."),
+            text("Hard: near-perfect rhythm,"),
+            text("aggressive and careful."),
+        ],
+        ROW_NAME => vec![
+            header("[ PLAYER NAME ]", "📝 PLAYER NAME", ascii),
+            blank(),
+            text("Set your nickname."),
+            blank(),
+            title("Options:"),
+            text("A-Z, 0-9, A-Z, underscores"),
+            text("Max 12 characters."),
+        ],
+        ROW_SKIN => vec![
+            header("[ CHARACTER SKIN ]", "🎭 CHARACTER SKIN", ascii),
+            blank(),
+            text(if ascii {
+                "Select your character skin."
+            } else {
+                "Select your emoji skin."
+            }),
+            text("This is how other players"),
+            text("will see you on the map."),
+            blank(),
+            title("Options:"),
+            text(format!(
+                "{} skins, Q/D to browse.",
+                common::game::models::ALL_SKINS.len()
+            )),
+            text("A skin can't be shared by"),
+            text("two ready players."),
+        ],
+        ROW_READY => vec![
+            Line::from(Span::styled(
+                if ascii { " [ START MATCH ] " } else { "🚀 START MATCH" },
                 Style::default()
-                    .fg(frame.fg_color)
-                    .add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Line::from(Span::styled(
-            format!(" [{}]", pulse_bar),
-            Style::default().fg(Color::LightRed),
-        )),
-    ]
+                    .add_modifier(Modifier::BOLD)
+                    .fg(Color::Green),
+            )),
+            blank(),
+            text("Launches the local match."),
+            blank(),
+            text("Press Enter to join the"),
+            text("arena now!"),
+        ],
+        _ => Vec::new(),
+    }
+}
+
+pub fn header(ascii_label: &str, emoji_label: &str, ascii: bool) -> Line<'static> {
+    let label = if ascii {
+        format!(" {} ", ascii_label)
+    } else {
+        emoji_label.to_string()
+    };
+    Line::from(Span::styled(
+        label,
+        Style::default()
+            .add_modifier(Modifier::BOLD)
+            .fg(Color::Cyan),
+    ))
+}
+
+pub fn text(content: impl Into<String>) -> Line<'static> {
+    Line::from(content.into())
+}
+
+pub fn title(content: impl Into<String>) -> Line<'static> {
+    Line::from(Span::styled(
+        content.into(),
+        Style::default().add_modifier(Modifier::UNDERLINED),
+    ))
+}
+
+pub fn dim(content: impl Into<String>) -> Line<'static> {
+    Line::from(Span::styled(
+        content.into(),
+        Style::default().fg(Color::DarkGray),
+    ))
+}
+
+pub fn blank() -> Line<'static> {
+    Line::from("")
 }
 
 pub fn get_skin_label(skin: &str, ascii: bool) -> String {

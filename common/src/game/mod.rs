@@ -1,10 +1,13 @@
 pub mod actions;
 pub mod ai;
 pub mod bombs;
+pub mod bonuses;
 pub mod context;
 pub mod models;
 pub mod physics;
 pub mod rhythm;
+pub mod rules;
+pub mod skins;
 pub mod spawns;
 pub mod state;
 

@@ -1,7 +1,10 @@
 use crate::game::rhythm::BeatAccuracy;
-use crate::game::spawns::GameRng;
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
+
+pub use crate::game::bonuses::{BonusType, SecondItem};
+pub use crate::game::rules::*;
+pub use crate::game::skins::*;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum GameMode {
@@ -39,13 +42,6 @@ impl BotDifficulty {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SecondItem {
-    Shield,
-    Detonator,
-    Dash,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 pub enum Direction {
     Up,
@@ -67,66 +63,6 @@ impl Direction {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum BonusType {
-    BombQty,
-    BombRange,
-    Shield,
-    Pierce,
-    ExtraLife,
-    Detonator,
-    Dash,
-}
-
-impl BonusType {
-    /// Relative drop weights: common upgrades first, rare items last.
-    const WEIGHTS: &'static [(BonusType, u32)] = &[
-        (BonusType::BombQty, 28),
-        (BonusType::BombRange, 28),
-        (BonusType::Shield, 12),
-        (BonusType::Dash, 10),
-        (BonusType::Detonator, 9),
-        (BonusType::Pierce, 8),
-        (BonusType::ExtraLife, 5),
-    ];
-
-    pub fn roll(rng: &mut GameRng) -> BonusType {
-        let total: u32 = Self::WEIGHTS.iter().map(|(_, w)| w).sum();
-        let mut pick = rng.next_u32() % total;
-        for &(bonus, weight) in Self::WEIGHTS {
-            if pick < weight {
-                return bonus;
-            }
-            pick -= weight;
-        }
-        BonusType::BombQty
-    }
-}
-
-pub const DEFAULT_BONUS_LIFETIME_TICKS: u8 = 20;
-pub const BRICK_BONUS_LIFETIME_TICKS: u8 = 60;
-pub const BRICK_DENSITY_PERCENT: u32 = 65;
-pub const BRICK_BONUS_DROP_PERCENT: u32 = 35;
-/// Cells within this Manhattan distance of a spawn never receive bricks.
-pub const SPAWN_SAFE_RADIUS: i32 = 2;
-
-pub const KILL_POINTS: u32 = 300;
-pub const SELF_KILL_PENALTY: u32 = 150;
-pub const BRICK_POINTS: u32 = 10;
-pub const BONUS_PICKUP_POINTS: u32 = 25;
-
-pub const MAX_LIVES: u8 = 9;
-pub const DASH_DISTANCE: u32 = 3;
-
-/// Every `COMBO_STEP` consecutive on-beat actions raise the score multiplier by one.
-pub const COMBO_STEP: u32 = 8;
-pub const MAX_COMBO_MULTIPLIER: u32 = 4;
-/// From this combo, bombs gain one extra range ("Fever").
-pub const FEVER_COMBO: u32 = 16;
-pub const FEVER_BONUS_RANGE: usize = 1;
-pub const BOMB_FUSE_BEATS: u8 = 4;
-pub const SHIELD_DURATION_BEATS: u64 = 3;
-pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Cell {
@@ -314,140 +250,6 @@ impl Default for RoomSettings {
     }
 }
 
-pub const ALL_SKINS: &[&str] = &["👶", "😑", "😎", "🤓", "🥰", "😱", "🤠", "🥸", "👿", "🐷", "🐸", "🎃", "🗿", "😡", "💩", "🤡", "👹", "👺", "👽", "🤖", "🍔", "🍙", "🍪", "🍎", "🥔"];
-
-pub fn get_skin_name(skin: &str) -> &'static str {
-    match skin {
-        "👶" => "Baby",
-        "😑" => "Neutral",
-        "😎" => "Cool",
-        "🤓" => "Nerd",
-        "🥰" => "Romantic",
-        "😱" => "Scared",
-        "🤠" => "Cowboy",
-        "🥸" => "Disguised",
-        "👿" => "Devil",
-        "🐷" => "Pig",
-        "🐸" => "Frog",
-        "🎃" => "Jack-o'-Lantern",
-        "🗿" => "Golem",
-        "😡" => "Angry",
-        "💩" => "Poop",
-        "🤡" => "Clown",
-        "👹" => "Ogre",
-        "👺" => "Goblin",
-        "👽" => "Alien",
-        "🤖" => "Robot",
-        "🍔" => "Burger",
-        "🍙" => "Rice",
-        "🍪" => "Cookie",
-        "🍎" => "Apple",
-        "🥔" => "Potato",
-        _ => "Player",
-    }
-}
-
-pub fn get_skin_short_code(skin: &str) -> &'static str {
-    match skin {
-        "👶" => "BB",
-        "😑" => "NT",
-        "😎" => "CL",
-        "🤓" => "ND",
-        "🥰" => "RM",
-        "😱" => "SC",
-        "🤠" => "CW",
-        "🥸" => "DS",
-        "👿" => "DV",
-        "🐷" => "PG",
-        "🐸" => "FR",
-        "🎃" => "JK",
-        "🗿" => "GL",
-        "😡" => "AN",
-        "💩" => "PT",
-        "🤡" => "CL",
-        "👹" => "OG",
-        "👺" => "GB",
-        "👽" => "AL",
-        "🤖" => "RO",
-        "🍔" => "BG",
-        "🍙" => "RC",
-        "🍪" => "CK",
-        "🍎" => "AP",
-        "🥔" => "PT",
-        _ => "PL",
-    }
-}
-
-pub fn is_valid_player_name(name: &str) -> bool {
-    let trimmed = name.trim();
-    if trimmed.is_empty() || name.chars().count() > 16 {
-        return false;
-    }
-    name.chars().all(|c| c.is_alphanumeric() || c == ' ' || c == '-' || c == '_')
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_is_valid_player_name() {
-        assert!(is_valid_player_name("Player1"));
-        assert!(is_valid_player_name("Jean-Michel"));
-        assert!(is_valid_player_name("Aôut_éè"));
-        assert!(is_valid_player_name("Bot_1"));
-        
-        assert!(!is_valid_player_name(""));
-        assert!(!is_valid_player_name("   "));
-        assert!(!is_valid_player_name("PlayerNameIsTooLongToBeValidForThisGame"));
-        assert!(!is_valid_player_name("Player#1"));
-        assert!(!is_valid_player_name("🤖"));
-    }
-
-    #[test]
-    fn combo_multiplier_grows_every_step_and_is_capped() {
-        let mut player = Player::new(1, "Player 1", "🤖", 3);
-
-        let multipliers: Vec<u32> = [0, COMBO_STEP, COMBO_STEP * 2, COMBO_STEP * 50]
-            .iter()
-            .map(|&combo| {
-                player.combo = combo;
-                player.combo_multiplier()
-            })
-            .collect();
-
-        assert_eq!(multipliers, vec![1, 2, 3, MAX_COMBO_MULTIPLIER]);
-    }
-
-    #[test]
-    fn effective_bomb_range_adds_fever_bonus() {
-        let mut player = Player::new(1, "Player 1", "🤖", 3);
-        player.bomb_range = 2;
-        player.combo = FEVER_COMBO;
-
-        let range = player.effective_bomb_range();
-
-        assert_eq!(range, 2 + FEVER_BONUS_RANGE);
-    }
-
-    #[test]
-    fn try_consume_action_lockout_allows_action_when_no_previous_action() {
-        let mut player = Player::new(1, "Player 1", "🤖", 3);
-
-        let allowed = player.try_consume_action_lockout();
-
-        assert!(allowed);
-        assert!(player.last_action_time.is_some());
-    }
-
-    #[test]
-    fn try_consume_action_lockout_blocks_action_when_spam_lockout_active() {
-        let mut player = Player::new(1, "Player 1", "🤖", 3);
-        player.last_action_time = Some(Instant::now());
-        player.spam_lockout_until = Some(Instant::now() + Duration::from_millis(500));
-
-        let allowed = player.try_consume_action_lockout();
-
-        assert!(!allowed);
-    }
-}
+#[path = "models_tests.rs"]
+mod tests;
