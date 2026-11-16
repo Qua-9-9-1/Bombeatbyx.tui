@@ -1,4 +1,5 @@
 pub mod actions;
+pub mod combat;
 pub mod match_flow;
 pub mod spawns;
 

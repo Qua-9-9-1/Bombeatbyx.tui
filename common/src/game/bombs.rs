@@ -1,5 +1,6 @@
 use crate::game::models::{
-    BOMB_FUSE_BEATS, BRICK_BONUS_DROP_PERCENT, BRICK_BONUS_LIFETIME_TICKS, BonusType, Cell,
+    BOMB_FUSE_BEATS, BRICK_BONUS_DROP_PERCENT, BRICK_BONUS_LIFETIME_TICKS, BRICK_POINTS, BonusType,
+    Cell,
 };
 use crate::game::rhythm::BeatAccuracy;
 use crate::game::state::GameState;
@@ -54,14 +55,20 @@ impl GameState {
                             bombs_to_explode.push((x, y));
                         }
                     }
-                    Cell::Explosion { mut ticks_left } => {
+                    Cell::Explosion {
+                        mut ticks_left,
+                        owner_id,
+                    } => {
                         if ticks_left > 0 {
                             ticks_left -= 1;
                         }
                         self.grid[idx] = if ticks_left == 0 {
                             self.take_pending_drop(idx)
                         } else {
-                            Cell::Explosion { ticks_left }
+                            Cell::Explosion {
+                                ticks_left,
+                                owner_id,
+                            }
                         };
                     }
                     Cell::Bonus {
@@ -122,7 +129,11 @@ impl GameState {
             p.active_bombs = p.active_bombs.saturating_sub(1);
         }
 
-        self.grid[by * self.width + bx] = Cell::Explosion { ticks_left: 1 };
+        let fire = Cell::Explosion {
+            ticks_left: 1,
+            owner_id,
+        };
+        self.grid[by * self.width + bx] = fire;
         let mut chained = Vec::new();
         let directions = [(0, -1), (0, 1), (-1, 0), (1, 0)];
 
@@ -139,7 +150,8 @@ impl GameState {
                 match self.grid[idx] {
                     Cell::Wall => break,
                     Cell::Brick => {
-                        self.grid[idx] = Cell::Explosion { ticks_left: 1 };
+                        self.grid[idx] = fire;
+                        self.award_points(owner_id, BRICK_POINTS);
                         if self.rng.chance(BRICK_BONUS_DROP_PERCENT) {
                             let bonus = BonusType::roll(&mut self.rng);
                             self.pending_drops.push((idx, bonus));
@@ -147,7 +159,7 @@ impl GameState {
                         break;
                     }
                     Cell::Empty | Cell::Explosion { .. } | Cell::Bonus { .. } => {
-                        self.grid[idx] = Cell::Explosion { ticks_left: 1 };
+                        self.grid[idx] = fire;
                     }
                     Cell::Bomb { .. } => {
                         chained.push((tx as usize, ty as usize));
@@ -157,43 +169,6 @@ impl GameState {
             }
         }
         chained
-    }
-
-    pub fn check_deaths(&mut self, current_beat: u64) {
-        for i in 0..self.players.len() {
-            if !self.players[i].is_alive || self.players[i].is_spectator {
-                continue;
-            }
-
-            if self.players[i].respawn_timer.is_some() {
-                continue;
-            }
-
-            let cx = self.players[i].sub_x / 2;
-            let cy = self.players[i].sub_y / 1;
-            let cell = self.get_cell(cx, cy);
-
-            if let Cell::Explosion { .. } = cell {
-                if self.players[i].is_protected(current_beat) {
-                    continue;
-                }
-                self.players[i].is_alive = false;
-                self.players[i].lives = self.players[i].lives.saturating_sub(1);
-                if self.players[i].lives == 0 {
-                    if self.players[i].death_beat.is_none() {
-                        self.players[i].death_beat = Some(current_beat);
-                    }
-                }
-                self.players[i].death_pos = Some((self.players[i].sub_x, self.players[i].sub_y));
-                self.players[i].respawn_timer =
-                    Some(std::time::Instant::now() + std::time::Duration::from_secs(3));
-                self.players[i].combo = 0;
-                self.players[i].collected_bonuses.clear();
-                self.players[i].second_item = None;
-                self.players[i].max_bombs = 1;
-                self.players[i].bomb_range = 1;
-            }
-        }
     }
 }
 
@@ -265,7 +240,10 @@ mod tests {
         use crate::game::models::BonusType;
         let mut state = GameState::new(5, 5);
         let idx = 1 * 5 + 3;
-        state.grid[idx] = Cell::Explosion { ticks_left: 1 };
+        state.grid[idx] = Cell::Explosion {
+            ticks_left: 1,
+            owner_id: 1,
+        };
         state.pending_drops.push((idx, BonusType::BombRange));
 
         state.tick_bombs_and_explosions();
@@ -281,41 +259,20 @@ mod tests {
     }
 
     #[test]
-    fn check_deaths_kills_player_standing_in_fire() {
-        let mut state = GameState::new(5, 5);
+    fn tick_bombs_and_explosions_awards_points_for_destroyed_brick() {
+        let mut state = GameState::new(7, 3);
         state.players = vec![create_test_player(1)];
-        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
+        state.grid[1 * 7 + 2] = Cell::Brick;
+        state.grid[1 * 7 + 1] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 2,
+        };
 
-        state.check_deaths(10);
+        state.tick_bombs_and_explosions();
 
-        assert!(!state.players[0].is_alive);
-        assert_eq!(state.players[0].lives, 2);
-    }
-
-    #[test]
-    fn check_deaths_spares_player_with_active_shield_for_several_beats() {
-        let mut state = GameState::new(5, 5);
-        let mut player = create_test_player(1);
-        player.shield_until_beat = Some(12);
-        state.players = vec![player];
-        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
-
-        state.check_deaths(12);
-
-        assert!(state.players[0].is_alive);
-    }
-
-    #[test]
-    fn check_deaths_kills_player_after_shield_expired() {
-        let mut state = GameState::new(5, 5);
-        let mut player = create_test_player(1);
-        player.shield_until_beat = Some(12);
-        state.players = vec![player];
-        state.grid[1 * 5 + 1] = Cell::Explosion { ticks_left: 1 };
-
-        state.check_deaths(13);
-
-        assert!(!state.players[0].is_alive);
+        assert_eq!(state.players[0].score, BRICK_POINTS);
+        assert!(matches!(state.grid[1 * 7 + 3], Cell::Empty));
     }
 
     #[test]

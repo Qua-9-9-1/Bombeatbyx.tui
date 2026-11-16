@@ -170,6 +170,11 @@ fn draw_sidebar_player(
                 ));
             }
         }
+        let kills_label = if ascii { " K:" } else { " 🎯" };
+        line1_spans.push(Span::styled(
+            format!("{}{}", kills_label, player.kills),
+            Style::default().fg(Color::Gray),
+        ));
         lines.push(Line::from(line1_spans));
 
         let combo_info = get_combo_info(player.combo, ascii);

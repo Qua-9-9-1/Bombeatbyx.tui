@@ -63,13 +63,13 @@ pub fn draw_podium_player(
 
     let detail_text = match mode {
         common::game::models::GameMode::Score => {
-            format!("{} pts", player.score)
+            format!("{} pts {}K", player.score, player.kills)
         }
         common::game::models::GameMode::Deathmatch => {
             if player.lives > 0 {
-                format!("{} lives", player.lives)
+                format!("{} lives {}K", player.lives, player.kills)
             } else {
-                "Defeated".to_string()
+                format!("Defeated {}K", player.kills)
             }
         }
     };

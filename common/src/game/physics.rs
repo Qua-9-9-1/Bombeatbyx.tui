@@ -1,4 +1,4 @@
-use crate::game::models::{BonusType, Cell, SecondItem};
+use crate::game::models::{BONUS_PICKUP_POINTS, BonusType, Cell, SecondItem};
 use crate::game::state::GameState;
 
 impl GameState {
@@ -22,6 +22,7 @@ impl GameState {
                     let cell_y = next_y as usize;
                     let idx = cell_y * self.width + cell_x;
                     if let Cell::Bonus { bonus_type: b_type, .. } = self.grid[idx] {
+                        player.score = player.score.saturating_add(BONUS_PICKUP_POINTS);
                         match b_type {
                             BonusType::BombQty => {
                                 player.max_bombs = player.max_bombs.saturating_add(1);

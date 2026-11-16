@@ -48,6 +48,11 @@ pub const BRICK_DENSITY_PERCENT: u32 = 65;
 pub const BRICK_BONUS_DROP_PERCENT: u32 = 35;
 /// Cells within this Manhattan distance of a spawn never receive bricks.
 pub const SPAWN_SAFE_RADIUS: i32 = 2;
+
+pub const KILL_POINTS: u32 = 300;
+pub const SELF_KILL_PENALTY: u32 = 150;
+pub const BRICK_POINTS: u32 = 10;
+pub const BONUS_PICKUP_POINTS: u32 = 25;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
@@ -58,7 +63,7 @@ pub enum Cell {
     Wall,
     Brick,
     Bomb { owner_id: u32, ticks_left: u8, range: u8 },
-    Explosion { ticks_left: u8 },
+    Explosion { ticks_left: u8, owner_id: u32 },
     Bonus { bonus_type: BonusType, ticks_left: u8 },
 }
 
@@ -95,6 +100,8 @@ pub struct Player {
     pub shield_until_beat: Option<u64>,
     pub is_ready: bool,
     pub death_beat: Option<u64>,
+    #[serde(default)]
+    pub kills: u32,
 }
 
 impl Player {
@@ -127,6 +134,7 @@ impl Player {
             shield_until_beat: None,
             is_ready: false,
             death_beat: None,
+            kills: 0,
         }
     }
 

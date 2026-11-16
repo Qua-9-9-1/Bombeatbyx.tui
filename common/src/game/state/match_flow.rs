@@ -64,6 +64,7 @@ impl Player {
         self.lives = lives;
         self.is_alive = !self.is_spectator;
         self.score = 0;
+        self.kills = 0;
         self.combo = 0;
         self.death_pos = None;
         self.death_beat = None;

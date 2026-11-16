@@ -62,6 +62,8 @@ pub fn draw_local_player_stats(
                 player.bomb_range.to_string(),
                 Style::default().fg(Color::White),
             ),
+            Span::styled(" | Kills: ", Style::default().fg(Color::DarkGray)),
+            Span::styled(player.kills.to_string(), Style::default().fg(Color::White)),
         ]);
 
         let items_str = get_collected_bonuses_str(&player.collected_bonuses, ascii);
