@@ -50,6 +50,23 @@ pub fn draw_game_sidebar(
         has_meta = true;
     }
 
+    if ctx.state.sudden_death {
+        let text = if ctx.state.is_sudden_death_active() {
+            if ascii { "  !! SUDDEN DEATH !!" } else { "  ⚠️ SUDDEN DEATH!" }.to_string()
+        } else {
+            let remaining = ctx
+                .state
+                .sudden_death_start_secs()
+                .saturating_sub(ctx.state.elapsed_time_secs);
+            format!("  Shrink in: {:02}:{:02}", remaining / 60, remaining % 60)
+        };
+        lines.push(Line::from(Span::styled(
+            text,
+            Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+        )));
+        has_meta = true;
+    }
+
     if mode == common::game::models::GameMode::Score {
         lines.push(Line::from(vec![Span::styled(
             format!("  Target: {}", ctx.state.target_score),

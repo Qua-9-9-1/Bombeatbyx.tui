@@ -74,6 +74,7 @@ impl GameContext {
             if is_playing {
                 self.state.tick_beat(current_beat);
                 self.state.tick_bombs_and_explosions();
+                self.state.tick_sudden_death(current_beat);
             }
         }
 

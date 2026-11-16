@@ -185,10 +185,11 @@ pub fn draw_info_panel(
                     .fg(Color::Cyan),
             )));
             info_lines.push(Line::from(""));
-            info_lines.push(Line::from("If active, the walls start"));
-            info_lines.push(Line::from("closing in automatically"));
-            info_lines.push(Line::from("after 2 minutes, and the"));
-            info_lines.push(Line::from("tempo rises to 160 BPM."));
+            info_lines.push(Line::from("If active, after 2 minutes"));
+            info_lines.push(Line::from("(or half the time limit),"));
+            info_lines.push(Line::from("walls close in one cell per"));
+            info_lines.push(Line::from("beat, spiralling inward."));
+            info_lines.push(Line::from("Crushed players lose a life."));
             info_lines.push(Line::from(""));
             info_lines.push(Line::from(Span::styled(
                 "Example:",
