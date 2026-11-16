@@ -26,6 +26,9 @@ Candidate features, ordered by expected fun per effort. Keep the core rule in mi
 * **Map presets:** open arena, maze, cross; plus a brick density setting in the lobby.
 * **Replays / ghosts:** the simulation is deterministic given a seed and the inputs, so matches can be recorded.
 
-## 5. Technical Prerequisites
-* **Server-side settings validation:** clamp every `RoomSettings` field received in `UpdateSettings` (map size, BPM, lives, bot count).
-* **Rhythm resync:** clients currently realign `beat_count` from `last_acted_beat`; using `GameState.current_beat` would be more robust.
+## 5. Network Follow-ups
+* **End-to-end network test:** an in-process server + `tokio-tungstenite` client test covering create, join, ready, start, action and disconnect.
+* **LAN discovery for several clients on one machine:** the client binds UDP 27315 exclusively; needs `SO_REUSEADDR` (e.g. the `socket2` crate).
+* **Private LAN rooms:** they are not broadcast, so they can only be joined by setting the host IP as server address.
+* **Per-IP limits:** cap rooms and connections per IP on public servers.
+* **Close kicked sockets server-side** instead of relying on the client to leave.
