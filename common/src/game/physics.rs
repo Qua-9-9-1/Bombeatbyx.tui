@@ -30,7 +30,11 @@ fn apply_bonus(player: &mut Player, bonus: BonusType) {
             }
             player.pierce = true;
         }
-        BonusType::ExtraLife => player.lives = (player.lives + 1).min(MAX_LIVES),
+        BonusType::ExtraLife => {
+            if player.lives < MAX_LIVES {
+                player.lives += 1;
+            }
+        }
         BonusType::Shield => player.second_item = Some(SecondItem::Shield),
         BonusType::Detonator => player.second_item = Some(SecondItem::Detonator),
         BonusType::Dash => player.second_item = Some(SecondItem::Dash),
@@ -196,6 +200,22 @@ mod tests {
         state.move_player(1, 2, 0);
 
         assert_eq!(state.players[0].lives, MAX_LIVES);
+    }
+
+    #[test]
+    fn move_player_extra_life_never_lowers_lives_above_cap() {
+        let mut state = GameState::new(5, 5);
+        state.grid[1 * 5 + 2] = Cell::Bonus {
+            bonus_type: BonusType::ExtraLife,
+            ticks_left: 10,
+        };
+        let mut player = create_test_player(1, 2, 1);
+        player.lives = MAX_LIVES + 3;
+        state.players = vec![player];
+
+        state.move_player(1, 2, 0);
+
+        assert_eq!(state.players[0].lives, MAX_LIVES + 3);
     }
 
     #[test]
