@@ -1,5 +1,6 @@
 use super::GameState;
-use crate::game::models::{GameMode, Player, RoomSettings};
+use crate::game::models::{BRICK_DENSITY_PERCENT, GameMode, Player, RoomSettings};
+use crate::game::spawns::GameRng;
 
 pub const MATCH_START_COUNTDOWN_BEATS: u32 = 4;
 pub const MATCH_END_COUNTDOWN_BEATS: u32 = 4;
@@ -19,6 +20,7 @@ impl GameState {
         state.time_limit_mins = settings.time_limit_mins;
         state.countdown = Some(MATCH_START_COUNTDOWN_BEATS);
         state.spawn_players(players);
+        state.generate_bricks(&mut GameRng::from_time(), BRICK_DENSITY_PERCENT);
         state
     }
 

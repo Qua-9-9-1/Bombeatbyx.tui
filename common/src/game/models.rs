@@ -21,6 +21,11 @@ pub enum BonusType {
 }
 
 pub const DEFAULT_BONUS_LIFETIME_TICKS: u8 = 20;
+pub const BRICK_BONUS_LIFETIME_TICKS: u8 = 60;
+pub const BRICK_DENSITY_PERCENT: u32 = 65;
+pub const BRICK_BONUS_DROP_PERCENT: u32 = 35;
+/// Cells within this Manhattan distance of a spawn never receive bricks.
+pub const SPAWN_SAFE_RADIUS: i32 = 2;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;

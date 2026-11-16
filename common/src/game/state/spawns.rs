@@ -1,6 +1,6 @@
 use super::GameState;
-use crate::game::models::{BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS};
-use crate::game::spawns::{get_pseudo_random_u32, get_spawn_points};
+use crate::game::models::{BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS, SPAWN_SAFE_RADIUS};
+use crate::game::spawns::{GameRng, get_pseudo_random_u32, get_spawn_points};
 
 impl GameState {
     pub fn spawn_players(&mut self, mut players: Vec<Player>) {
@@ -29,6 +29,32 @@ impl GameState {
         }
 
         self.players = players;
+    }
+
+    /// Fills empty cells with destructible bricks, keeping a free area around
+    /// every active player so nobody starts trapped.
+    pub fn generate_bricks(&mut self, rng: &mut GameRng, density_percent: u32) {
+        let spawns: Vec<(i32, i32)> = self
+            .players
+            .iter()
+            .filter(|p| !p.is_spectator && p.is_alive)
+            .map(|p| (p.sub_x / 2, p.sub_y))
+            .collect();
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let idx = y * self.width + x;
+                if self.grid[idx] != Cell::Empty {
+                    continue;
+                }
+                let near_spawn = spawns.iter().any(|&(sx, sy)| {
+                    (x as i32 - sx).abs() + (y as i32 - sy).abs() <= SPAWN_SAFE_RADIUS
+                });
+                if !near_spawn && rng.chance(density_percent) {
+                    self.grid[idx] = Cell::Brick;
+                }
+            }
+        }
     }
 
     pub fn tick_respawns(&mut self) {
@@ -199,6 +225,33 @@ mod tests {
         assert!(!state.players[1].is_alive);
         assert_eq!(state.players[1].sub_x, -100);
         assert_eq!(state.players[1].sub_y, -100);
+    }
+
+    #[test]
+    fn generate_bricks_keeps_spawn_area_free() {
+        let mut state = GameState::new(15, 15);
+        let mut player = create_test_player(1, false, true);
+        player.sub_x = 2;
+        player.sub_y = 1;
+        state.players = vec![player];
+
+        state.generate_bricks(&mut GameRng::seeded(7), 100);
+
+        assert_eq!(state.get_cell(1, 1), Cell::Empty);
+        assert_eq!(state.get_cell(2, 1), Cell::Empty);
+        assert_eq!(state.get_cell(3, 1), Cell::Empty);
+        assert_eq!(state.get_cell(1, 3), Cell::Empty);
+        assert_eq!(state.get_cell(5, 5), Cell::Brick);
+    }
+
+    #[test]
+    fn generate_bricks_never_replaces_walls() {
+        let mut state = GameState::new(9, 9);
+
+        state.generate_bricks(&mut GameRng::seeded(3), 100);
+
+        assert_eq!(state.get_cell(0, 0), Cell::Wall);
+        assert_eq!(state.get_cell(2, 2), Cell::Wall);
     }
 
     #[test]

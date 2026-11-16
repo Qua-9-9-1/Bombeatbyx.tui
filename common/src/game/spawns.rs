@@ -12,6 +12,45 @@ pub fn get_pseudo_random_u32() -> u32 {
     x as u32
 }
 
+/// Small deterministic PRNG (splitmix64). Seed it with a constant in tests,
+/// and with `GameRng::from_time()` in game code.
+#[derive(Debug, Clone)]
+pub struct GameRng(u64);
+
+impl GameRng {
+    pub fn seeded(seed: u64) -> Self {
+        Self(seed)
+    }
+
+    pub fn from_time() -> Self {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or(std::time::Duration::ZERO)
+            .as_nanos() as u64;
+        Self(now ^ ((get_pseudo_random_u32() as u64) << 32))
+    }
+
+    pub fn next_u32(&mut self) -> u32 {
+        self.0 = self.0.wrapping_add(0x9e3779b97f4a7c15);
+        let mut z = self.0;
+        z = (z ^ (z >> 30)).wrapping_mul(0xbf58476d1ce4e5b9);
+        z = (z ^ (z >> 27)).wrapping_mul(0x94d049bb133111eb);
+        (z ^ (z >> 31)) as u32
+    }
+
+    /// Returns a value in `0..n` (returns 0 when `n == 0`).
+    pub fn below(&mut self, n: usize) -> usize {
+        if n == 0 {
+            return 0;
+        }
+        (self.next_u32() as usize) % n
+    }
+
+    pub fn chance(&mut self, percent: u32) -> bool {
+        self.next_u32() % 100 < percent
+    }
+}
+
 pub fn get_spawn_points(width: usize, height: usize, count: usize) -> Vec<(usize, usize)> {
     let mut candidates = vec![
         (1, 1),
