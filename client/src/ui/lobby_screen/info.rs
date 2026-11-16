@@ -1,5 +1,7 @@
 use crate::screens::lobby::{ROW_BOT_COUNT, ROW_BOT_LEVEL, ROW_NAME, ROW_READY, ROW_SKIN};
-use common::game::models::{MAX_BOTS, RoomSettings};
+use common::game::models::{
+    BONUS_PICKUP_POINTS, BRICK_POINTS, KILL_POINTS, MAX_BOTS, RoomSettings, SELF_KILL_PENALTY,
+};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -209,23 +211,30 @@ pub fn draw_info_panel(
                     .fg(Color::Cyan),
             )));
             info_lines.push(Line::from(""));
-            info_lines.push(Line::from("Specifies how often power-ups"));
-            info_lines.push(Line::from("spawn onto the map grid."));
+            info_lines.push(Line::from(format!(
+                "A random bonus every {} beats,",
+                rs.bonus_every
+            )));
+            info_lines.push(Line::from("plus hidden ones in bricks."));
             info_lines.push(Line::from(""));
+            let (bomb, fire, pierce, life) = if ascii {
+                ("B+", "R+", "P+", "L+")
+            } else {
+                ("💣", "🔥", "🔪", "💖")
+            };
+            let (shield, detonator, dash) = if ascii {
+                ("S+", "D+", "F+")
+            } else {
+                ("🛡️", "🧨", "👟")
+            };
+            info_lines.push(Line::from(format!("{} +1 bomb  {} +1 range", bomb, fire)));
+            info_lines.push(Line::from(format!("{} pierce   {} +1 life", pierce, life)));
             info_lines.push(Line::from(Span::styled(
-                "Frequency:",
+                "Item (E key):",
                 Style::default().add_modifier(Modifier::UNDERLINED),
             )));
-            info_lines.push(Line::from(format!("Every {} beats.", rs.bonus_every)));
-            info_lines.push(Line::from(""));
-            info_lines.push(Line::from(Span::styled(
-                "Example:",
-                Style::default().fg(Color::DarkGray),
-            )));
-            info_lines.push(Line::from(Span::styled(
-                "10: Spawns every 10 beats.",
-                Style::default().fg(Color::DarkGray),
-            )));
+            info_lines.push(Line::from(format!("{} shield {} detonate", shield, detonator)));
+            info_lines.push(Line::from(format!("{} dash 3 cells", dash)));
         }
         5 => {
             info_lines.push(Line::from(Span::styled(
@@ -269,8 +278,13 @@ pub fn draw_info_panel(
             info_lines.push(Line::from(""));
             info_lines.push(Line::from("Deathmatch: Last player"));
             info_lines.push(Line::from("standing with lives wins."));
-            info_lines.push(Line::from("Score: High score from"));
-            info_lines.push(Line::from("rhythm steps wins."));
+            info_lines.push(Line::from("Score: first to the target."));
+            info_lines.push(Line::from(format!("Kill +{} | Brick +{}", KILL_POINTS, BRICK_POINTS)));
+            info_lines.push(Line::from(format!(
+                "Bonus +{} | Suicide -{}",
+                BONUS_PICKUP_POINTS, SELF_KILL_PENALTY
+            )));
+            info_lines.push(Line::from("On-beat moves x combo mult."));
         }
         7 => {
             info_lines.push(Line::from(Span::styled(
@@ -361,13 +375,12 @@ pub fn draw_info_panel(
                 "Options:",
                 Style::default().add_modifier(Modifier::UNDERLINED),
             )));
-            if ascii {
-                info_lines.push(Line::from("RO (Robot), CA (Cat), FR (Frog),"));
-                info_lines.push(Line::from("FO (Fox), PE (Penguin)."));
-            } else {
-                info_lines.push(Line::from("🤖 Robot, 🐱 Cat, 🐸 Frog,"));
-                info_lines.push(Line::from("🦊 Fox, 🐧 Penguin."));
-            }
+            info_lines.push(Line::from(format!(
+                "{} skins, Q/D to browse.",
+                common::game::models::ALL_SKINS.len()
+            )));
+            info_lines.push(Line::from("A skin can't be shared by"));
+            info_lines.push(Line::from("two ready players."));
         }
         ROW_READY => {
             info_lines.push(Line::from(Span::styled(
