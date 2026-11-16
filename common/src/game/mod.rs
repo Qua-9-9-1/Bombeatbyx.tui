@@ -1,4 +1,5 @@
 pub mod actions;
+pub mod ai;
 pub mod bombs;
 pub mod context;
 pub mod models;

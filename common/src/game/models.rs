@@ -9,6 +9,36 @@ pub enum GameMode {
     Score,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum BotDifficulty {
+    Easy,
+    #[default]
+    Normal,
+    Hard,
+}
+
+impl BotDifficulty {
+    pub fn label(self) -> &'static str {
+        match self {
+            BotDifficulty::Easy => "Easy",
+            BotDifficulty::Normal => "Normal",
+            BotDifficulty::Hard => "Hard",
+        }
+    }
+
+    pub fn next(self) -> Self {
+        match self {
+            BotDifficulty::Easy => BotDifficulty::Normal,
+            BotDifficulty::Normal => BotDifficulty::Hard,
+            BotDifficulty::Hard => BotDifficulty::Easy,
+        }
+    }
+
+    pub fn previous(self) -> Self {
+        self.next().next()
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SecondItem {
     Shield,
