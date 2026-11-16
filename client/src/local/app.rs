@@ -152,41 +152,7 @@ impl App {
                     let mut should_end = false;
                     if let Some(ref mut ctx) = self.game_ctx {
                         has_beat_ticked = ctx.tick_game_logic();
-
-                        let mut win_condition_met = false;
-                        if let Some(limit_mins) = self.room_settings.time_limit_mins {
-                            if ctx.state.elapsed_time_secs >= limit_mins * 60 {
-                                win_condition_met = true;
-                            }
-                        }
-
-                        if self.room_settings.mode == common::game::models::GameMode::Score {
-                            if ctx
-                                .state
-                                .players
-                                .iter()
-                                .any(|p| p.score >= self.room_settings.target_score)
-                            {
-                                win_condition_met = true;
-                            }
-                        } else {
-                            let total_players = ctx.state.players.len();
-                            let alive_count =
-                                ctx.state.players.iter().filter(|p| p.lives > 0).count();
-                            if total_players > 1 && alive_count <= 1 {
-                                win_condition_met = true;
-                            } else if total_players <= 1 && alive_count == 0 {
-                                win_condition_met = true;
-                            }
-                        }
-
-                        if win_condition_met && ctx.state.game_over_countdown.is_none() {
-                            ctx.state.game_over_countdown = Some(4);
-                        }
-
-                        if ctx.state.game_over_countdown == Some(0) {
-                            should_end = true;
-                        }
+                        should_end = ctx.state.update_match_end();
                     }
                     if has_beat_ticked && self.is_local_dev_bots {
                         self.update_bots();

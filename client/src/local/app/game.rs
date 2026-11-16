@@ -6,38 +6,12 @@ use std::time::Duration;
 impl App {
     #[allow(dead_code)]
     pub(crate) fn start_game(&mut self) {
-        if let Some(ref mut ctx) = self.game_ctx {
-            let mut players = ctx.state.players.clone();
-            for p in &mut players {
-                p.lives = self.room_settings.lives;
-                p.is_alive = !p.is_spectator;
-                p.death_pos = None;
-                p.respawn_timer = None;
-                p.active_bombs = 0;
-                p.max_bombs = 1;
-                p.bomb_range = 1;
-                p.collected_bonuses.clear();
-                p.second_item = None;
-                p.shield_until_beat = None;
-                p.combo = 0;
-            }
-
-            let mut new_state =
-                common::game::GameState::new(self.room_settings.width, self.room_settings.height);
-            new_state.bpm = self.room_settings.bpm;
-            new_state.sudden_death = self.room_settings.sudden_death;
-            new_state.bonus_every = self.room_settings.bonus_every;
-            new_state.mode = self.room_settings.mode;
-            new_state.target_score = self.room_settings.target_score;
-            new_state.time_limit_mins = self.room_settings.time_limit_mins;
-            new_state.countdown = Some(4);
-
-            new_state.spawn_players(players);
-
-            ctx.state = new_state;
-            ctx.rhythm = common::game::RhythmEngine::new(self.room_settings.bpm);
-            ctx.last_closed_window_beat = None;
-            ctx.start_time = std::time::Instant::now();
+        if let Some(ref ctx) = self.game_ctx {
+            let players = ctx.state.players.clone();
+            self.game_ctx = Some(common::game::GameContext::new_match(
+                &self.room_settings,
+                players,
+            ));
         }
 
         self.state = crate::local::app::AppState::InGame;

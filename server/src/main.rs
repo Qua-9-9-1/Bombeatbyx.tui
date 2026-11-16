@@ -28,51 +28,16 @@ async fn main() {
                 let mut s = loop_state.lock().await;
                 for room in s.rooms.values_mut() {
                     if room.in_game {
-                        let mut should_end = false;
                         let mut victory_state = None;
 
                         if let Some(ref mut ctx) = room.game_ctx {
                             ctx.tick_game_logic();
-
-                            let mut win_condition_met = false;
-                            if let Some(limit_mins) = room.room_settings.time_limit_mins {
-                                if ctx.state.elapsed_time_secs >= limit_mins * 60 {
-                                    win_condition_met = true;
-                                }
-                            }
-
-                            if room.room_settings.mode == common::game::models::GameMode::Score {
-                                if ctx.state.players.iter().any(|p| p.score >= room.room_settings.target_score) {
-                                    win_condition_met = true;
-                                }
-                            } else {
-                                let active_non_spec =
-                                    room.peers.values().filter(|p| !p.is_spectator).count();
-                                let alive_count = ctx
-                                    .state
-                                    .players
-                                    .iter()
-                                    .filter(|p| p.lives > 0 && !p.is_spectator)
-                                    .count();
-                                if active_non_spec > 1 && alive_count <= 1 {
-                                    win_condition_met = true;
-                                }
-                            }
-
-                            if win_condition_met && ctx.state.game_over_countdown.is_none() {
-                                ctx.state.game_over_countdown = Some(4);
-                            }
-
-                            if ctx.state.game_over_countdown == Some(0) {
-                                should_end = true;
-                            }
-
-                            if should_end {
+                            if ctx.state.update_match_end() {
                                 victory_state = Some(ctx.state.clone());
                             }
                         }
 
-                        if should_end {
+                        if victory_state.is_some() {
                             stop_game_in_room(room, victory_state);
                             continue;
                         }

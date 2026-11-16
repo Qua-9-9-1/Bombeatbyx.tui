@@ -135,39 +135,8 @@ pub fn stop_game_in_room(room: &mut Room, victory_state: Option<GameState>) {
 }
 
 pub fn start_game_in_room(room: &mut Room) {
-    let mut players = room.get_lobby_players();
-    for p in &mut players {
-        p.lives = room.room_settings.lives;
-        p.is_alive = !p.is_spectator;
-        p.death_pos = None;
-        p.respawn_timer = None;
-        p.active_bombs = 0;
-        p.max_bombs = 1;
-        p.bomb_range = 1;
-        p.collected_bonuses.clear();
-        p.second_item = None;
-        p.shield_until_beat = None;
-        p.combo = 0;
-    }
-
-    let mut new_state = GameState::new(room.room_settings.width, room.room_settings.height);
-    new_state.bpm = room.room_settings.bpm;
-    new_state.sudden_death = room.room_settings.sudden_death;
-    new_state.bonus_every = room.room_settings.bonus_every;
-    new_state.mode = room.room_settings.mode;
-    new_state.target_score = room.room_settings.target_score;
-    new_state.time_limit_mins = room.room_settings.time_limit_mins;
-    new_state.countdown = Some(4);
-    new_state.spawn_players(players);
-
-    let mut ctx = GameContext::new(
-        room.room_settings.width,
-        room.room_settings.height,
-        room.room_settings.bpm,
-    );
-    ctx.state = new_state;
-
-    room.game_ctx = Some(ctx);
+    let players = room.get_lobby_players();
+    room.game_ctx = Some(GameContext::new_match(&room.room_settings, players));
     room.in_game = true;
 
     room.broadcast(ServerMessage::GameStarted {

@@ -1,4 +1,5 @@
 use super::actions::GameAction;
+use super::models::{Player, RoomSettings};
 use super::rhythm::{BeatAccuracy, RhythmEngine};
 use super::state::GameState;
 
@@ -17,6 +18,12 @@ impl GameContext {
             last_closed_window_beat: None,
             start_time: std::time::Instant::now(),
         }
+    }
+
+    pub fn new_match(settings: &RoomSettings, players: Vec<Player>) -> Self {
+        let mut ctx = Self::new(settings.width, settings.height, settings.bpm);
+        ctx.state = GameState::new_match(settings, players);
+        ctx
     }
 
     pub fn tick_game_logic(&mut self) -> bool {
