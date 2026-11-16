@@ -1,5 +1,6 @@
 use crate::local::app::App;
-use crate::local::settings::GaugeSkin;
+use crate::local::app::inputs::menu::settings::SETTINGS_ROW_BACK;
+use crate::local::settings::{GaugeSkin, is_valid_server_addr};
 use crate::ui::menu::center_rect;
 use ratatui::{
     buffer::Buffer,
@@ -18,7 +19,7 @@ fn key_display(k: char) -> String {
 }
 
 pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
-    let menu_rect = center_rect(tui_area, 58, 22);
+    let menu_rect = center_rect(tui_area, 64, 23);
     let ascii = app.profile.ascii_mode;
 
     let title = if ascii {
@@ -66,6 +67,10 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         key_label(6, app.profile.key_spell, "Spell / Item"),
         format!("Gauge Skin  : < {} >", gauge_str),
         format!("Display Mode: < {} >", mode_str),
+        match app.server_addr_draft {
+            Some(ref draft) => format!("Server      : [ {}█ ]", draft),
+            None => format!("Server      : [ {} ]", app.profile.server_addr),
+        },
         back_label.to_string(),
     ];
 
@@ -86,10 +91,11 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     for (idx, item) in items.iter().enumerate() {
         let base_color = match idx {
             1..=6 => Color::Cyan,
-            9 => Color::White,
+            SETTINGS_ROW_BACK => Color::White,
             _ => Color::Yellow,
         };
-        let is_capturing_slot = capturing && idx == cursor;
+        let is_capturing_slot =
+            (capturing || app.server_addr_draft.is_some()) && idx == cursor;
         let color = if is_capturing_slot {
             Color::LightRed
         } else {
@@ -124,7 +130,17 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     }
 
     lines.push(Line::from(""));
-    if capturing {
+    if let Some(ref draft) = app.server_addr_draft {
+        let (hint, color) = if is_valid_server_addr(draft.trim()) {
+            ("host:port  |  Enter to save  |  Esc to cancel", Color::LightGreen)
+        } else {
+            ("Expected host:port (e.g. 192.168.1.20:27300)", Color::LightRed)
+        };
+        lines.push(Line::from(Span::styled(
+            hint,
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        )));
+    } else if capturing {
         lines.push(Line::from(Span::styled(
             "Press any character key to bind  |  Esc to cancel",
             Style::default()

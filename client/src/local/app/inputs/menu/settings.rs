@@ -1,10 +1,41 @@
 use crate::local::app::{App, AppState};
-use crate::local::settings::{GaugeSkin, KeyPreset};
+use crate::local::settings::{
+    GaugeSkin, KeyPreset, MAX_SERVER_ADDR_CHARS, is_valid_server_addr,
+};
 use crossterm::event::KeyCode;
 
+pub const SETTINGS_ROW_SERVER: usize = 9;
+pub const SETTINGS_ROW_BACK: usize = 10;
+const SETTINGS_ITEM_COUNT: usize = 11;
+
 impl App {
+    fn handle_server_addr_typing(&mut self, code: KeyCode) {
+        let Some(draft) = self.server_addr_draft.as_mut() else {
+            return;
+        };
+        match code {
+            KeyCode::Enter if is_valid_server_addr(draft.trim()) => {
+                self.profile.server_addr = draft.trim().to_string();
+                self.server_addr_draft = None;
+                let _ = self.profile.save();
+            }
+            KeyCode::Backspace => {
+                draft.pop();
+            }
+            KeyCode::Char(c) if !c.is_whitespace() && draft.chars().count() < MAX_SERVER_ADDR_CHARS => {
+                draft.push(c);
+            }
+            _ => {}
+        }
+    }
+
     pub(crate) fn handle_settings_menu_input(&mut self, code: KeyCode) {
-        let num_items = 10_usize;
+        let num_items = SETTINGS_ITEM_COUNT;
+
+        if self.server_addr_draft.is_some() {
+            self.handle_server_addr_typing(code);
+            return;
+        }
 
         if self.capturing_key {
             if code == KeyCode::Esc {
@@ -71,7 +102,10 @@ impl App {
                     self.profile.ascii_mode = !self.profile.ascii_mode;
                     let _ = self.profile.save();
                 }
-                9 => {
+                SETTINGS_ROW_SERVER => {
+                    self.server_addr_draft = Some(self.profile.server_addr.clone());
+                }
+                SETTINGS_ROW_BACK => {
                     self.capturing_key = false;
                     if self.paused_from.is_some() {
                         self.state = AppState::PauseMenu;

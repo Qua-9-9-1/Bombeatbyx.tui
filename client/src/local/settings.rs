@@ -1,6 +1,25 @@
 use common::game::RoomSettings;
 use serde::{Deserialize, Serialize};
 
+/// The server binds 27300 by default (see `server/src/main.rs`).
+pub const DEFAULT_SERVER_ADDR: &str = "127.0.0.1:27300";
+/// Old default that never matched the server port; migrated on load.
+const LEGACY_SERVER_ADDR: &str = "127.0.0.1:3000";
+pub const MAX_SERVER_ADDR_CHARS: usize = 64;
+
+/// Accepts `host:port`, optionally prefixed by `ws://` or `wss://`.
+pub fn is_valid_server_addr(addr: &str) -> bool {
+    let rest = addr
+        .strip_prefix("ws://")
+        .or_else(|| addr.strip_prefix("wss://"))
+        .unwrap_or(addr);
+    let host_port = rest.trim_end_matches("/ws").trim_end_matches('/');
+    match host_port.rsplit_once(':') {
+        Some((host, port)) => !host.is_empty() && port.parse::<u16>().is_ok_and(|p| p > 0),
+        None => false,
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 pub enum KeyPreset {
     ZQSD,
@@ -92,7 +111,11 @@ impl ClientSettings {
     pub fn load() -> Self {
         let path = Self::config_path();
         if let Ok(data) = std::fs::read_to_string(&path) {
-            if let Ok(settings) = serde_json::from_str::<Self>(&data) {
+            if let Ok(mut settings) = serde_json::from_str::<Self>(&data) {
+                if settings.server_addr == LEGACY_SERVER_ADDR {
+                    settings.server_addr = DEFAULT_SERVER_ADDR.to_string();
+                    let _ = settings.save();
+                }
                 return settings;
             }
         }
@@ -123,7 +146,7 @@ impl ClientSettings {
             key_bomb: bomb,
             key_spell: spell,
             ascii_mode: false,
-            server_addr: "127.0.0.1:3000".to_string(),
+            server_addr: DEFAULT_SERVER_ADDR.to_string(),
             last_room_settings: RoomSettings::default(),
         }
     }
@@ -143,6 +166,31 @@ mod tests {
     fn presets_map_correct_characters() {
         assert_eq!(KeyPreset::ZQSD.keys(), ('z', 's', 'q', 'd', ' ', 'e'));
         assert_eq!(KeyPreset::WASD.keys(), ('w', 's', 'a', 'd', ' ', 'e'));
+    }
+
+    #[test]
+    fn default_server_addr_matches_server_default_port() {
+        let settings = ClientSettings::default_with_preset(KeyPreset::WASD);
+
+        assert!(settings.server_addr.ends_with(":27300"));
+    }
+
+    #[test]
+    fn is_valid_server_addr_accepts_host_port_and_ws_urls() {
+        let valid = ["127.0.0.1:27300", "play.example.com:443", "ws://10.0.0.2:27300/ws"];
+
+        let results: Vec<bool> = valid.iter().map(|a| is_valid_server_addr(a)).collect();
+
+        assert_eq!(results, vec![true, true, true]);
+    }
+
+    #[test]
+    fn is_valid_server_addr_rejects_missing_or_bad_port() {
+        let invalid = ["localhost", "127.0.0.1:", ":27300", "127.0.0.1:99999", "host:abc"];
+
+        let has_valid = invalid.iter().any(|a| is_valid_server_addr(a));
+
+        assert!(!has_valid);
     }
 
     #[test]

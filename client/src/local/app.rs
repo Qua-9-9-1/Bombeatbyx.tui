@@ -1,5 +1,5 @@
 mod game;
-mod inputs;
+pub(crate) mod inputs;
 mod local_server;
 
 use crate::local::settings::ClientSettings;
@@ -79,6 +79,8 @@ pub struct App {
     pub victory_start_time: Option<Instant>,
     pub solo_paused_at: Option<Instant>,
     pub bot_rng: common::game::spawns::GameRng,
+    /// Server address being typed in the settings menu (`None` = not editing).
+    pub server_addr_draft: Option<String>,
 }
 
 impl App {
@@ -126,6 +128,7 @@ impl App {
             victory_start_time: None,
             solo_paused_at: None,
             bot_rng: common::game::spawns::GameRng::from_time(),
+            server_addr_draft: None,
         }
     }
 

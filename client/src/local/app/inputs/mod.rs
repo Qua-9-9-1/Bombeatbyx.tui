@@ -112,7 +112,9 @@ impl App {
                 self.state = self.paused_from.take().unwrap_or(AppState::InGame);
             }
             AppState::SettingsMenu => {
-                if self.capturing_key {
+                if self.server_addr_draft.is_some() {
+                    self.server_addr_draft = None;
+                } else if self.capturing_key {
                     self.capturing_key = false;
                 } else if self.paused_from.is_some() {
                     self.state = AppState::PauseMenu;
