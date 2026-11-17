@@ -78,6 +78,7 @@ Above roughly 300 ms of round-trip time, timing will feel unfair: prefer a serve
 
 | Symptom | Likely cause and fix |
 | :--- | :--- |
+| `No server is running at ...` (when hosting **Online**) | Nothing listens at the address of **Settings > Server**. Start a dedicated server there (section 2), or host in **LAN** mode to use your own machine. |
 | `Server did not answer within 5 s` | Wrong address or port, server not running, or firewall. Check **Settings > Server**. |
 | `Connection lost: server stopped responding` | No message from the server for 12 seconds (network drop or server crash). |
 | Online room list stays empty | Press `R` to refresh. Only **Public** online rooms are listed. |

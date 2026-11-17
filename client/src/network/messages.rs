@@ -74,7 +74,15 @@ impl App {
                 self.stop_local_server();
             }
             ServerMessage::ConnectionFailed(err) => {
-                self.network.network_error = Some(err);
+                // The join screen has its own error line; elsewhere, say it right away.
+                if self.state == AppState::JoinRoomMenu {
+                    self.network.network_error = Some(err);
+                } else {
+                    self.active_notification = Some(crate::local::app::NotificationPopup {
+                        title: "Connection failed".to_string(),
+                        message: err,
+                    });
+                }
                 self.network.is_multiplayer = false;
                 self.network.server_tx = None;
                 self.network.server_rx = None;

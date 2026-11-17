@@ -34,8 +34,10 @@ impl App {
 
                     if is_lan {
                         if let Err(e) = self.start_local_server() {
-                            self.network.network_error = Some(e);
-                            self.state = AppState::MainMenu;
+                            self.active_notification = Some(crate::local::app::NotificationPopup {
+                                title: "LAN server failed".to_string(),
+                                message: e,
+                            });
                             return;
                         }
                         let port = self.network.local_server_port.unwrap_or(27300);

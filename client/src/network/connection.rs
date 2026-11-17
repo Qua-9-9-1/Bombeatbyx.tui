@@ -24,6 +24,18 @@ fn to_ws_url(addr: String) -> String {
     ws_url
 }
 
+/// Turns low-level connection errors into an actionable message.
+fn describe_connect_error(error: &tokio_tungstenite::tungstenite::Error, ws_url: &str) -> String {
+    use tokio_tungstenite::tungstenite::Error;
+    match error {
+        Error::Io(io) if io.kind() == std::io::ErrorKind::ConnectionRefused => format!(
+            "No server is running at {}. Start a dedicated server, set its address in Settings > Server, or host in LAN mode.",
+            ws_url
+        ),
+        other => format!("Could not reach {}: {}", ws_url, other),
+    }
+}
+
 fn encode(msg: &ClientMessage) -> Option<Message> {
     serde_json::to_string(msg)
         .ok()
@@ -56,7 +68,7 @@ async fn run_connection(
     let ws_stream = match connect.await {
         Ok(Ok((stream, _))) => stream,
         Ok(Err(e)) => {
-            let _ = tx_to_app.send(ServerMessage::ConnectionFailed(e.to_string()));
+            let _ = tx_to_app.send(ServerMessage::ConnectionFailed(describe_connect_error(&e, &ws_url)));
             return;
         }
         Err(_) => {
