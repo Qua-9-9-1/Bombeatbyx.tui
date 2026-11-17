@@ -1,6 +1,7 @@
 mod game;
 pub(crate) mod inputs;
 mod local_server;
+mod sound;
 
 use crate::local::settings::ClientSettings;
 use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
@@ -82,6 +83,8 @@ pub struct App {
     pub bot_rng: common::game::spawns::GameRng,
     /// Server address being typed in the settings menu (`None` = not editing).
     pub server_addr_draft: Option<String>,
+    /// Last beat the metronome handled, to ring once per beat.
+    pub last_sound_beat: u64,
 }
 
 impl App {
@@ -130,6 +133,7 @@ impl App {
             solo_paused_at: None,
             bot_rng: common::game::spawns::GameRng::from_time(),
             server_addr_draft: None,
+            last_sound_beat: 0,
         }
     }
 
@@ -186,6 +190,7 @@ impl App {
                         ctx.rhythm.tick_logic();
                     }
                 }
+                self.ring_beat_sound();
             }
             self.handle_inputs(tui)?;
             if self.state == AppState::InGame && !self.network.is_multiplayer {

@@ -67,6 +67,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         key_label(6, app.profile.key_spell, "Spell / Item"),
         format!("Gauge Skin  : < {} >", gauge_str),
         format!("Display Mode: < {} >", mode_str),
+        format!("Beat Sound  : < {} >", app.profile.beat_sound.label()),
         match app.server_addr_draft {
             Some(ref draft) => format!("Server      : [ {}█ ]", draft),
             None => format!("Server      : [ {} ]", app.profile.server_addr),

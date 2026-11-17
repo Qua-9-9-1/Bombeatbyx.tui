@@ -1,14 +1,24 @@
 use crate::local::app::{App, AppState};
 use crate::local::settings::{
-    GaugeSkin, KeyPreset, MAX_SERVER_ADDR_CHARS, is_valid_server_addr,
+    BeatSound, GaugeSkin, KeyPreset, MAX_SERVER_ADDR_CHARS, is_valid_server_addr,
 };
 use crossterm::event::KeyCode;
 
-pub const SETTINGS_ROW_SERVER: usize = 9;
-pub const SETTINGS_ROW_BACK: usize = 10;
-const SETTINGS_ITEM_COUNT: usize = 11;
+pub const SETTINGS_ROW_SOUND: usize = 9;
+pub const SETTINGS_ROW_SERVER: usize = 10;
+pub const SETTINGS_ROW_BACK: usize = 11;
+const SETTINGS_ITEM_COUNT: usize = 12;
 
 impl App {
+    /// Switches the metronome mode and rings once so the player hears it.
+    fn cycle_beat_sound(&mut self) {
+        self.profile.beat_sound = self.profile.beat_sound.next();
+        let _ = self.profile.save();
+        if self.profile.beat_sound != BeatSound::Off {
+            let _ = crate::tui::ring_bell();
+        }
+    }
+
     fn handle_server_addr_typing(&mut self, code: KeyCode) {
         let Some(draft) = self.server_addr_draft.as_mut() else {
             return;
@@ -91,6 +101,7 @@ impl App {
                         self.profile.ascii_mode = !self.profile.ascii_mode;
                         let _ = self.profile.save();
                     }
+                    SETTINGS_ROW_SOUND => self.cycle_beat_sound(),
                     _ => {}
                 }
             }
@@ -102,6 +113,7 @@ impl App {
                     self.profile.ascii_mode = !self.profile.ascii_mode;
                     let _ = self.profile.save();
                 }
+                SETTINGS_ROW_SOUND => self.cycle_beat_sound(),
                 SETTINGS_ROW_SERVER => {
                     self.server_addr_draft = Some(self.profile.server_addr.clone());
                 }

@@ -61,6 +61,44 @@ pub enum GaugeSkin {
     Simple,
 }
 
+/// Metronome played through the terminal bell (works over SSH and Docker).
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum BeatSound {
+    Off,
+    #[default]
+    EveryBeat,
+    /// Only the first beat of each 4-beat bar.
+    EveryBar,
+}
+
+pub const BEATS_PER_BAR: u64 = 4;
+
+impl BeatSound {
+    pub fn label(self) -> &'static str {
+        match self {
+            BeatSound::Off => "Off",
+            BeatSound::EveryBeat => "Every beat",
+            BeatSound::EveryBar => "Every 4 beats",
+        }
+    }
+
+    pub fn next(self) -> Self {
+        match self {
+            BeatSound::Off => BeatSound::EveryBeat,
+            BeatSound::EveryBeat => BeatSound::EveryBar,
+            BeatSound::EveryBar => BeatSound::Off,
+        }
+    }
+
+    pub fn rings_on(self, beat: u64) -> bool {
+        match self {
+            BeatSound::Off => false,
+            BeatSound::EveryBeat => true,
+            BeatSound::EveryBar => beat % BEATS_PER_BAR == 0,
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ClientSettings {
     pub name: String,
@@ -74,6 +112,8 @@ pub struct ClientSettings {
     pub key_bomb: char,
     pub key_spell: char,
     pub ascii_mode: bool,
+    #[serde(default)]
+    pub beat_sound: BeatSound,
     pub server_addr: String,
     pub last_room_settings: RoomSettings,
 }
@@ -146,6 +186,7 @@ impl ClientSettings {
             key_bomb: bomb,
             key_spell: spell,
             ascii_mode: false,
+            beat_sound: BeatSound::default(),
             server_addr: DEFAULT_SERVER_ADDR.to_string(),
             last_room_settings: RoomSettings::default(),
         }
@@ -191,6 +232,36 @@ mod tests {
         let has_valid = invalid.iter().any(|a| is_valid_server_addr(a));
 
         assert!(!has_valid);
+    }
+
+    #[test]
+    fn beat_sound_every_bar_rings_on_bar_starts_only() {
+        let beats = 0..8u64;
+
+        let rung: Vec<u64> = beats.filter(|b| BeatSound::EveryBar.rings_on(*b)).collect();
+
+        assert_eq!(rung, vec![0, 4]);
+    }
+
+    #[test]
+    fn beat_sound_cycles_through_all_modes() {
+        let start = BeatSound::Off;
+
+        let back = start.next().next().next();
+
+        assert_eq!(start.next(), BeatSound::EveryBeat);
+        assert_eq!(back, start);
+    }
+
+    #[test]
+    fn config_without_beat_sound_field_still_loads() {
+        let mut json = serde_json::to_value(ClientSettings::default_with_preset(KeyPreset::WASD))
+            .expect("serializable settings");
+        json.as_object_mut().expect("object").remove("beat_sound");
+
+        let loaded: ClientSettings = serde_json::from_value(json).expect("legacy config loads");
+
+        assert_eq!(loaded.beat_sound, BeatSound::EveryBeat);
     }
 
     #[test]

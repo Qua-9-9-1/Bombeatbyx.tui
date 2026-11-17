@@ -6,6 +6,15 @@ use crossterm::{
 use ratatui::prelude::*;
 use std::io::{self, Stdout};
 
+/// Rings the terminal bell (BEL). The host terminal plays the sound,
+/// so it also works through SSH or a Docker container.
+pub fn ring_bell() -> io::Result<()> {
+    use std::io::Write;
+    let mut out = io::stdout();
+    out.write_all(b"\x07")?;
+    out.flush()
+}
+
 pub struct Tui {
     terminal: Terminal<CrosstermBackend<Stdout>>,
 }
