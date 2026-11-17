@@ -28,10 +28,6 @@ Candidate features, ordered by expected fun per effort. Keep the core rule in mi
 
 ## 5. Network Follow-ups
 * **End-to-end network test:** an in-process server + `tokio-tungstenite` client test covering create, join, ready, start, action and disconnect.
-* **LAN discovery for several clients on one machine:** the client binds UDP 27315 exclusively; needs `SO_REUSEADDR` (e.g. the `socket2` crate).
 * **Private LAN rooms:** they are not broadcast, so they can only be joined by setting the host IP as server address.
-* **Close kicked sockets server-side** instead of relying on the client to leave.
-* **RTT manipulation (known limit):** a client can delay its Pongs to always get the full 150 ms latency compensation. Mitigation ideas: use the minimum of recent samples, a lower cap, or reject unstable RTTs.
-* **Game loop cost:** the server serializes every running room to JSON under the global lock every 16 ms to detect changes; use a dirty flag/hash and serialize outside the lock.
-* **Client message size:** the client accepts tokio-tungstenite's default max message size; set a smaller limit (e.g. 1 MiB) in `connect_async_with_config`.
-* **Death animation online:** `respawn_timer` is not serialized, so online clients never draw the death animation.
+* **RTT manipulation (known limit, not fixable server-side):** a client can delay its Pongs to always get the full 150 ms latency compensation; the server cannot tell a slow network from a cheater. Possible mitigations: lower cap, or compensation from the minimum of recent samples (penalizes honest jittery players).
+* **Game loop cost:** states are still serialized every 16 ms (outside the lock) to detect changes; a dirty flag set by the simulation would avoid it.

@@ -82,7 +82,7 @@ Above roughly 300 ms of round-trip time, timing will feel unfair: prefer a serve
 | `Server did not answer within 5 s` | Wrong address or port, server not running, or firewall. Check **Settings > Server**. |
 | `Connection lost: server stopped responding` | No message from the server for 12 seconds (network drop or server crash). |
 | Online room list stays empty | Press `R` to refresh. Only **Public** online rooms are listed. |
-| LAN room not visible | UDP 27315 blocked, players on different subnets, or the room is **Private**. Only one client per machine can listen for LAN rooms. |
+| LAN room not visible | UDP 27315 blocked, players on different subnets, or the room is **Private**. |
 | Hosting LAN fails (`Failed to start server binary` or `Server did not answer`) | The `server` executable is not next to the client. Keep both files from the release archive together. |
 | `Room is full` | 8 players maximum. |
 | `You are banned from this room` | The host banned your IP for this room. |

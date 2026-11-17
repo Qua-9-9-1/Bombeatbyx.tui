@@ -115,7 +115,8 @@ CLIENT                          SERVER
 | **Latency** | RTT is smoothed (EWMA) per peer in `Room.latencies`. Actions are judged at `reception - RTT/2`, capped by `MAX_LATENCY_COMPENSATION` (150 ms). |
 | **Rhythm sync** | On the first snapshot of each beat, the client calls `RhythmEngine::align(beat, RTT/2 + half tick, 25 ms tolerance)`. |
 | **Prediction** | The client applies its own action immediately and keeps it over server snapshots only for `RTT + 150 ms` (`client/src/network/sync.rs`). |
-| **Broadcast** | `GameStateUpdate` is sent only when the serialized state changed (`Room.last_broadcast_state`). |
+| **Broadcast** | `server/src/game_loop.rs`: rooms are ticked and their states cloned under the lock; the JSON fingerprint used to skip unchanged states is computed outside the lock. `GameStateUpdate` is sent only when it changed. |
+| **Kicked sockets** | A peer no longer in its room (kick/ban) has its socket closed by the server at the next ping (3 s), without relying on the client. |
 | **Host change** | Always via `Room::set_host`, which updates the running game and broadcasts `HostTransferred`. |
 | **LAN hosting** | The client looks for the `server` binary next to its own executable first (release zip layout), then in `target/`. |
 | **Abuse limits (server)** | Max `MAX_CONNECTIONS_PER_IP` (16) sockets per IP, 16 KiB per client message/frame, 60 messages/s per connection (extra dropped), 1000 rooms. `CreateRoom` is ignored while already in a room (it used to leave ghost peers). |
