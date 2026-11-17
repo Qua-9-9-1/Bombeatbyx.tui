@@ -49,6 +49,7 @@ pub fn feedback_title(app: &App) -> Line<'static> {
     };
     let (text, color) = match &hit.kind {
         HitKind::AlreadyActed => (" ONE ACTION PER BEAT ".to_string(), Color::Magenta),
+        HitKind::TooFast => (" TOO FAST - SLOW DOWN ".to_string(), Color::Magenta),
         HitKind::Rated(BeatAccuracy::Miss, side) => {
             let side = match side {
                 Some(BeatSide::Early) => "EARLY",

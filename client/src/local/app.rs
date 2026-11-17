@@ -196,7 +196,13 @@ impl App {
                         ctx.rhythm.tick_logic();
                         // Also catches beats reached through a clock realignment.
                         let beat = ctx.rhythm.beat_count;
-                        ctx.flush_buffered_actions(beat);
+                        let flushed = ctx.flush_buffered_actions(beat);
+                        // Predicted from now on, until the server confirms it.
+                        if let Some((_, buffered)) =
+                            flushed.iter().find(|(id, _)| *id == self.current_player_id)
+                        {
+                            self.last_local_action = Some((beat, buffered.action, Instant::now()));
+                        }
                     }
                 }
                 self.ring_beat_sound();

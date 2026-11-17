@@ -10,6 +10,8 @@ pub enum HitKind {
     Rated(BeatAccuracy, Option<BeatSide>),
     /// A second input in a beat that was already used.
     AlreadyActed,
+    /// Refused by the anti-spam lockout (presses too close together).
+    TooFast,
 }
 
 #[derive(Debug, Clone)]
@@ -31,16 +33,20 @@ impl App {
             return;
         }
         let now = Instant::now();
+        let Some(player) = ctx.state.players.iter().find(|p| p.id == self.current_player_id) else {
+            return;
+        };
+        // Dead players' inputs do nothing: no feedback rather than a fake rating.
+        if !player.is_alive {
+            return;
+        }
         let (target_beat, accuracy) = ctx.rhythm.timing_at(now);
-        let beat_used = accuracy != BeatAccuracy::Miss
-            && ctx
-                .state
-                .players
-                .iter()
-                .find(|p| p.id == self.current_player_id)
-                .is_some_and(|p| p.last_acted_beat == Some(target_beat));
+        let beat_used =
+            accuracy != BeatAccuracy::Miss && player.last_acted_beat == Some(target_beat);
         let already_acted = beat_used || ctx.has_buffered_action(self.current_player_id);
-        let kind = if already_acted {
+        let kind = if player.would_be_throttled(now) {
+            HitKind::TooFast
+        } else if already_acted {
             HitKind::AlreadyActed
         } else {
             let side = (accuracy != BeatAccuracy::Perfect).then(|| beat_side(ctx.rhythm.progress()));

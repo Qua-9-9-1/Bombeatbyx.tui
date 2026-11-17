@@ -91,7 +91,11 @@ impl App {
                 if let Some(ref mut ctx) = self.game_ctx {
                     let (target_beat, _) = ctx.rhythm.timing_at(std::time::Instant::now());
                     ctx.process_player_action(self.current_player_id, action);
-                    self.last_local_action = Some((target_beat, action, std::time::Instant::now()));
+                    // A buffered input is predicted when it runs (see the online
+                    // branch of `App::run`), not at press time.
+                    if !ctx.has_buffered_action(self.current_player_id) {
+                        self.last_local_action = Some((target_beat, action, std::time::Instant::now()));
+                    }
                 }
             } else {
                 if let Some(ref mut ctx) = self.game_ctx {
