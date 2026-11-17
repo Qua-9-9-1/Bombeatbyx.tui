@@ -62,6 +62,24 @@ impl GameState {
         }
     }
 
+    /// Runs an input buffered after an off-beat press. It happens on the beat,
+    /// but earns no rhythm points and breaks the combo.
+    pub fn handle_buffered_action(&mut self, player_id: u32, action: GameAction, beat: u64) {
+        if self.countdown.is_some() || self.game_over_countdown.is_some() {
+            return;
+        }
+        let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) else {
+            return;
+        };
+        if !player.is_alive || player.last_acted_beat == Some(beat) {
+            return;
+        }
+        player.combo = 0;
+        player.last_acted_beat = Some(beat);
+        player.last_accuracy = BeatAccuracy::Miss;
+        self.apply_player_action(player_id, action, BeatAccuracy::Miss, beat);
+    }
+
     /// Resets the combo of every active player who let a beat pass without acting.
     pub fn reset_idle_combos(&mut self, current_beat: u64) {
         for player in &mut self.players {

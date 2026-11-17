@@ -1,7 +1,9 @@
 use super::actions::GameAction;
+use super::input_buffer::BufferedAction;
 use super::models::{Player, RoomSettings};
 use super::rhythm::{BeatAccuracy, RhythmEngine};
 use super::state::GameState;
+use std::collections::HashMap;
 use std::time::{Duration, Instant};
 
 /// Upper bound of the latency compensation applied to a player's input.
@@ -12,6 +14,8 @@ pub struct GameContext {
     pub rhythm: RhythmEngine,
     pub last_closed_window_beat: Option<u64>,
     pub start_time: std::time::Instant,
+    /// One pending off-beat input per player (see `input_buffer`).
+    pub buffered_actions: HashMap<u32, BufferedAction>,
 }
 
 impl GameContext {
@@ -21,6 +25,7 @@ impl GameContext {
             rhythm: RhythmEngine::new(bpm),
             last_closed_window_beat: None,
             start_time: std::time::Instant::now(),
+            buffered_actions: HashMap::new(),
         }
     }
 
@@ -76,6 +81,7 @@ impl GameContext {
             }
 
             if is_playing {
+                self.flush_buffered_actions(current_beat);
                 self.state.tick_beat(current_beat);
                 self.state.tick_bombs_and_explosions();
                 self.state.tick_sudden_death(current_beat);
@@ -124,7 +130,18 @@ impl GameContext {
         let now = Instant::now();
         let pressed_at = now.checked_sub(compensation).unwrap_or(now);
         let (target_beat, accuracy) = self.rhythm.timing_at(pressed_at);
+        let is_emote = matches!(action, GameAction::Emote(_));
 
+        if !is_emote {
+            if accuracy == BeatAccuracy::Miss {
+                self.buffer_action(player_id, action);
+                return;
+            }
+            // The slot already holds the action for this beat: one input per beat.
+            if self.has_buffered_action(player_id) {
+                return;
+            }
+        }
         self.state
             .handle_action(player_id, action, accuracy, target_beat);
     }
@@ -178,7 +195,9 @@ mod tests {
             Duration::from_millis(390),
         );
 
-        assert_eq!(context.state.players[0].last_accuracy, BeatAccuracy::Miss);
+        // Judged off-beat: the input waits for the next beat instead of running now.
+        assert!(context.has_buffered_action(1));
+        assert_eq!(context.state.players[0].sub_y, 0);
     }
 
     #[test]

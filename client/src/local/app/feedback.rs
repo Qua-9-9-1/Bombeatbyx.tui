@@ -32,12 +32,14 @@ impl App {
         }
         let now = Instant::now();
         let (target_beat, accuracy) = ctx.rhythm.timing_at(now);
-        let already_acted = ctx
-            .state
-            .players
-            .iter()
-            .find(|p| p.id == self.current_player_id)
-            .is_some_and(|p| p.last_acted_beat == Some(target_beat));
+        let beat_used = accuracy != BeatAccuracy::Miss
+            && ctx
+                .state
+                .players
+                .iter()
+                .find(|p| p.id == self.current_player_id)
+                .is_some_and(|p| p.last_acted_beat == Some(target_beat));
+        let already_acted = beat_used || ctx.has_buffered_action(self.current_player_id);
         let kind = if already_acted {
             HitKind::AlreadyActed
         } else {

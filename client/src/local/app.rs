@@ -194,6 +194,9 @@ impl App {
                 } else {
                     if let Some(ref mut ctx) = self.game_ctx {
                         ctx.rhythm.tick_logic();
+                        // Also catches beats reached through a clock realignment.
+                        let beat = ctx.rhythm.beat_count;
+                        ctx.flush_buffered_actions(beat);
                     }
                 }
                 self.ring_beat_sound();
