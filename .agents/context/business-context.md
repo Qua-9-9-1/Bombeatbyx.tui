@@ -19,7 +19,8 @@ All tuning values live in `common/src/game/rules.rs` (re-exported by `models`). 
 
 ### 2.1 Rhythm Synchronization (Critical Rule)
 * **All player actions** (movement, bomb drop, item use) are **gated by the active BPM beat**: one action per beat (`last_acted_beat`), plus a 100 ms anti-spam lockout.
-* `BeatAccuracy` = `Perfect` / `Great` / `Ok` / `Miss` / `Waiting`, evaluated from the distance to the nearest beat. A `Miss` consumes the beat, does nothing and resets the combo.
+* `BeatAccuracy` = `Perfect` / `Great` / `Ok` / `Miss` / `Waiting`, evaluated from the distance to the nearest beat (`PERFECT_WINDOW` / `GREAT_WINDOW` / `OK_WINDOW` in `rules.rs`, fractions of the beat on each side).
+* **Readability rule:** players must be able to keep the rhythm while looking at the arena. Beat cues live on the map (`client/src/ui/game_screen/beat_fx.rs`): border lit during the hit window, local player cell glowing, floor checkerboard swapping each beat, 4-beat bar counter, and local feedback (`App.last_hit`: rating + EARLY/LATE, or ONE ACTION PER BEAT) in the arena title. Never move essential timing info away from the map. A `Miss` consumes the beat, does nothing and resets the combo.
 * **Combo** (`Player.combo`): +1 for each `Perfect`/`Great` action (`Ok` keeps it). An on-beat action that fails (bumping a wall) still keeps the groove but consumes the beat.
 * **Idle reset (NecroDancer rule):** letting a beat pass without acting resets the combo (`GameState::reset_idle_combos`, called when the beat window closes).
 * **Multiplier:** rhythm points are multiplied by `1 + combo / COMBO_STEP` (max `MAX_COMBO_MULTIPLIER`).

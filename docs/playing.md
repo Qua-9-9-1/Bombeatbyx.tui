@@ -28,13 +28,26 @@ Emotes are free: they ignore the beat and never break your combo.
 
 ## 3. The Rhythm Rule
 
-Everything you do (moving, bombing, using an item) must be **on the beat**. Follow the gauge under the map and the `PERFECT / GREAT / OKAY / MISS` feedback.
+Everything you do (moving, bombing, using an item) must be **on the beat**.
+
+### Reading the beat without leaving the map
+
+| Cue | Meaning |
+| :--- | :--- |
+| Arena border turns **thick and green** | Press now: the hit window is open. |
+| Your cell turns **green** | Same, right under your eyes. |
+| Floor tiles swap | A new beat just started. |
+| `◆ ◇ ◇ ◇` under the arena | Position in the 4-beat bar. |
+| Title above the arena | Rating of your last input, with `EARLY` / `LATE` when you were off, or `ONE ACTION PER BEAT` if you pressed twice. |
+| Beat sound | Optional metronome, see [Settings](#beat-sound). |
+
+The gauge under the map shows the same timing in more detail.
 
 | Timing (distance to the beat) | Rating | Points | Combo |
 | :--- | :--- | :--- | :--- |
-| within 4 % of a beat | **Perfect** | 50 | +1 |
-| within 9 % | **Great** | 20 | +1 |
-| within 15 % | **Okay** | 5 | kept |
+| within 6 % of a beat | **Perfect** | 50 | +1 |
+| within 12 % | **Great** | 20 | +1 |
+| within 20 % | **Okay** | 5 | kept |
 | further | **Miss** | 0 | reset, action ignored |
 
 * **One action per beat.** Extra presses in the same beat are ignored, and pressing keys faster than every 100 ms triggers a short lockout.
