@@ -1,7 +1,10 @@
+mod feedback;
 mod game;
 pub(crate) mod inputs;
 mod local_server;
 mod sound;
+
+pub use feedback::{HitKind, LocalHit};
 
 use crate::local::settings::ClientSettings;
 use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
@@ -85,6 +88,8 @@ pub struct App {
     pub server_addr_draft: Option<String>,
     /// Last beat the metronome handled, to ring once per beat.
     pub last_sound_beat: u64,
+    /// Local judgement of the last input, for on-arena feedback.
+    pub last_hit: Option<LocalHit>,
 }
 
 impl App {
@@ -134,6 +139,7 @@ impl App {
             bot_rng: common::game::spawns::GameRng::from_time(),
             server_addr_draft: None,
             last_sound_beat: 0,
+            last_hit: None,
         }
     }
 

@@ -83,6 +83,7 @@ impl App {
 
     pub(crate) fn trigger_game_action(&mut self, code: KeyCode) {
         if let Some(action) = self.map_key_to_action(code) {
+            self.record_local_hit(&action);
             if self.network.is_multiplayer {
                 if let Some(ref tx) = self.network.server_tx {
                     let _ = tx.send(common::messages::ClientMessage::Action(action.clone()));
