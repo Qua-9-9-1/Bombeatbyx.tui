@@ -118,3 +118,9 @@ CLIENT                          SERVER
 | **Broadcast** | `GameStateUpdate` is sent only when the serialized state changed (`Room.last_broadcast_state`). |
 | **Host change** | Always via `Room::set_host`, which updates the running game and broadcasts `HostTransferred`. |
 | **LAN hosting** | The client looks for the `server` binary next to its own executable first (release zip layout), then in `target/`. |
+| **Abuse limits (server)** | Max `MAX_CONNECTIONS_PER_IP` (16) sockets per IP, 16 KiB per client message/frame, 60 messages/s per connection (extra dropped), 1000 rooms. `CreateRoom` is ignored while already in a room (it used to leave ghost peers). |
+| **Outbox** | Each peer has a bounded queue (`PeerSender`, `OUTBOX_CAPACITY` 512, `try_send`). A saturated queue (client not reading) closes the connection at the next ping. Never use an unbounded channel toward a client. |
+| **Pong** | Only a Pong answering an outstanding Ping resets the timeout and updates the RTT. |
+| **Room codes** | Generated from `RandomState` (OS randomness): private codes are secrets, never time-seeded. |
+| **Emotes** | Not beat-gated, so they have their own 500 ms cooldown and are refused to spectators (each emote triggers a broadcast). |
+| **Client trust** | The client never trusts the server: `network/validate.rs` sanitizes settings and drops states failing `GameState::is_well_formed()`. LAN datagrams are parsed strictly (code, name, player count, port), at most 32 per frame and 32 listed rooms. |
