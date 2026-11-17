@@ -1,16 +1,22 @@
 use crate::state::Room;
 
+use std::hash::{BuildHasher, Hasher};
+
+/// Unpredictable 64-bit value: `RandomState` keys come from the OS random source.
+fn random_u64() -> u64 {
+    std::collections::hash_map::RandomState::new()
+        .build_hasher()
+        .finish()
+}
+
+/// Private room codes act as passwords, so they must not be guessable
+/// from the creation time.
 pub fn generate_room_code(rooms: &std::collections::HashMap<String, Room>) -> String {
-    let mut seed = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or_default()
-        .as_nanos() as u64;
     let chars: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     loop {
         let mut code = String::new();
         for _ in 0..6 {
-            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1);
-            let idx = (seed >> 32) as usize % chars.len();
+            let idx = (random_u64() % chars.len() as u64) as usize;
             code.push(chars[idx] as char);
         }
         if !rooms.contains_key(&code) {

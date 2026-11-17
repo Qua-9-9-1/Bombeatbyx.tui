@@ -1,9 +1,9 @@
 use crate::state::SharedState;
 use common::messages::{RoomInfo, ServerMessage};
-use tokio::sync::mpsc::UnboundedSender;
+use crate::state::PeerSender;
 
 pub async fn handle_get_rooms(
-    tx: &UnboundedSender<ServerMessage>,
+    tx: &PeerSender,
     state: &SharedState,
 ) -> Result<(), ()> {
     let s = state.lock().await;

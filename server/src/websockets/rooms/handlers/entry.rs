@@ -2,14 +2,14 @@ use crate::state::{Peer, Room, SharedState};
 use crate::websockets::utils::generate_room_code;
 use common::game::GameState;
 use common::messages::ServerMessage;
-use tokio::sync::mpsc::UnboundedSender;
+use crate::state::PeerSender;
 
 pub async fn handle_create_room(
     my_room_code: &mut Option<String>,
     my_player_id: &mut Option<u32>,
     my_name: &str,
     my_skin: &str,
-    tx: &UnboundedSender<ServerMessage>,
+    tx: &PeerSender,
     state: &SharedState,
     client_ip: std::net::IpAddr,
     is_public: bool,
@@ -83,7 +83,7 @@ pub async fn handle_join_room(
     my_player_id: &mut Option<u32>,
     my_name: &mut String,
     my_skin: &mut String,
-    tx: &UnboundedSender<ServerMessage>,
+    tx: &PeerSender,
     state: &SharedState,
     client_ip: std::net::IpAddr,
     code: String,

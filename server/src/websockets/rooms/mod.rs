@@ -3,7 +3,7 @@ pub mod handlers;
 use crate::state::{Room, SharedState};
 use common::game::{GameContext, GameState};
 use common::messages::{ClientMessage, ServerMessage};
-use tokio::sync::mpsc::UnboundedSender;
+use crate::state::PeerSender;
 
 use handlers::*;
 
@@ -12,13 +12,15 @@ pub async fn process_client_message(
     my_player_id: &mut Option<u32>,
     my_name: &mut String,
     my_skin: &mut String,
-    tx: UnboundedSender<ServerMessage>,
+    tx: PeerSender,
     client_msg: ClientMessage,
     state: &SharedState,
     client_ip: std::net::IpAddr,
 ) -> Result<(), ()> {
     match client_msg {
         ClientMessage::GetRooms => handle_get_rooms(&tx, state).await?,
+        // Creating a second room would leave a ghost peer behind in the first one.
+        ClientMessage::CreateRoom { .. } if my_room_code.is_some() => {}
         ClientMessage::CreateRoom {
             is_public,
             is_lan,

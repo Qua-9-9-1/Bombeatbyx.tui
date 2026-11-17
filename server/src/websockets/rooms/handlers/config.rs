@@ -92,7 +92,7 @@ mod tests {
     use crate::state::{Room, Peer, ServerState};
     use std::sync::Arc;
     use tokio::sync::Mutex;
-    use tokio::sync::mpsc::unbounded_channel;
+    use crate::state::peer_channel;
 
     #[tokio::test]
     async fn toggle_ready_blocks_when_skin_already_taken_by_ready_player() {
@@ -100,7 +100,7 @@ mod tests {
         let mut room = Room::new("TEST".to_string(), true, false);
         room.host_id = Some(1);
 
-        let (tx, _) = unbounded_channel();
+        let (tx, _rx) = peer_channel();
         let ip = "127.0.0.1".parse::<std::net::IpAddr>().unwrap();
 
         room.peers.insert(1, Peer {

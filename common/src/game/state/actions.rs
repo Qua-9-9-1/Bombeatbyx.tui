@@ -3,6 +3,9 @@ use crate::game::actions::GameAction;
 use crate::game::models::{Cell, SHIELD_DURATION_BEATS, SecondItem};
 
 const MAX_COMBO: u32 = 9999;
+const EMOTE_DURATION: std::time::Duration = std::time::Duration::from_millis(1500);
+/// Minimum delay between two emotes of the same player.
+const EMOTE_COOLDOWN: std::time::Duration = std::time::Duration::from_millis(500);
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
@@ -170,6 +173,15 @@ impl GameState {
 
     pub fn trigger_emote(&mut self, player_id: u32, index: u8) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
+            // Emotes ignore the beat, so they get their own anti-flood cooldown
+            // (each one changes the state and triggers a broadcast).
+            let now = std::time::Instant::now();
+            let on_cooldown = player
+                .emote_until
+                .is_some_and(|until| until > now + EMOTE_DURATION - EMOTE_COOLDOWN);
+            if player.is_spectator || on_cooldown {
+                return;
+            }
             let emote = match index {
                 1 => "👋",
                 2 => "✌️",
@@ -178,8 +190,7 @@ impl GameState {
                 _ => return,
             };
             player.active_emote = Some(emote.to_string());
-            player.emote_until =
-                Some(std::time::Instant::now() + std::time::Duration::from_millis(1500));
+            player.emote_until = Some(now + EMOTE_DURATION);
         }
     }
 }

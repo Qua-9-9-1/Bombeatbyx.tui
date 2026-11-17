@@ -4,13 +4,39 @@ use std::collections::{HashMap, HashSet};
 use std::net::IpAddr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::mpsc::{self, Receiver, Sender};
+
+/// Messages queued for one client. A client that stops reading fills it: new
+/// messages are then dropped and the connection is closed, instead of letting
+/// server memory grow without limit.
+pub const OUTBOX_CAPACITY: usize = 512;
+
+/// Bounded, non-blocking sender to one client.
+#[derive(Clone, Debug)]
+pub struct PeerSender(Sender<ServerMessage>);
+
+impl PeerSender {
+    /// Queues a message; fails (message dropped) when the outbox is full or closed.
+    pub fn send(&self, msg: ServerMessage) -> Result<(), ()> {
+        self.0.try_send(msg).map_err(|_| ())
+    }
+
+    /// `true` once the client stopped draining its outbox.
+    pub fn is_saturated(&self) -> bool {
+        self.0.capacity() == 0
+    }
+}
+
+pub fn peer_channel() -> (PeerSender, Receiver<ServerMessage>) {
+    let (tx, rx) = mpsc::channel(OUTBOX_CAPACITY);
+    (PeerSender(tx), rx)
+}
 
 pub struct Peer {
     pub id: u32,
     pub name: String,
     pub skin: String,
-    pub tx: UnboundedSender<ServerMessage>,
+    pub tx: PeerSender,
     pub is_ready: bool,
     pub is_spectator: bool,
     pub ip: IpAddr,
@@ -102,14 +128,40 @@ impl Room {
     }
 }
 
+/// Simultaneous WebSocket connections allowed from one IP address
+/// (a LAN party behind one router stays well below it).
+pub const MAX_CONNECTIONS_PER_IP: usize = 16;
+
 pub struct ServerState {
     pub rooms: HashMap<String, Room>,
+    /// Open connections per client IP.
+    pub connections: HashMap<IpAddr, usize>,
 }
 
 impl ServerState {
     pub fn new() -> Self {
         Self {
             rooms: HashMap::new(),
+            connections: HashMap::new(),
+        }
+    }
+
+    /// Registers a new connection; `false` if the IP already has too many.
+    pub fn try_open_connection(&mut self, ip: IpAddr) -> bool {
+        let count = self.connections.entry(ip).or_insert(0);
+        if *count >= MAX_CONNECTIONS_PER_IP {
+            return false;
+        }
+        *count += 1;
+        true
+    }
+
+    pub fn close_connection(&mut self, ip: IpAddr) {
+        if let Some(count) = self.connections.get_mut(&ip) {
+            *count = count.saturating_sub(1);
+            if *count == 0 {
+                self.connections.remove(&ip);
+            }
         }
     }
 }
@@ -119,21 +171,49 @@ pub type SharedState = Arc<Mutex<ServerState>>;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tokio::sync::mpsc::unbounded_channel;
     use std::net::IpAddr;
+
+    #[test]
+    fn connections_per_ip_are_capped_and_released() {
+        let mut state = ServerState::new();
+        let ip = "10.0.0.7".parse::<IpAddr>().unwrap();
+        for _ in 0..MAX_CONNECTIONS_PER_IP {
+            assert!(state.try_open_connection(ip));
+        }
+
+        let over_limit = state.try_open_connection(ip);
+        state.close_connection(ip);
+        let after_release = state.try_open_connection(ip);
+
+        assert!(!over_limit);
+        assert!(after_release);
+    }
+
+    #[test]
+    fn peer_sender_drops_messages_once_outbox_is_full() {
+        let (tx, _rx) = peer_channel();
+        for _ in 0..OUTBOX_CAPACITY {
+            assert!(tx.send(ServerMessage::GameEnded).is_ok());
+        }
+
+        let overflow = tx.send(ServerMessage::GameEnded);
+
+        assert!(overflow.is_err());
+        assert!(tx.is_saturated());
+    }
 
     #[test]
     fn get_lobby_players_returns_sorted_list() {
         let mut room = Room::new("TEST".to_string(), true, false);
         room.host_id = Some(1);
         
-        let (tx, _) = unbounded_channel();
+        let (tx, _rx) = peer_channel();
         let ip = "127.0.0.1".parse::<IpAddr>().unwrap();
 
         room.peers.insert(2, Peer {
             id: 2,
             name: "Player 2".to_string(),
-            skin: "🐱".to_string(),
+            skin: "ðŸ±".to_string(),
             tx: tx.clone(),
             is_ready: true,
             is_spectator: false,
@@ -143,7 +223,7 @@ mod tests {
         room.peers.insert(1, Peer {
             id: 1,
             name: "Player 1".to_string(),
-            skin: "🤖".to_string(),
+            skin: "ðŸ¤–".to_string(),
             tx: tx.clone(),
             is_ready: false,
             is_spectator: false,
@@ -162,13 +242,13 @@ mod tests {
     #[test]
     fn set_host_updates_running_game_and_notifies_peers() {
         let mut room = Room::new("TEST".to_string(), true, false);
-        let (tx, mut rx) = unbounded_channel();
+        let (tx, mut rx) = peer_channel();
         let ip = "127.0.0.1".parse::<IpAddr>().unwrap();
         for id in [1, 2] {
             room.peers.insert(id, Peer {
                 id,
                 name: format!("Player {}", id),
-                skin: "🤖".to_string(),
+                skin: "ðŸ¤–".to_string(),
                 tx: tx.clone(),
                 is_ready: true,
                 is_spectator: false,
