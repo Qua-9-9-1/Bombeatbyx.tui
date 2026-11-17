@@ -15,6 +15,12 @@ pub const BONUS_PICKUP_POINTS: u32 = 25;
 pub const MAX_LIVES: u8 = 9;
 pub const DASH_DISTANCE: u32 = 3;
 
+/// Hit windows, as a fraction of the beat interval on each side of the beat.
+/// One action per beat and the miss penalty keep wide windows spam-proof.
+pub const PERFECT_WINDOW: f64 = 0.06;
+pub const GREAT_WINDOW: f64 = 0.12;
+pub const OK_WINDOW: f64 = 0.20;
+
 /// Every `COMBO_STEP` consecutive on-beat actions raise the score multiplier by one.
 pub const COMBO_STEP: u32 = 8;
 pub const MAX_COMBO_MULTIPLIER: u32 = 4;

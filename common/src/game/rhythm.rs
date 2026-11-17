@@ -1,3 +1,4 @@
+use crate::game::rules::{GREAT_WINDOW, OK_WINDOW, PERFECT_WINDOW};
 use serde::{Deserialize, Serialize};
 use std::time::{Duration, Instant};
 
@@ -116,18 +117,36 @@ impl RhythmEngine {
     }
 }
 
-fn accuracy_from_progress(progress: f64) -> BeatAccuracy {
-    let distance = if progress > 0.5 {
-        1.0 - progress
-    } else {
-        progress
-    };
+/// Side of the nearest beat an input fell on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BeatSide {
+    Early,
+    Late,
+}
 
-    if distance <= 0.04 {
+/// Inputs in the second half of a beat target the next beat: they are early.
+pub fn beat_side(progress: f64) -> BeatSide {
+    if progress > 0.5 { BeatSide::Early } else { BeatSide::Late }
+}
+
+/// Distance to the nearest beat, as a fraction of the beat interval (0..=0.5).
+pub fn distance_to_beat(progress: f64) -> f64 {
+    if progress > 0.5 { 1.0 - progress } else { progress }
+}
+
+/// `true` while an input would not be a miss.
+pub fn is_in_hit_window(progress: f64) -> bool {
+    distance_to_beat(progress) <= OK_WINDOW
+}
+
+fn accuracy_from_progress(progress: f64) -> BeatAccuracy {
+    let distance = distance_to_beat(progress);
+
+    if distance <= PERFECT_WINDOW {
         BeatAccuracy::Perfect
-    } else if distance <= 0.09 {
+    } else if distance <= GREAT_WINDOW {
         BeatAccuracy::Great
-    } else if distance <= 0.15 {
+    } else if distance <= OK_WINDOW {
         BeatAccuracy::Ok
     } else {
         BeatAccuracy::Miss
@@ -221,5 +240,24 @@ mod tests {
         assert_eq!(BeatAccuracy::Ok.bonus_points(), 5);
         assert_eq!(BeatAccuracy::Miss.bonus_points(), 0);
         assert_eq!(BeatAccuracy::Waiting.bonus_points(), 0);
+    }
+
+    #[test]
+    fn hit_window_is_symmetric_around_the_beat() {
+        let edges = [OK_WINDOW, 1.0 - OK_WINDOW, OK_WINDOW + 0.01, 1.0 - OK_WINDOW - 0.01];
+
+        let open: Vec<bool> = edges.iter().map(|p| is_in_hit_window(*p)).collect();
+
+        assert_eq!(open, vec![true, true, false, false]);
+    }
+
+    #[test]
+    fn beat_side_reports_early_before_and_late_after_the_beat() {
+        let before_beat = 0.9;
+        let after_beat = 0.1;
+
+        let sides = (beat_side(before_beat), beat_side(after_beat));
+
+        assert_eq!(sides, (BeatSide::Early, BeatSide::Late));
     }
 }

@@ -46,7 +46,7 @@ impl GameContext {
         let progress = self.rhythm.progress();
         let is_playing = self.state.countdown.is_none() && self.state.game_over_countdown.is_none();
 
-        if progress > 0.15 && progress <= 0.5 {
+        if progress > crate::game::rules::OK_WINDOW && progress <= 0.5 {
             if self.last_closed_window_beat != Some(current_beat) {
                 for player in &mut self.state.players {
                     if player.last_acted_beat != Some(current_beat) {
