@@ -28,7 +28,7 @@ Emotes are free: they ignore the beat and never break your combo.
 
 ## 3. The Rhythm Rule
 
-Everything you do (moving, bombing, using an item) must be **on the beat**.
+Everything you do (moving, bombing, using an item) happens **on the beat**. Pressing in time is what scores and builds your combo; pressing off-time never loses your input, it just waits for the next beat.
 
 ### Reading the beat without leaving the map
 
@@ -38,7 +38,7 @@ Everything you do (moving, bombing, using an item) must be **on the beat**.
 | Your cell turns **green** | Same, right under your eyes. |
 | Floor tiles swap | A new beat just started. |
 | `◆ ◇ ◇ ◇` under the arena | Position in the 4-beat bar. |
-| Title above the arena | Rating of your last input, with `EARLY` / `LATE` when you were off, or `ONE ACTION PER BEAT` if you pressed twice. |
+| Title above the arena | Rating of your last input, `EARLY` / `LATE - QUEUED FOR NEXT BEAT` when you were off, or `ONE ACTION PER BEAT` if you pressed twice. |
 | Beat sound | Optional metronome, see [Settings](#beat-sound). |
 
 The gauge under the map shows the same timing in more detail.
@@ -48,9 +48,11 @@ The gauge under the map shows the same timing in more detail.
 | within 6 % of a beat | **Perfect** | 50 | +1 |
 | within 12 % | **Great** | 20 | +1 |
 | within 20 % | **Okay** | 5 | kept |
-| further | **Miss** | 0 | reset, action ignored |
+| further | **Off-beat** | 0 | reset; the action is **queued** and runs on the next beat |
 
+* **Input buffer.** You have a single input slot. An off-beat press fills it and runs exactly on the next beat. While the slot is full, other presses are ignored, so the first press counts, not the last.
 * **One action per beat.** Extra presses in the same beat are ignored, and pressing keys faster than every 100 ms triggers a short lockout.
+* **Mashing does not pay:** it produces at most one action per beat, always off-beat, so no points and no combo.
 * **Keep moving.** Letting a beat pass without acting resets your combo.
 * Bumping into a wall on the beat still counts as keeping the groove (it consumes your beat).
 * **Combo multiplier:** rhythm points are multiplied by x2 from combo 8, x3 from 16, x4 from 24.
