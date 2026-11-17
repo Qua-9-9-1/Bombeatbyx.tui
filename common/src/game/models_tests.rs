@@ -1,4 +1,5 @@
 use super::*;
+use std::time::Duration;
 
 #[test]
 fn combo_multiplier_grows_every_step_and_is_capped() {

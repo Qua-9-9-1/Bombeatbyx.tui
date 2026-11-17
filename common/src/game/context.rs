@@ -8,6 +8,8 @@ use std::time::{Duration, Instant};
 
 /// Upper bound of the latency compensation applied to a player's input.
 pub const MAX_LATENCY_COMPENSATION: Duration = Duration::from_millis(150);
+/// Latest point of a beat for the idle-combo check (before the next hit window).
+const IDLE_CHECK_MAX_PROGRESS: f64 = 0.45;
 
 pub struct GameContext {
     pub state: GameState,
@@ -35,8 +37,15 @@ impl GameContext {
         ctx
     }
 
+    /// Beat progress after which an unused beat counts as idle. It leaves room
+    /// for latency-compensated inputs that arrive after the hit window closed,
+    /// and stays before the next beat's window (which opens at 0.8).
+    fn idle_check_progress(&self) -> f64 {
+        let margin = MAX_LATENCY_COMPENSATION.as_secs_f64() / self.rhythm.beat_interval.as_secs_f64();
+        (crate::game::rules::OK_WINDOW + margin).min(IDLE_CHECK_MAX_PROGRESS)
+    }
+
     pub fn tick_game_logic(&mut self) -> bool {
-        self.state.tick_respawns();
         self.state.tick_emotes();
         if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
             self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
@@ -48,10 +57,12 @@ impl GameContext {
 
         let current_beat = self.rhythm.beat_count;
         self.state.current_beat = current_beat;
+        // After `current_beat` is updated, so respawn protection counts from now.
+        self.state.tick_respawns();
         let progress = self.rhythm.progress();
         let is_playing = self.state.countdown.is_none() && self.state.game_over_countdown.is_none();
 
-        if progress > crate::game::rules::OK_WINDOW && progress <= 0.5 {
+        if progress > self.idle_check_progress() && progress <= 0.5 {
             if self.last_closed_window_beat != Some(current_beat) {
                 for player in &mut self.state.players {
                     if player.last_acted_beat != Some(current_beat) {
@@ -81,9 +92,10 @@ impl GameContext {
             }
 
             if is_playing {
-                self.flush_buffered_actions(current_beat);
                 self.state.tick_beat(current_beat);
                 self.state.tick_bombs_and_explosions();
+                // After the bomb tick, so a buffered bomb keeps its full fuse.
+                self.flush_buffered_actions(current_beat);
                 self.state.tick_sudden_death(current_beat);
             }
         }

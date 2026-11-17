@@ -151,3 +151,43 @@ fn trigger_action_2_activates_shield_when_equipped() {
     );
     assert!(state.players[0].second_item.is_none());
 }
+
+#[test]
+fn early_bomb_gets_one_extra_fuse_tick() {
+    let mut state = GameState::new(5, 5);
+    state.players = vec![create_test_player(1)];
+    state.players[0].sub_y = 1;
+    state.current_beat = 7;
+
+    state.handle_action(1, GameAction::PlaceBomb, BeatAccuracy::Perfect, 8);
+
+    let fuse = crate::game::rules::BOMB_FUSE_BEATS;
+    assert!(matches!(state.grid[5 + 1], Cell::Bomb { ticks_left, .. } if ticks_left == fuse + 1));
+}
+
+#[test]
+fn presses_during_lockout_do_not_extend_it() {
+    let mut player = create_test_player(1);
+    let lockout = std::time::Instant::now() + crate::game::rules::SPAM_LOCKOUT;
+    player.spam_lockout_until = Some(lockout);
+
+    let accepted = player.try_consume_action_lockout();
+
+    assert!(!accepted);
+    assert_eq!(player.spam_lockout_until, Some(lockout));
+}
+
+#[test]
+fn emotes_have_a_cooldown_and_are_refused_to_spectators() {
+    let mut state = GameState::new(5, 5);
+    let mut spectator = create_test_player(2);
+    spectator.is_spectator = true;
+    state.players = vec![create_test_player(1), spectator];
+
+    state.trigger_emote(1, 1);
+    state.trigger_emote(1, 2);
+    state.trigger_emote(2, 1);
+
+    assert_eq!(state.players[0].active_emote.as_deref(), Some("👋"));
+    assert!(state.players[1].active_emote.is_none());
+}

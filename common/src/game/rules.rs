@@ -21,6 +21,10 @@ pub const PERFECT_WINDOW: f64 = 0.06;
 pub const GREAT_WINDOW: f64 = 0.12;
 pub const OK_WINDOW: f64 = 0.20;
 
+/// Two presses closer than this trigger the anti-spam lockout.
+pub const SPAM_MIN_INTERVAL: std::time::Duration = std::time::Duration::from_millis(100);
+pub const SPAM_LOCKOUT: std::time::Duration = std::time::Duration::from_millis(300);
+
 /// Every `COMBO_STEP` consecutive on-beat actions raise the score multiplier by one.
 pub const COMBO_STEP: u32 = 8;
 pub const MAX_COMBO_MULTIPLIER: u32 = 4;

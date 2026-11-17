@@ -47,18 +47,21 @@ impl GameContext {
 
     /// Runs every buffered input due on `current_beat`. Called when a beat starts
     /// (by `tick_game_logic`, and by online clients for their local prediction).
-    pub fn flush_buffered_actions(&mut self, current_beat: u64) {
+    /// Returns the inputs that were run, so an online client can register them
+    /// as local predictions.
+    pub fn flush_buffered_actions(&mut self, current_beat: u64) -> Vec<(u32, BufferedAction)> {
         let due: Vec<(u32, BufferedAction)> = self
             .buffered_actions
             .iter()
             .filter(|(_, buffered)| buffered.beat <= current_beat)
             .map(|(id, buffered)| (*id, *buffered))
             .collect();
-        for (player_id, buffered) in due {
-            self.buffered_actions.remove(&player_id);
+        for (player_id, buffered) in &due {
+            self.buffered_actions.remove(player_id);
             self.state
-                .handle_buffered_action(player_id, buffered.action, current_beat);
+                .handle_buffered_action(*player_id, buffered.action, current_beat);
         }
+        due
     }
 }
 

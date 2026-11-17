@@ -49,6 +49,11 @@ impl GameState {
 
             let success =
                 self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
+            // An early press targets the next beat but lands before its bomb
+            // tick: one extra tick keeps the fuse at the same number of beats.
+            if success && action == GameAction::PlaceBomb && current_beat > self.current_beat {
+                self.add_fuse_tick_under(player_id);
+            }
             // An on-beat action keeps the groove even if it fails (e.g. bumping
             // a wall), but it consumes the beat: one action per beat.
             if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
@@ -81,6 +86,16 @@ impl GameState {
         player.last_acted_beat = Some(beat);
         player.last_accuracy = BeatAccuracy::Miss;
         self.apply_player_action(player_id, action, BeatAccuracy::Miss, beat);
+    }
+
+    fn add_fuse_tick_under(&mut self, player_id: u32) {
+        let Some(player) = self.players.iter().find(|p| p.id == player_id) else {
+            return;
+        };
+        let idx = (player.sub_y as usize) * self.width + (player.sub_x / 2) as usize;
+        if let Some(Cell::Bomb { ticks_left, .. }) = self.grid.get_mut(idx) {
+            *ticks_left = ticks_left.saturating_add(1);
+        }
     }
 
     /// Resets the combo of every active player who let a beat pass without acting.
