@@ -5,6 +5,9 @@ use std::time::Instant;
 
 impl App {
     pub fn handle_server_message(&mut self, msg: ServerMessage) {
+        let Some(msg) = super::validate::sanitize_server_message(msg) else {
+            return;
+        };
         match msg {
             ServerMessage::RoomList(rooms) => {
                 self.network.online_rooms = rooms;

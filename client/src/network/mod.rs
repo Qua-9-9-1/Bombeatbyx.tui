@@ -6,6 +6,7 @@ pub mod connection;
 pub mod messages;
 pub mod sync;
 pub mod tick;
+pub mod validate;
 
 pub struct NetworkContext {
     pub is_multiplayer: bool,
