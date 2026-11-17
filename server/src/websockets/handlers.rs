@@ -52,6 +52,16 @@ pub fn smooth_rtt(previous: Option<Duration>, sample: Duration) -> Duration {
     }
 }
 
+/// `false` once the peer was removed from its room (kicked or banned): the
+/// server then closes the socket itself instead of trusting the client to leave.
+async fn is_still_in_room(state: &SharedState, room_code: &Option<String>, player_id: Option<u32>) -> bool {
+    let (Some(code), Some(id)) = (room_code, player_id) else {
+        return true;
+    };
+    let s = state.lock().await;
+    s.rooms.get(code).is_some_and(|room| room.peers.contains_key(&id))
+}
+
 async fn record_latency(
     state: &SharedState,
     room_code: &Option<String>,
@@ -126,6 +136,11 @@ pub async fn handle_socket(socket: WebSocket, state: SharedState, client_ip: std
                 unanswered_pings += 1;
                 // A client that stopped reading would make its outbox grow forever.
                 if unanswered_pings > MAX_UNANSWERED_PINGS || tx.is_saturated() {
+                    break;
+                }
+                if !is_still_in_room(&state, &my_room_code, my_player_id).await {
+                    // Already removed from the room: skip `disconnect_peer` below.
+                    my_room_code = None;
                     break;
                 }
                 let rtt_ms = rtt.map_or(0, |d| d.as_millis().min(u32::MAX as u128) as u32);
