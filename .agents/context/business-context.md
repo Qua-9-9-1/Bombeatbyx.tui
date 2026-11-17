@@ -25,6 +25,7 @@ All tuning values live in `common/src/game/rules.rs` (re-exported by `models`). 
 * **Multiplier:** rhythm points are multiplied by `1 + combo / COMBO_STEP` (max `MAX_COMBO_MULTIPLIER`).
 * **Fever:** from `FEVER_COMBO`, newly placed bombs get `+FEVER_BONUS_RANGE` range.
 * Beat timing is authoritative on the server; `GameState.current_beat` is broadcast so clients render beat-based effects (shields) correctly.
+* **Metronome:** the client rings the terminal bell (BEL) on each beat (`ClientSettings.beat_sound`: Off / EveryBeat / EveryBar, `client/src/local/app/sound.rs`). Beats reached more than 40 ms late (online realignment) stay silent. No audio library: BEL keeps it working over SSH and Docker. `assets/beat-click.wav` is a short click players can set as their terminal bell sound.
 
 ### 2.2 Bomberman-Style Arena
 * Walls (border + even/even pillars), **bricks** (generated at `BRICK_DENSITY_PERCENT`, never within `SPAWN_SAFE_RADIUS` of a spawn) and empty cells.

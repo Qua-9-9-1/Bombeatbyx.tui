@@ -128,6 +128,20 @@ Bots follow the same rules as you, including the beat. Pausing (`Esc`) freezes t
 | Move / Bomb / Item keys | `Enter`, then press the new key. |
 | Gauge Skin | Rhythm gauge style: NecroDancer, Undertale or Simple. |
 | Display Mode | **Emojis**, or **ASCII** for terminals that cannot render emojis. |
+| Beat Sound | Metronome: **Every beat**, **Every 4 beats** or **Off**. See below. |
 | Server | Address of the online server (`host:port`). `Enter` to edit, `Enter` to save, `Esc` to cancel. |
 
 Settings are saved in `config.json`, next to the client executable.
+
+### Beat sound
+
+The metronome uses the **terminal bell**, so the sound is played by your terminal (it also works through SSH or Docker). Changing the setting rings once so you can check it.
+
+Most terminals play a long system "ding" by default, which is too slow for a beat. Point the bell to the short click shipped in `assets/beat-click.wav` instead. In **Windows Terminal**, open the settings JSON (`Ctrl+Shift+,`) and add to `profiles.defaults`:
+
+```json
+"bellStyle": "audible",
+"bellSound": "C:/path/to/Bombeatbyx.tui/assets/beat-click.wav"
+```
+
+If you hear nothing: check that the bell style is `audible` and that system sounds are not muted. Some terminals only flash the window or the taskbar on a bell.
