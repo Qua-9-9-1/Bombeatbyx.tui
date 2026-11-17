@@ -3,6 +3,7 @@ use std::time::Instant;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub mod connection;
+pub mod lan;
 pub mod messages;
 pub mod sync;
 pub mod tick;

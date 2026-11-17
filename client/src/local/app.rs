@@ -152,10 +152,8 @@ impl App {
         let mut lag = Duration::ZERO;
         let mut prev_state = self.state.clone();
 
-        let udp_socket = std::net::UdpSocket::bind("0.0.0.0:27315").ok();
-        if let Some(ref s) = udp_socket {
-            let _ = s.set_nonblocking(true);
-        }
+        let udp_socket =
+            crate::network::lan::bind_lan_listener(crate::network::lan::LAN_DISCOVERY_PORT);
 
         while self.game_run {
             let current_time = Instant::now();

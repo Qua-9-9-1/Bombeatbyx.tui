@@ -3,8 +3,9 @@
 
 use crate::local::app::App;
 use common::game::models::BOMB_FUSE_BEATS;
+use common::game::state::combat::RESPAWN_DELAY_SECS;
 use common::game::{Cell, GameAction, GameState, Player};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 /// Server tick period: a beat snapshot leaves the server up to one tick late.
 const SERVER_TICK: Duration = Duration::from_millis(16);
@@ -30,6 +31,8 @@ impl App {
             ctx.rhythm
                 .align(new_state.current_beat, since_beat, BEAT_SYNC_TOLERANCE);
         }
+
+        restore_respawn_timers(&mut new_state.players, &ctx.state.players);
 
         let local_player = ctx
             .state
@@ -62,7 +65,20 @@ fn keep_client_only_timers(server_player: &mut Player, local: &Player) {
     server_player.last_action_time = local.last_action_time;
     server_player.spam_lockout_until = local.spam_lockout_until;
     server_player.emote_until = local.emote_until;
-    server_player.respawn_timer = local.respawn_timer;
+}
+
+/// `respawn_timer` is not serialized: rebuild it locally so the death
+/// animation plays online too. Started when a player is first seen dead.
+fn restore_respawn_timers(server_players: &mut [Player], previous: &[Player]) {
+    let now = Instant::now();
+    for player in server_players.iter_mut().filter(|p| !p.is_alive && p.death_pos.is_some()) {
+        let known_timer = previous
+            .iter()
+            .find(|p| p.id == player.id && !p.is_alive)
+            .and_then(|p| p.respawn_timer);
+        player.respawn_timer =
+            known_timer.or(Some(now + Duration::from_secs(RESPAWN_DELAY_SECS)));
+    }
 }
 
 /// Keeps the locally predicted result until the server acknowledges the action.

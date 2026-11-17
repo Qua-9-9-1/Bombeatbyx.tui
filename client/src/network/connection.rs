@@ -4,8 +4,10 @@ use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio_tungstenite::tungstenite::Message;
+use tokio_tungstenite::tungstenite::protocol::WebSocketConfig;
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
+const MAX_SERVER_MESSAGE_BYTES: usize = 1024 * 1024;
 /// The server pings every 3 s: this much silence means the link is dead.
 const INACTIVITY_TIMEOUT: Duration = Duration::from_secs(12);
 
@@ -64,7 +66,16 @@ async fn run_connection(
     tx_to_app: UnboundedSender<ServerMessage>,
     mut rx_from_app: UnboundedReceiver<ClientMessage>,
 ) {
-    let connect = tokio::time::timeout(CONNECT_TIMEOUT, tokio_tungstenite::connect_async(&ws_url));
+    // A server snapshot is a few tens of KiB: refuse anything absurd instead of
+    // letting a malicious server make the client allocate 64 MiB messages.
+    let config = WebSocketConfig::default()
+        .max_message_size(Some(MAX_SERVER_MESSAGE_BYTES))
+        .max_frame_size(Some(MAX_SERVER_MESSAGE_BYTES));
+    let connect = tokio::time::timeout(
+        CONNECT_TIMEOUT,
+        // Nagle disabled: small game messages must not wait to be batched.
+        tokio_tungstenite::connect_async_with_config(&ws_url, Some(config), true),
+    );
     let ws_stream = match connect.await {
         Ok(Ok((stream, _))) => stream,
         Ok(Err(e)) => {
