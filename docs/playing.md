@@ -21,10 +21,10 @@ Default bindings depend on your system language: **ZQSD** for French layouts, **
 | Move | `Z` `Q` `S` `D` | `W` `A` `S` `D` | Arrow keys |
 | Place bomb | `Space` | `Space` | |
 | Use item | `E` | `E` | |
-| Emotes | `F1` to `F4` | `F1` to `F4` | 👋 ✌️ 🖕 👍 |
+| Emotes 👋 ✌️ 🖕 👍 | `1` to `4` (`&` `é` `"` `'` work too) | `1` to `4` | `F1` to `F4` |
 | Pause | `Esc` | `Esc` | |
 
-Emotes are free: they ignore the beat and never break your combo.
+Emotes are free: they ignore the beat, work at any moment and never break your combo (one every half second at most).
 
 ## 3. The Rhythm Rule
 
@@ -147,7 +147,7 @@ Bots follow the same rules as you, including the beat. Pausing (`Esc`) freezes t
 | Setting | Description |
 | :--- | :--- |
 | Key Preset | Switch between ZQSD and WASD. |
-| Move / Bomb / Item keys | `Enter`, then press the new key. |
+| Move / Bomb / Item / Emote keys | `Enter`, then press the new key. A digit also works with the AZERTY character of the same key. |
 | Gauge Skin | Rhythm gauge style: NecroDancer, Undertale or Simple. |
 | Display Mode | **Emojis**, or **ASCII** for terminals that cannot render emojis. |
 | Beat Sound | Metronome: **Every beat**, **Every 4 beats** or **Off**. See below. |

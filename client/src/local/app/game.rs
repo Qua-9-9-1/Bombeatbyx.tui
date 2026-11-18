@@ -120,16 +120,8 @@ impl App {
             Some(GameAction::PlaceBomb)
         } else if code == KeyCode::Char(key_spell) {
             Some(GameAction::TriggerSpell)
-        } else if code == KeyCode::F(1) {
-            Some(GameAction::Emote(1))
-        } else if code == KeyCode::F(2) {
-            Some(GameAction::Emote(2))
-        } else if code == KeyCode::F(3) {
-            Some(GameAction::Emote(3))
-        } else if code == KeyCode::F(4) {
-            Some(GameAction::Emote(4))
         } else {
-            None
+            emote_for_key(&self.profile.emote_keys, code).map(GameAction::Emote)
         }
     }
 
@@ -215,3 +207,64 @@ const BOT_NAMES: [&str; 7] = [
     "Bot Eta",
 ];
 const BOT_EMOTE_PERCENT: u32 = 1;
+
+/// Emote number (1-4) bound to `code`: the configured key, or F1-F4.
+/// Emotes ignore the beat, so any moment is fine.
+fn emote_for_key(emote_keys: &[char; 4], code: KeyCode) -> Option<u8> {
+    let KeyCode::Char(pressed) = code else {
+        return (1..=4u8).find(|&n| code == KeyCode::F(n));
+    };
+    (1..=4u8).find(|&n| {
+        let configured = emote_keys[n as usize - 1];
+        same_key(pressed, configured)
+    })
+}
+
+/// On AZERTY the number row types `& é " '` without Shift: a digit binding
+/// also accepts the character of the same physical key, and vice versa.
+fn same_key(pressed: char, configured: char) -> bool {
+    const AZERTY_DIGITS: [(char, char); 10] = [
+        ('1', '&'), ('2', 'é'), ('3', '"'), ('4', '\''), ('5', '('),
+        ('6', '-'), ('7', 'è'), ('8', '_'), ('9', 'ç'), ('0', 'à'),
+    ];
+    let pressed = pressed.to_lowercase().next().unwrap_or(pressed);
+    let configured = configured.to_lowercase().next().unwrap_or(configured);
+    pressed == configured
+        || AZERTY_DIGITS.iter().any(|&(digit, symbol)| {
+            (pressed, configured) == (digit, symbol) || (pressed, configured) == (symbol, digit)
+        })
+}
+
+#[cfg(test)]
+mod emote_key_tests {
+    use super::*;
+
+    #[test]
+    fn number_keys_and_function_keys_trigger_emotes() {
+        let keys = ['1', '2', '3', '4'];
+
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('1')), Some(1));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('4')), Some(4));
+        assert_eq!(emote_for_key(&keys, KeyCode::F(2)), Some(2));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('5')), None);
+    }
+
+    #[test]
+    fn azerty_number_row_works_without_shift() {
+        let keys = ['1', '2', '3', '4'];
+
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('&')), Some(1));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('é')), Some(2));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('"')), Some(3));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('\'')), Some(4));
+    }
+
+    #[test]
+    fn rebound_emote_keys_are_used() {
+        let keys = ['h', 'j', 'k', 'l'];
+
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('j')), Some(2));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('L')), Some(4));
+        assert_eq!(emote_for_key(&keys, KeyCode::Char('1')), None);
+    }
+}

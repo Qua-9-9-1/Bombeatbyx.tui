@@ -73,6 +73,12 @@ pub enum BeatSound {
 
 pub const BEATS_PER_BAR: u64 = 4;
 
+pub const EMOTE_LABELS: [&str; 4] = ["Emote Hi", "Emote Peace", "Emote Rude", "Emote Thumb"];
+
+fn default_emote_keys() -> [char; 4] {
+    ['1', '2', '3', '4']
+}
+
 impl BeatSound {
     pub fn label(self) -> &'static str {
         match self {
@@ -114,6 +120,9 @@ pub struct ClientSettings {
     pub ascii_mode: bool,
     #[serde(default)]
     pub beat_sound: BeatSound,
+    /// Keys of the 4 emotes (👋 ✌️ 🖕 👍). F1-F4 always work too.
+    #[serde(default = "default_emote_keys")]
+    pub emote_keys: [char; 4],
     pub server_addr: String,
     pub last_room_settings: RoomSettings,
 }
@@ -187,6 +196,7 @@ impl ClientSettings {
             key_spell: spell,
             ascii_mode: false,
             beat_sound: BeatSound::default(),
+            emote_keys: default_emote_keys(),
             server_addr: DEFAULT_SERVER_ADDR.to_string(),
             last_room_settings: RoomSettings::default(),
         }
@@ -262,6 +272,17 @@ mod tests {
         let loaded: ClientSettings = serde_json::from_value(json).expect("legacy config loads");
 
         assert_eq!(loaded.beat_sound, BeatSound::EveryBeat);
+    }
+
+    #[test]
+    fn config_without_emote_keys_defaults_to_number_keys() {
+        let mut json = serde_json::to_value(ClientSettings::default_with_preset(KeyPreset::ZQSD))
+            .expect("serializable settings");
+        json.as_object_mut().expect("object").remove("emote_keys");
+
+        let loaded: ClientSettings = serde_json::from_value(json).expect("legacy config loads");
+
+        assert_eq!(loaded.emote_keys, ['1', '2', '3', '4']);
     }
 
     #[test]

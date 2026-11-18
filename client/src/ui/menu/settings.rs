@@ -1,6 +1,6 @@
 use crate::local::app::App;
-use crate::local::app::inputs::menu::settings::SETTINGS_ROW_BACK;
-use crate::local::settings::{GaugeSkin, is_valid_server_addr};
+use crate::local::app::inputs::menu::settings::{SETTINGS_ROW_BACK, SETTINGS_ROW_EMOTES};
+use crate::local::settings::{EMOTE_LABELS, GaugeSkin, is_valid_server_addr};
 use crate::ui::menu::center_rect;
 use ratatui::{
     buffer::Buffer,
@@ -57,7 +57,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         }
     };
 
-    let items: Vec<String> = vec![
+    let mut items: Vec<String> = vec![
         format!("Key Preset  : < {} >", preset_str),
         key_label(1, app.profile.key_up, "Move Up"),
         key_label(2, app.profile.key_down, "Move Down"),
@@ -65,6 +65,12 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         key_label(4, app.profile.key_right, "Move Right"),
         key_label(5, app.profile.key_bomb, "Place Bomb"),
         key_label(6, app.profile.key_spell, "Spell / Item"),
+    ];
+    for (offset, label) in EMOTE_LABELS.iter().enumerate() {
+        let row = SETTINGS_ROW_EMOTES.start() + offset;
+        items.push(key_label(row, app.profile.emote_keys[offset], label));
+    }
+    items.extend([
         format!("Gauge Skin  : < {} >", gauge_str),
         format!("Display Mode: < {} >", mode_str),
         format!("Beat Sound  : < {} >", app.profile.beat_sound.label()),
@@ -73,7 +79,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
             None => format!("Server      : [ {} ]", app.profile.server_addr),
         },
         back_label.to_string(),
-    ];
+    ]);
 
     let mut lines = vec![
         Line::from(""),
@@ -91,7 +97,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     for (idx, item) in items.iter().enumerate() {
         let base_color = match idx {
-            1..=6 => Color::Cyan,
+            1..=10 => Color::Cyan,
             SETTINGS_ROW_BACK => Color::White,
             _ => Color::Yellow,
         };
@@ -121,7 +127,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         } else {
             lines.push(Line::from(Span::styled(
                 format!("    {}    ", item),
-                Style::default().fg(if (1..=6).contains(&idx) {
+                Style::default().fg(if (1..=10).contains(&idx) {
                     Color::Cyan
                 } else {
                     Color::Reset
@@ -150,7 +156,7 @@ pub fn draw_settings_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
         )));
     } else {
         lines.push(Line::from(Span::styled(
-            "Z/S navigate  Q/D adjust  Enter=bind key  Emotes: F1-F4",
+            "Z/S navigate  Q/D adjust  Enter=bind key  (emotes: also F1-F4)",
             Style::default().fg(Color::DarkGray),
         )));
     }

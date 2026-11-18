@@ -4,10 +4,14 @@ use crate::local::settings::{
 };
 use crossterm::event::KeyCode;
 
-pub const SETTINGS_ROW_SOUND: usize = 9;
-pub const SETTINGS_ROW_SERVER: usize = 10;
-pub const SETTINGS_ROW_BACK: usize = 11;
-const SETTINGS_ITEM_COUNT: usize = 12;
+/// Rows 1-6: movement, bomb and item keys; then the 4 emote keys.
+pub const SETTINGS_ROW_EMOTES: std::ops::RangeInclusive<usize> = 7..=10;
+pub const SETTINGS_ROW_GAUGE: usize = 11;
+pub const SETTINGS_ROW_DISPLAY: usize = 12;
+pub const SETTINGS_ROW_SOUND: usize = 13;
+pub const SETTINGS_ROW_SERVER: usize = 14;
+pub const SETTINGS_ROW_BACK: usize = 15;
+const SETTINGS_ITEM_COUNT: usize = 16;
 
 impl App {
     /// Switches the metronome mode and rings once so the player hears it.
@@ -64,6 +68,9 @@ impl App {
                     4 => self.profile.key_right = c,
                     5 => self.profile.key_bomb = c,
                     6 => self.profile.key_spell = c,
+                    row if SETTINGS_ROW_EMOTES.contains(&row) => {
+                        self.profile.emote_keys[row - SETTINGS_ROW_EMOTES.start()] = c;
+                    }
                     _ => {}
                 }
                 let _ = self.profile.save();
@@ -89,7 +96,7 @@ impl App {
                         self.profile.apply_preset(next);
                         let _ = self.profile.save();
                     }
-                    7 => {
+                    SETTINGS_ROW_GAUGE => {
                         self.profile.gauge_skin = match self.profile.gauge_skin {
                             GaugeSkin::NecroDancer => GaugeSkin::Simple,
                             GaugeSkin::Undertale => GaugeSkin::NecroDancer,
@@ -97,7 +104,7 @@ impl App {
                         };
                         let _ = self.profile.save();
                     }
-                    8 => {
+                    SETTINGS_ROW_DISPLAY => {
                         self.profile.ascii_mode = !self.profile.ascii_mode;
                         let _ = self.profile.save();
                     }
@@ -106,10 +113,10 @@ impl App {
                 }
             }
             KeyCode::Enter => match self.settings_cursor {
-                1 | 2 | 3 | 4 | 5 | 6 => {
+                row if (1..=6).contains(&row) || SETTINGS_ROW_EMOTES.contains(&row) => {
                     self.capturing_key = true;
                 }
-                8 => {
+                SETTINGS_ROW_DISPLAY => {
                     self.profile.ascii_mode = !self.profile.ascii_mode;
                     let _ = self.profile.save();
                 }
