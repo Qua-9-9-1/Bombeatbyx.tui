@@ -30,10 +30,11 @@ All tuning values live in `common/src/game/rules.rs` (re-exported by `models`). 
 * **Metronome:** the client rings the terminal bell (BEL) on each beat (`ClientSettings.beat_sound`: Off / EveryBeat / EveryBar, `client/src/local/app/sound.rs`). Beats reached more than 40 ms late (online realignment) stay silent. No audio library: BEL keeps it working over SSH and Docker. `assets/beat-click.wav` is a short click players can set as their terminal bell sound.
 
 ### 2.2 Bomberman-Style Arena
-* Walls (border + even/even pillars), **bricks** (generated at `BRICK_DENSITY_PERCENT`, never within `SPAWN_SAFE_RADIUS` of a spawn) and empty cells.
+* Walls (border + the pattern of `RoomSettings.map_layout`: Classic even/even pillars, Open, Ring, Lanes; all mirror-symmetric and fully connected, checked by tests in `map_layout.rs`), **bricks** (generated at `BRICK_DENSITY_PERCENT`, never within `SPAWN_SAFE_RADIUS` of a spawn) and empty cells.
 * Bombs explode after `BOMB_FUSE_BEATS` beats. Range and pierce are **locked at placement** (stored in `Cell::Bomb`).
 * Blasts stop at walls, at bricks (unless pierce) and at other bombs, which **chain-explode in the same tick**.
-* A destroyed brick may hide a bonus (`BRICK_BONUS_DROP_PERCENT`), revealed when the fire on its cell dies out (`GameState.pending_drops`).
+* A brick may hide a bonus (`BRICK_BONUS_DROP_PERCENT`), decided when bricks are generated (`GameState.hidden_bonuses`, server-only) and revealed when the fire on its cell dies out (`GameState.pending_drops`). With the `brick_hints` room option, `cracked_bricks` publishes them to clients, drawn `▒▒`.
+* Every kill is appended to `GameState.kill_feed` (last `KILL_FEED_LEN`), and every judged input to `Player.hits` (`HitStats`, shown on the victory screen).
 * Fire is lethal on contact: deaths are checked **every tick**, not only on beats.
 * Each `Cell::Explosion` stores its `owner_id` for kill credit.
 * Death: lose a life, lose all power-ups and the combo, respawn after `RESPAWN_DELAY_SECS` with `RESPAWN_PROTECTION_BEATS` of invulnerability.

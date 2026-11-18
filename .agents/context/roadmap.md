@@ -4,8 +4,6 @@ Candidate features, ordered by expected fun per effort. Keep the core rule in mi
 
 ## 1. Quick Wins
 * **Bots in online rooms:** let the host fill empty slots with AI bots. The AI is already in `common`; the server needs bot players without a `Peer`, driven from the server tick on each beat, and counted in the start and disconnect rules.
-* **Beat-synced bomb fuse display:** show the remaining beats on each bomb (`4`, `3`, `2`, `1`) to make timing readable.
-* **Kill feed:** a short sidebar log ("Alpha 💥 Beta") using the existing kill credit.
 * **Combo milestone feedback:** flash the HUD when the multiplier goes up or Fever starts.
 
 ## 2. Rhythm Depth
@@ -23,7 +21,7 @@ Candidate features, ordered by expected fun per effort. Keep the core rule in mi
 ## 4. Modes & Meta
 * **Teams (2v2):** friendly fire toggle, shared win condition.
 * **King of the Hill:** hold the center cell on beat to earn points.
-* **Map presets:** open arena, maze, cross; plus a brick density setting in the lobby.
+* **More map patterns:** maze, cross (Classic, Open, Ring and Lanes exist in `map_layout.rs`); plus a brick density setting in the lobby.
 * **Replays / ghosts:** the simulation is deterministic given a seed and the inputs, so matches can be recorded.
 
 ## 5. Network Follow-ups

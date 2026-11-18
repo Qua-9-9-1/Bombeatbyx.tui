@@ -35,7 +35,8 @@ Everything you do (moving, bombing, using an item) happens **on the beat**. Pres
 | Cue | Meaning |
 | :--- | :--- |
 | Arena border turns **thick and green** | Press now: the hit window is open. |
-| Your cell turns **green** | Same, right under your eyes. |
+| Your cell turns **green** | Same, right under your eyes (brighter on the first beat of each bar). |
+| Arena border color between beats | Your combo: grey, then **yellow** (4), **orange** (8), **violet** in Fever (16). |
 | Floor tiles swap | A new beat just started. |
 | `◆ ◇ ◇ ◇` under the arena | Position in the 4-beat bar. |
 | Title above the arena | Rating of your last input, `EARLY` / `LATE - QUEUED FOR NEXT BEAT` when you were off, or `ONE ACTION PER BEAT` if you pressed twice. |
@@ -63,12 +64,16 @@ The gauge under the map shows the same timing in more detail.
 | Cell | Look (emoji / ASCII) | Rule |
 | :--- | :--- | :--- |
 | Wall | `██` / `##` | Indestructible. |
-| Brick | `░░` / `[]` | Destroyed by blasts; may hide a bonus. |
-| Bomb | 💣 / `()` | Explodes 4 beats after being placed. Blocks movement. |
+| Brick | `░░` / `[]` | Destroyed by blasts. |
+| Cracked brick | `▒▒` / `{}` | Hides a bonus (only with the **Brick Hints** room option). |
+| Bomb | 💣 / `()` | Explodes 4 beats after being placed. Blocks movement. Its background gets **redder on every beat**: bright red means it explodes on the next beat. |
+| Danger | red floor | Fire lands here on the next beat (chain reactions included): get out. |
 | Fire | 💥 🔥 / `##` `**` | Lethal on contact for one beat. |
 
 * Blasts go in a cross, stop at walls, at bricks (unless *Pierce*) and at other bombs, which **explode instantly** (chain reaction).
 * A bomb keeps the range it had when it was placed.
+* Standing on your fresh bomb, your cell keeps the bomb's red and alternates between you and 💣 on the beat.
+* Recent kills are listed at the top of the players panel (`Alpha 💥 Beta`, 🧱 for sudden death).
 * When you are hit you lose a life, all your power-ups and your combo. You respawn after 3 seconds, far from other players, with 3 beats of invulnerability (shown by a blue background).
 
 ## 5. Bonuses and Items
@@ -94,7 +99,7 @@ You hold **one item at a time** (shown between brackets next to your name). Use 
 | **Deathmatch** | Last player with lives left. |
 | **Score** | First player to reach the target score. |
 
-With a **time limit**, the match also ends when the timer runs out; the ranking then decides the podium.
+With a **time limit**, the match also ends when the timer runs out; the ranking then decides the podium. The podium shows each player's share of on-beat inputs, and your own Perfect / Great / Ok / Miss breakdown.
 
 | Event | Points |
 | :--- | :--- |
@@ -111,6 +116,8 @@ With a **time limit**, the match also ends when the timer runs out; the ranking 
 The lobby has three panels: room settings (center), help for the selected line (left) and players (right).
 
 * `Z`/`S` select a line, `Q`/`D` change its value (host only for room settings).
+* **Map Pattern** picks the arena: **Classic** (pillar grid), **Open** (no pillars), **Ring** (walled ring with 4 gates around the center) or **Lanes** (long corridors joined by a few crossings). Every pattern is mirror-symmetric, so all spawns are equally fair.
+* **Brick Hints** shows which bricks hide a bonus.
 * `Enter` on **Your Name** edits it (letters, digits, spaces, `-` and `_`, 12 characters max).
 * `Q`/`D` on **Your Skin** browses the 25 skins. Two ready players cannot share a skin.
 * `Enter` on **READY** toggles your ready state. The game starts when every player (at least 2) is ready.
