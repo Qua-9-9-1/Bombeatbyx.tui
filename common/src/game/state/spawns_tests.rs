@@ -112,3 +112,17 @@ fn tick_respawns_grants_temporary_spawn_protection() {
     assert!(state.players[0].is_protected(40 + RESPAWN_PROTECTION_BEATS));
     assert!(!state.players[0].is_protected(41 + RESPAWN_PROTECTION_BEATS));
 }
+
+#[test]
+fn cracked_bricks_are_public_only_with_brick_hints() {
+    let mut hidden = GameState::new(15, 15);
+    hidden.generate_bricks(&mut GameRng::seeded(11), 100);
+    let mut shown = GameState::new(15, 15);
+    shown.brick_hints = true;
+    shown.generate_bricks(&mut GameRng::seeded(11), 100);
+
+    assert!(!hidden.hidden_bonuses.is_empty());
+    assert!(hidden.cracked_bricks.is_empty());
+    assert_eq!(shown.cracked_bricks, shown.hidden_bonuses);
+    assert!(shown.hidden_bonuses.iter().all(|&i| shown.grid[i] == Cell::Brick));
+}

@@ -1,6 +1,5 @@
 use crate::game::models::{
-    BOMB_FUSE_BEATS, BRICK_BONUS_DROP_PERCENT, BRICK_BONUS_LIFETIME_TICKS, BRICK_POINTS, BonusType,
-    Cell,
+    BOMB_FUSE_BEATS, BRICK_BONUS_LIFETIME_TICKS, BRICK_POINTS, BonusType, Cell,
 };
 use crate::game::rhythm::BeatAccuracy;
 use crate::game::state::GameState;
@@ -156,7 +155,7 @@ impl GameState {
                     Cell::Brick => {
                         self.grid[idx] = fire;
                         self.award_points(owner_id, BRICK_POINTS);
-                        if self.rng.chance(BRICK_BONUS_DROP_PERCENT) {
+                        if self.take_hidden_bonus(idx) {
                             let bonus = BonusType::roll(&mut self.rng);
                             self.pending_drops.push((idx, bonus));
                         }

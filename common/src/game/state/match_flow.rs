@@ -11,7 +11,9 @@ impl GameState {
             p.reset_for_match(settings.lives);
         }
 
-        let mut state = GameState::new(settings.width, settings.height);
+        let mut state =
+            GameState::with_layout(settings.width, settings.height, settings.map_layout);
+        state.brick_hints = settings.brick_hints;
         state.bpm = settings.bpm;
         state.sudden_death = settings.sudden_death;
         state.bonus_every = settings.bonus_every;
@@ -73,6 +75,7 @@ impl Player {
         self.reset_power_ups();
         self.shield_until_beat = None;
         self.last_acted_beat = None;
+        self.hits = Default::default();
     }
 }
 

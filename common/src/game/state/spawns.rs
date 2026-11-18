@@ -1,5 +1,7 @@
 use super::GameState;
-use crate::game::models::{BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS, SPAWN_SAFE_RADIUS};
+use crate::game::models::{
+    BRICK_BONUS_DROP_PERCENT, BonusType, Cell, Player, RESPAWN_PROTECTION_BEATS, SPAWN_SAFE_RADIUS,
+};
 use crate::game::spawns::{GameRng, get_spawn_points};
 
 impl GameState {
@@ -52,8 +54,15 @@ impl GameState {
                 });
                 if !near_spawn && rng.chance(density_percent) {
                     self.grid[idx] = Cell::Brick;
+                    // Decided now so the map can hint at it (cracked bricks).
+                    if rng.chance(BRICK_BONUS_DROP_PERCENT) {
+                        self.hidden_bonuses.push(idx);
+                    }
                 }
             }
+        }
+        if self.brick_hints {
+            self.cracked_bricks = self.hidden_bonuses.clone();
         }
     }
 

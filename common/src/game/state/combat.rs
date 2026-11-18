@@ -1,5 +1,6 @@
 use super::GameState;
-use crate::game::models::{Cell, KILL_POINTS, SELF_KILL_PENALTY};
+use crate::game::match_stats::KILL_FEED_LEN;
+use crate::game::models::{Cell, KILL_POINTS, KillEvent, SELF_KILL_PENALTY};
 
 pub const RESPAWN_DELAY_SECS: u64 = 3;
 
@@ -56,6 +57,15 @@ impl GameState {
                 }
             }
             None => {}
+        }
+
+        self.kill_feed.push(KillEvent {
+            killer: killer_id,
+            victim: victim_id,
+            beat: current_beat,
+        });
+        if self.kill_feed.len() > KILL_FEED_LEN {
+            self.kill_feed.remove(0);
         }
     }
 }
@@ -141,5 +151,20 @@ mod tests {
 
         assert_eq!(state.players[0].kills, 0);
         assert_eq!(state.players[0].score, 500 - SELF_KILL_PENALTY);
+    }
+
+    #[test]
+    fn kill_player_feeds_the_kill_log_and_keeps_only_the_latest() {
+        let mut state = GameState::new(7, 5);
+        state.players = vec![player_at(1, 1, 1), player_at(2, 3, 1)];
+
+        for beat in 0..(KILL_FEED_LEN as u64 + 2) {
+            state.kill_player(1, Some(1), beat);
+        }
+
+        assert_eq!(state.kill_feed.len(), KILL_FEED_LEN);
+        let last = state.kill_feed.last().unwrap();
+        assert_eq!((last.killer, last.victim), (Some(1), 2));
+        assert_eq!(last.beat, KILL_FEED_LEN as u64 + 1);
     }
 }

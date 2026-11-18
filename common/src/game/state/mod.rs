@@ -4,7 +4,7 @@ pub mod match_flow;
 pub mod spawns;
 pub mod sudden_death;
 
-use crate::game::models::{BonusType, Cell, GameMode, Player};
+use crate::game::models::{BonusType, Cell, GameMode, KillEvent, MapLayout, Player};
 use crate::game::spawns::GameRng;
 use serde::{Deserialize, Serialize};
 
@@ -31,21 +31,32 @@ pub struct GameState {
     /// Bonuses hidden in destroyed bricks, revealed when the fire on their cell dies out.
     #[serde(skip)]
     pub pending_drops: Vec<(usize, BonusType)>,
+    /// Bricks that drop a bonus when destroyed (server-side truth).
+    #[serde(skip)]
+    pub hidden_bonuses: Vec<usize>,
+    /// Public copy of `hidden_bonuses`, only filled when `brick_hints` is on,
+    /// so clients cannot see hidden bonuses the host chose to keep secret.
+    #[serde(default)]
+    pub cracked_bricks: Vec<usize>,
+    #[serde(default)]
+    pub brick_hints: bool,
+    /// Most recent kills, oldest first (at most `KILL_FEED_LEN`).
+    #[serde(default)]
+    pub kill_feed: Vec<KillEvent>,
     #[serde(skip)]
     pub rng: GameRng,
 }
 
 impl GameState {
     pub fn new(width: usize, height: usize) -> Self {
+        Self::with_layout(width, height, MapLayout::Classic)
+    }
+
+    pub fn with_layout(width: usize, height: usize, layout: MapLayout) -> Self {
         let mut grid = vec![Cell::Empty; width * height];
         for y in 0..height {
             for x in 0..width {
-                if x == 0
-                    || x == width - 1
-                    || y == 0
-                    || y == height - 1
-                    || (x % 2 == 0 && y % 2 == 0)
-                {
+                if layout.is_wall(x, y, width, height) {
                     grid[y * width + x] = Cell::Wall;
                 }
             }
@@ -68,6 +79,10 @@ impl GameState {
             current_beat: 0,
             sudden_death_progress: 0,
             pending_drops: Vec::new(),
+            hidden_bonuses: Vec::new(),
+            cracked_bricks: Vec::new(),
+            brick_hints: false,
+            kill_feed: Vec::new(),
             rng: GameRng::from_time(),
         }
     }
@@ -86,6 +101,20 @@ impl GameState {
         sizes.contains(&self.width)
             && sizes.contains(&self.height)
             && self.grid.len() == self.width * self.height
+            && self.cracked_bricks.len() <= self.grid.len()
+            && self.kill_feed.len() <= crate::game::match_stats::KILL_FEED_LEN
+    }
+
+    /// Removes the hidden bonus of a brick that disappears. Returns whether it had one.
+    pub fn take_hidden_bonus(&mut self, idx: usize) -> bool {
+        self.cracked_bricks.retain(|&i| i != idx);
+        match self.hidden_bonuses.iter().position(|&i| i == idx) {
+            Some(pos) => {
+                self.hidden_bonuses.swap_remove(pos);
+                true
+            }
+            None => false,
+        }
     }
 
     pub fn tick_beat(&mut self, beat_count: u64) {

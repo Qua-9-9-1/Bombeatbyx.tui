@@ -253,3 +253,29 @@ fn blast_destroys_a_bonus_lying_on_the_floor() {
     state.tick_bombs_and_explosions();
     assert_eq!(state.grid[bonus_idx], Cell::Empty);
 }
+#[test]
+fn only_bricks_hiding_a_bonus_drop_one() {
+    let mut state = GameState::new(9, 3);
+    state.players = vec![create_test_player(1)];
+    let (loaded, plain) = (1 * 9 + 2, 1 * 9 + 6);
+    state.grid[loaded] = Cell::Brick;
+    state.grid[plain] = Cell::Brick;
+    state.hidden_bonuses = vec![loaded];
+    state.cracked_bricks = vec![loaded];
+    for x in [1, 5] {
+        state.grid[1 * 9 + x] = Cell::Bomb {
+            owner_id: 1,
+            ticks_left: 1,
+            range: 1,
+            pierce: false,
+        };
+    }
+
+    state.tick_bombs_and_explosions();
+    state.tick_bombs_and_explosions();
+
+    assert!(matches!(state.grid[loaded], Cell::Bonus { .. }));
+    assert_eq!(state.grid[plain], Cell::Empty);
+    assert!(state.hidden_bonuses.is_empty());
+    assert!(state.cracked_bricks.is_empty());
+}

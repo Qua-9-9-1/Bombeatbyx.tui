@@ -65,6 +65,7 @@ impl GameState {
             }
         }
         self.pending_drops.retain(|&(drop_idx, _)| drop_idx != idx);
+        self.take_hidden_bonus(idx);
         self.grid[idx] = Cell::Wall;
 
         let (x, y) = ((idx % self.width) as i32, (idx / self.width) as i32);

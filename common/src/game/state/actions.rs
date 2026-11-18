@@ -37,6 +37,7 @@ impl GameState {
             }
 
             if matches!(accuracy, BeatAccuracy::Miss) {
+                player.hits.record(&accuracy);
                 player.last_acted_beat = Some(current_beat);
                 player.last_accuracy = BeatAccuracy::Miss;
                 player.combo = 0;
@@ -59,6 +60,7 @@ impl GameState {
             if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
                 p.last_acted_beat = Some(current_beat);
                 p.last_accuracy = accuracy.clone();
+                p.hits.record(&accuracy);
                 if accuracy != BeatAccuracy::Ok {
                     p.combo = (p.combo + 1).min(MAX_COMBO);
                 }
@@ -85,6 +87,7 @@ impl GameState {
         player.combo = 0;
         player.last_acted_beat = Some(beat);
         player.last_accuracy = BeatAccuracy::Miss;
+        player.hits.record(&BeatAccuracy::Miss);
         self.apply_player_action(player_id, action, BeatAccuracy::Miss, beat);
     }
 
