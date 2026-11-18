@@ -44,13 +44,12 @@ impl BonusType {
     }
 
     /// Emoji shown on the map and in the HUD. Must never look like a placed
-    /// bomb (💣) or a flame (💥/🔥), and must be a single wide codepoint
-    /// (no variation selector) so every terminal draws it on two cells.
+    /// bomb (💣) or a blast (💥); the map draws bonuses on their own tile color.
     pub fn icon(self) -> &'static str {
         match self {
             BonusType::BombQty => "🎒",
-            BonusType::BombRange => "📏",
-            BonusType::Shield => "🧿",
+            BonusType::BombRange => "🔥",
+            BonusType::Shield => "🛡️",
             BonusType::Pierce => "🔪",
             BonusType::ExtraLife => "💖",
             BonusType::Detonator => "📡",
@@ -84,12 +83,11 @@ mod tests {
     use super::BonusType;
 
     #[test]
-    fn icons_are_unique_round_trip_and_never_look_like_bombs_or_fire() {
+    fn icons_are_unique_round_trip_and_never_look_like_a_bomb() {
         let all: Vec<BonusType> = BonusType::WEIGHTS.iter().map(|&(b, _)| b).collect();
         for (i, bonus) in all.iter().enumerate() {
             let icon = bonus.icon();
-            assert!(!["💣", "💥", "🔥", "✨", "🧨"].contains(&icon), "{icon}");
-            assert!(!icon.contains('\u{FE0F}'), "{icon} needs a variation selector");
+            assert!(!["💣", "💥", "🧨"].contains(&icon), "{icon}");
             assert_eq!(BonusType::from_icon(icon), Some(*bonus));
             assert!(all[i + 1..].iter().all(|other| other.icon() != icon));
             assert!(all[i + 1..].iter().all(|other| other.ascii_icon() != bonus.ascii_icon()));

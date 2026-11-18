@@ -228,3 +228,28 @@ fn move_player_picks_up_bonus_with_ticks_left() {
     assert_eq!(state.players[0].max_bombs, 2);
     assert_eq!(state.grid[cell_idx], Cell::Empty);
 }
+
+
+#[test]
+fn blast_destroys_a_bonus_lying_on_the_floor() {
+    use crate::game::models::BonusType;
+    let mut state = GameState::new(9, 3);
+    state.players = vec![create_test_player(1)];
+    let bonus_idx = 1 * 9 + 3;
+    state.grid[bonus_idx] = Cell::Bonus {
+        bonus_type: BonusType::BombQty,
+        ticks_left: 20,
+    };
+    state.grid[1 * 9 + 1] = Cell::Bomb {
+        owner_id: 1,
+        ticks_left: 1,
+        range: 3,
+        pierce: false,
+    };
+
+    state.tick_bombs_and_explosions();
+    assert!(matches!(state.grid[bonus_idx], Cell::Explosion { .. }));
+
+    state.tick_bombs_and_explosions();
+    assert_eq!(state.grid[bonus_idx], Cell::Empty);
+}

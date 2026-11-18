@@ -78,10 +78,10 @@ Bonuses appear every few beats (room setting) and inside destroyed bricks. They 
 | Bonus | Emoji / ASCII | Effect |
 | :--- | :--- | :--- |
 | Extra bomb | 🎒 / `B+` | +1 bomb at the same time |
-| Range | 📏 / `R+` | +1 blast range |
+| Fire | 🔥 / `R+` | +1 blast range |
 | Pierce | 🔪 / `P+` | Blasts go through bricks |
 | Extra life | 💖 / `L+` | +1 life (rare, capped at 9) |
-| Shield *(item)* | 🧿 / `S+` | Invulnerable for 3 beats |
+| Shield *(item)* | 🛡️ / `S+` | Invulnerable for 3 beats |
 | Detonator *(item)* | 📡 / `D+` | Explodes all your bombs right now |
 | Dash *(item)* | 👟 / `F+` | Moves up to 3 cells in the direction you face |
 

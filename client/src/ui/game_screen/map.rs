@@ -69,6 +69,7 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
                 player_is_here && is_bomb,
                 ascii,
                 beat,
+                ctx.rhythm.progress(),
             );
         }
     }
@@ -121,6 +122,7 @@ fn draw_cell(
     player_under_bomb: bool,
     ascii: bool,
     beat: u64,
+    beat_progress: f64,
 ) {
     let elapsed = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -151,8 +153,12 @@ fn draw_cell(
             (sym, frame.fg_color, frame.bg_color)
         }
         Cell::Explosion { .. } => {
+            // A blast lives one beat: play 💥 → 🔥 → ✨ over that beat
+            // (wall-clock time would always land on the last frame).
             let anim = crate::ui::animation::Animation::explosion_expanding();
-            let frame = anim.get_frame(elapsed);
+            let frame = anim.get_frame(std::time::Duration::from_millis(
+                (beat_progress.clamp(0.0, 1.0) * 300.0) as u64,
+            ));
             let sym = if ascii {
                 if frame.symbol == "💥" {
                     "##".to_string()
