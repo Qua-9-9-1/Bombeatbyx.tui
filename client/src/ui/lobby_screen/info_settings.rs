@@ -114,16 +114,19 @@ pub fn setting_lines(cursor: usize, rs: &RoomSettings, ascii: bool) -> Vec<Line<
 }
 
 fn bonus_lines(rs: &RoomSettings, ascii: bool) -> Vec<Line<'static>> {
-    let (bomb, fire, pierce, life) = if ascii {
-        ("B+", "R+", "P+", "L+")
-    } else {
-        ("💣", "🔥", "🔪", "💖")
-    };
-    let (shield, detonator, dash) = if ascii {
-        ("S+", "D+", "F+")
-    } else {
-        ("🛡️", "🧨", "👟")
-    };
+    use common::game::models::BonusType;
+    let icon = |b: BonusType| if ascii { b.ascii_icon() } else { b.icon() };
+    let (bomb, fire, pierce, life) = (
+        icon(BonusType::BombQty),
+        icon(BonusType::BombRange),
+        icon(BonusType::Pierce),
+        icon(BonusType::ExtraLife),
+    );
+    let (shield, detonator, dash) = (
+        icon(BonusType::Shield),
+        icon(BonusType::Detonator),
+        icon(BonusType::Dash),
+    );
     vec![
         header("[ BONUS SPAWN ]", "🎁 BONUS SPAWN", ascii),
         blank(),

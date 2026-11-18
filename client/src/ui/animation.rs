@@ -1,6 +1,9 @@
 use ratatui::style::Color;
 use std::time::Duration;
 
+/// Background of a bonus tile on the map.
+const BONUS_BG: Color = Color::Indexed(23);
+
 #[derive(Clone, Debug)]
 pub struct AnimationFrame {
     pub symbol: String,
@@ -161,18 +164,16 @@ impl Animation {
         ticks_left: u8,
         ascii: bool,
     ) -> Self {
-        use common::game::models::BonusType;
-        let (ascii_sym, emoji_sym) = match b_type {
-            BonusType::BombQty => ("B+", "💣"),
-            BonusType::BombRange => ("R+", "🔥"),
-            BonusType::Shield => ("S+", "🛡️"),
-            BonusType::Pierce => ("P+", "🔪"),
-            BonusType::ExtraLife => ("L+", "💖"),
-            BonusType::Detonator => ("D+", "🧨"),
-            BonusType::Dash => ("F+", "👟"),
-        };
-        let sym = if ascii { ascii_sym } else { emoji_sym };
+        let sym = if ascii { b_type.ascii_icon() } else { b_type.icon() };
+        let mut anim = Self::bonus_frames(sym, ticks_left);
+        // Teal tile: pickups never share the bombs' dark background.
+        for frame in &mut anim.frames {
+            frame.bg_color = BONUS_BG;
+        }
+        anim
+    }
 
+    fn bonus_frames(sym: &str, ticks_left: u8) -> Self {
         if ticks_left <= 5 {
             Self {
                 frames: vec![

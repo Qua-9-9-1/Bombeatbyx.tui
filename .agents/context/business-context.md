@@ -57,16 +57,16 @@ Match setup and end detection are centralized in `common` (`GameContext::new_mat
 | Successful on-beat action | `accuracy points x combo multiplier` |
 
 ### 2.4 Power-up Bonuses
-Bonuses spawn every `bonus_every` beats and from bricks; weighted rarity in `BonusType::roll`.
+Bonuses spawn every `bonus_every` beats and from bricks; weighted rarity in `BonusType::roll`. Icons come from `BonusType::icon`/`ascii_icon` (never reuse 💣, 💥, 🔥; no variation-selector emoji).
 
 | Bonus | Effect |
 | :--- | :--- |
-| 💣 BombQty | +1 simultaneous bomb |
-| 🔥 BombRange | +1 blast range |
+| 🎒 BombQty | +1 simultaneous bomb |
+| 📏 BombRange | +1 blast range |
 | 🔪 Pierce | Blasts go through bricks |
 | 💖 ExtraLife (rare) | +1 life, up to `MAX_LIVES` (never lowers a higher count) |
-| 🛡️ Shield (item) | Invulnerable for `SHIELD_DURATION_BEATS` beats |
-| 🧨 Detonator (item) | Instantly explodes all own bombs (kept if none placed) |
+| 🧿 Shield (item) | Invulnerable for `SHIELD_DURATION_BEATS` beats |
+| 📡 Detonator (item) | Instantly explodes all own bombs (kept if none placed) |
 | 👟 Dash (item) | Moves up to `DASH_DISTANCE` cells in the facing direction |
 
 Items go in the single `second_item` slot and are used with the spell key (`E`). Picking a new item replaces the current one.

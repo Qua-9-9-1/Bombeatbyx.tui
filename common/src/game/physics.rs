@@ -18,15 +18,15 @@ fn apply_bonus(player: &mut Player, bonus: BonusType) {
     match bonus {
         BonusType::BombQty => {
             player.max_bombs = player.max_bombs.saturating_add(1);
-            player.collected_bonuses.push("💣".to_string());
+            player.collected_bonuses.push(bonus.icon().to_string());
         }
         BonusType::BombRange => {
             player.bomb_range = player.bomb_range.saturating_add(1);
-            player.collected_bonuses.push("🔥".to_string());
+            player.collected_bonuses.push(bonus.icon().to_string());
         }
         BonusType::Pierce => {
             if !player.pierce {
-                player.collected_bonuses.push("🔪".to_string());
+                player.collected_bonuses.push(bonus.icon().to_string());
             }
             player.pierce = true;
         }

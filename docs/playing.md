@@ -73,16 +73,16 @@ The gauge under the map shows the same timing in more detail.
 
 ## 5. Bonuses and Items
 
-Bonuses appear every few beats (room setting) and inside destroyed bricks. Blinking bonuses are about to disappear.
+Bonuses appear every few beats (room setting) and inside destroyed bricks. They sit on a teal tile so they are never mistaken for a bomb; blinking bonuses are about to disappear.
 
 | Bonus | Emoji / ASCII | Effect |
 | :--- | :--- | :--- |
-| Bomb | 💣 / `B+` | +1 bomb at the same time |
-| Fire | 🔥 / `R+` | +1 blast range |
+| Extra bomb | 🎒 / `B+` | +1 bomb at the same time |
+| Range | 📏 / `R+` | +1 blast range |
 | Pierce | 🔪 / `P+` | Blasts go through bricks |
 | Extra life | 💖 / `L+` | +1 life (rare, capped at 9) |
-| Shield *(item)* | 🛡️ / `S+` | Invulnerable for 3 beats |
-| Detonator *(item)* | 🧨 / `D+` | Explodes all your bombs right now |
+| Shield *(item)* | 🧿 / `S+` | Invulnerable for 3 beats |
+| Detonator *(item)* | 📡 / `D+` | Explodes all your bombs right now |
 | Dash *(item)* | 👟 / `F+` | Moves up to 3 cells in the direction you face |
 
 You hold **one item at a time** (shown between brackets next to your name). Use it with `E`, on the beat. Picking up a new item replaces the current one.

@@ -28,11 +28,9 @@ pub fn get_collected_bonuses_str(bonuses: &[String], ascii: bool) -> String {
         if ascii {
             bonuses
                 .iter()
-                .map(|b| match b.as_str() {
-                    "💣" => "B",
-                    "🔥" => "R",
-                    "🔪" => "P",
-                    _ => "?",
+                .map(|b| {
+                    common::game::models::BonusType::from_icon(b)
+                        .map_or("?", |bonus| &bonus.ascii_icon()[..1])
                 })
                 .collect::<Vec<_>>()
                 .join(" ")
@@ -47,13 +45,19 @@ pub fn get_second_item_str(
     ascii: bool,
 ) -> String {
     use common::game::models::SecondItem;
-    let (ascii_sym, emoji_sym) = match second_item {
-        Some(SecondItem::Shield) => ("SH", "🛡️"),
-        Some(SecondItem::Detonator) => ("DT", "🧨"),
-        Some(SecondItem::Dash) => ("DA", "👟"),
-        None => return String::new(),
+    let Some(item) = second_item else {
+        return String::new();
     };
-    if ascii { ascii_sym } else { emoji_sym }.to_string()
+    if ascii {
+        match item {
+            SecondItem::Shield => "SH",
+            SecondItem::Detonator => "DT",
+            SecondItem::Dash => "DA",
+        }
+        .to_string()
+    } else {
+        item.bonus().icon().to_string()
+    }
 }
 
 pub fn get_player_status_icon(player: &common::game::Player, ascii: bool) -> String {
