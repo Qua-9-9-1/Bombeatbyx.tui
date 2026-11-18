@@ -80,32 +80,6 @@ impl Animation {
         }
     }
 
-    pub fn bomb_pulsing() -> Self {
-        Self {
-            frames: vec![
-                AnimationFrame {
-                    symbol: "💣".to_string(),
-                    fg_color: Color::Red,
-                    bg_color: Color::Indexed(234),
-                    duration: Duration::from_millis(250),
-                },
-                AnimationFrame {
-                    symbol: "💣".to_string(),
-                    fg_color: Color::Yellow,
-                    bg_color: Color::Indexed(234),
-                    duration: Duration::from_millis(250),
-                },
-                AnimationFrame {
-                    symbol: "💣".to_string(),
-                    fg_color: Color::Black,
-                    bg_color: Color::Red,
-                    duration: Duration::from_millis(250),
-                },
-            ],
-            loop_animation: true,
-        }
-    }
-
     pub fn explosion_expanding() -> Self {
         Self {
             frames: vec![

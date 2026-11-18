@@ -10,7 +10,7 @@ use ratatui::{
 };
 
 pub fn draw_lobby(buffer: &mut Buffer, tui_area: Rect, app: &App) {
-    let lobby_rect = crate::ui::menu::center_rect(tui_area, 102, 21);
+    let lobby_rect = crate::ui::menu::center_rect(tui_area, 102, 23);
 
     let columns = Layout::default()
         .direction(Direction::Horizontal)

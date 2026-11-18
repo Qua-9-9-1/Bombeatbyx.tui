@@ -77,6 +77,12 @@ pub fn draw_game_sidebar(
         has_meta = true;
     }
 
+    let kills = super::kill_feed::kill_feed_lines(&ctx.state, ascii);
+    if !kills.is_empty() {
+        lines.extend(kills);
+        has_meta = true;
+    }
+
     if has_meta {
         lines.push(Line::from(if ascii {
             "  ----------------------"

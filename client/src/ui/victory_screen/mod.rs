@@ -1,3 +1,4 @@
+pub mod accuracy;
 pub mod helpers;
 pub mod particles;
 pub mod podium;
@@ -215,6 +216,19 @@ pub fn draw_victory_screen(buffer: &mut Buffer, area: Rect, app: &App) {
             final_state.mode,
         );
     }
+
+    let columns = [(first_x, first_color), (second_x, second_color), (third_x, third_color)];
+    for (player, (x, color)) in ranked_players.iter().zip(columns) {
+        draw_str_centered(
+            buffer,
+            x,
+            base_y,
+            &accuracy::podium_label(&player.hits),
+            Style::default().fg(Color::Indexed(232)).bg(color),
+        );
+    }
+    let local = ranked_players.iter().find(|p| p.id == app.current_player_id);
+    accuracy::draw_local_breakdown(buffer, center_x, card_y + card_h - 3, local);
 
     let footer_y = card_y + card_h - 2;
     let elapsed = app

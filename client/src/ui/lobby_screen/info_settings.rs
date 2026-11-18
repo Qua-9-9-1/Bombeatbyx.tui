@@ -1,8 +1,9 @@
 //! Info panel texts for the host-only room settings rows.
 
 use super::info::{blank, dim, header, text, title};
+use crate::screens::lobby::{ROW_BRICK_HINTS, ROW_MAP_LAYOUT};
 use common::game::models::{
-    BONUS_PICKUP_POINTS, BRICK_POINTS, KILL_POINTS, RoomSettings, SELF_KILL_PENALTY,
+    BONUS_PICKUP_POINTS, BRICK_POINTS, KILL_POINTS, MapLayout, RoomSettings, SELF_KILL_PENALTY,
 };
 use ratatui::{
     style::{Color, Modifier, Style},
@@ -109,8 +110,58 @@ pub fn setting_lines(cursor: usize, rs: &RoomSettings, ascii: bool) -> Vec<Line<
             text("Sets the time limit for"),
             text("the match."),
         ],
+        ROW_MAP_LAYOUT => layout_lines(rs.map_layout, ascii),
+        ROW_BRICK_HINTS => vec![
+            header("[ BRICK HINTS ]", "🧱 BRICK HINTS", ascii),
+            blank(),
+            text("ON: bricks hiding a bonus"),
+            text(if ascii {
+                "look cracked: {} not []."
+            } else {
+                "look cracked: ▒▒ not ░░."
+            }),
+            blank(),
+            text("OFF: every brick looks the"),
+            text("same, bonuses are a surprise."),
+        ],
         _ => Vec::new(),
     }
+}
+
+fn layout_lines(layout: MapLayout, ascii: bool) -> Vec<Line<'static>> {
+    let (first, second, third) = match layout {
+        MapLayout::Classic => (
+            "A pillar every other cell.",
+            "Balanced: the reference",
+            "arena.",
+        ),
+        MapLayout::Open => (
+            "No pillars, only bricks.",
+            "Blasts travel far: clear",
+            "a path before you move.",
+        ),
+        MapLayout::Ring => (
+            "Pillars plus a walled ring",
+            "with 4 gates: the center",
+            "is a risky battleground.",
+        ),
+        MapLayout::Lanes => (
+            "Long corridors joined by",
+            "a few crossings: watch",
+            "for blasts down the lane.",
+        ),
+    };
+    vec![
+        header("[ MAP PATTERN ]", "🗺️  MAP PATTERN", ascii),
+        blank(),
+        title(format!("{}:", layout.label())),
+        text(first),
+        text(second),
+        text(third),
+        blank(),
+        dim("Every pattern is symmetric:"),
+        dim("all spawns are equally fair."),
+    ]
 }
 
 fn bonus_lines(rs: &RoomSettings, ascii: bool) -> Vec<Line<'static>> {

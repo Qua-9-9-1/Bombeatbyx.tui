@@ -4,11 +4,13 @@ use crossterm::event::KeyCode;
 /// Lobby rows, top to bottom. Rows before `ROW_NAME` are host-only room settings;
 /// the bot rows only exist in solo mode.
 pub const ROW_TIME_LIMIT: usize = 8;
-pub const ROW_BOT_COUNT: usize = 9;
-pub const ROW_BOT_LEVEL: usize = 10;
-pub const ROW_NAME: usize = 11;
-pub const ROW_SKIN: usize = 12;
-pub const ROW_READY: usize = 13;
+pub const ROW_MAP_LAYOUT: usize = 9;
+pub const ROW_BRICK_HINTS: usize = 10;
+pub const ROW_BOT_COUNT: usize = 11;
+pub const ROW_BOT_LEVEL: usize = 12;
+pub const ROW_NAME: usize = 13;
+pub const ROW_SKIN: usize = 14;
+pub const ROW_READY: usize = 15;
 
 pub fn is_bot_row(row: usize) -> bool {
     row == ROW_BOT_COUNT || row == ROW_BOT_LEVEL
@@ -112,6 +114,14 @@ impl LobbyScreen {
                     }
                 };
             }
+            ROW_MAP_LAYOUT => {
+                room_settings.map_layout = if increase {
+                    room_settings.map_layout.next()
+                } else {
+                    room_settings.map_layout.previous()
+                };
+            }
+            ROW_BRICK_HINTS => room_settings.brick_hints = !room_settings.brick_hints,
             ROW_BOT_COUNT => {
                 room_settings.bot_count =
                     ((room_settings.bot_count as i32) + sign).clamp(1, MAX_BOTS as i32) as u8;

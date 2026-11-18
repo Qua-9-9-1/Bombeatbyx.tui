@@ -70,70 +70,31 @@ pub fn draw_rules_panel(buffer: &mut Buffer, area: Rect, app: &App) {
         " [ READY ] ".to_string()
     };
 
+    // Host-only settings show `< value >` arrows to the host only.
+    let setting = |label: &str, value: String| {
+        if is_host {
+            format!("{:<14}: < {} >", label, value)
+        } else {
+            format!("{:<14}: {}", label, value)
+        }
+    };
+    let on_off = |on: bool| if on { "ON" } else { "OFF" }.to_string();
     let items = [
-        if is_host {
-            format!("Map Width     : < {} >", rs.width)
-        } else {
-            format!("Map Width     : {}", rs.width)
-        },
-        if is_host {
-            format!("Map Height    : < {} >", rs.height)
-        } else {
-            format!("Map Height    : {}", rs.height)
-        },
-        if is_host {
-            format!("BPM (Tempo)   : < {:.0} >", rs.bpm)
-        } else {
-            format!("BPM (Tempo)   : {:.0}", rs.bpm)
-        },
-        if is_host {
-            format!(
-                "Sudden Death  : < {} >",
-                if rs.sudden_death { "ON" } else { "OFF" }
-            )
-        } else {
-            format!(
-                "Sudden Death  : {}",
-                if rs.sudden_death { "ON" } else { "OFF" }
-            )
-        },
-        if is_host {
-            format!("Bonus Spawn   : < Every {} beats >", rs.bonus_every)
-        } else {
-            format!("Bonus Spawn   : Every {} beats", rs.bonus_every)
-        },
-        if is_host {
-            format!("Player Lives  : < {} >", rs.lives)
-        } else {
-            format!("Player Lives  : {}", rs.lives)
-        },
-        if is_host {
-            format!("Game Mode     : < {:?} >", rs.mode)
-        } else {
-            format!("Game Mode     : {:?}", rs.mode)
-        },
-        if is_host {
-            format!("Target Score  : < {} >", rs.target_score)
-        } else {
-            format!("Target Score  : {}", rs.target_score)
-        },
-        if is_host {
-            format!(
-                "Time Limit    : < {} >",
-                match rs.time_limit_mins {
-                    None => "OFF".to_string(),
-                    Some(m) => format!("{} mins", m),
-                }
-            )
-        } else {
-            format!(
-                "Time Limit    : {}",
-                match rs.time_limit_mins {
-                    None => "OFF".to_string(),
-                    Some(m) => format!("{} mins", m),
-                }
-            )
-        },
+        setting("Map Width", rs.width.to_string()),
+        setting("Map Height", rs.height.to_string()),
+        setting("BPM (Tempo)", format!("{:.0}", rs.bpm)),
+        setting("Sudden Death", on_off(rs.sudden_death)),
+        setting("Bonus Spawn", format!("Every {} beats", rs.bonus_every)),
+        setting("Player Lives", rs.lives.to_string()),
+        setting("Game Mode", format!("{:?}", rs.mode)),
+        setting("Target Score", rs.target_score.to_string()),
+        setting(
+            "Time Limit",
+            rs.time_limit_mins
+                .map_or_else(|| "OFF".to_string(), |m| format!("{} mins", m)),
+        ),
+        setting("Map Pattern", rs.map_layout.label().to_string()),
+        setting("Brick Hints", on_off(rs.brick_hints)),
         format!("Bots          : < {} >", rs.bot_count),
         format!("Bot Level     : < {} >", rs.bot_difficulty.label()),
         format!("Your Name     : < {} >", name_display),

@@ -1,5 +1,7 @@
 pub mod beat_fx;
+pub mod cell_style;
 pub mod helpers;
+pub mod kill_feed;
 pub mod map;
 pub mod sidebar;
 pub mod stats;

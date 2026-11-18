@@ -4,6 +4,7 @@
 
 use crate::local::app::{App, HitKind};
 use crate::local::settings::BEATS_PER_BAR;
+use common::game::models::{COMBO_STEP, FEVER_COMBO};
 use common::game::rhythm::{BeatAccuracy, BeatSide};
 use ratatui::{
     style::{Color, Modifier, Style},
@@ -16,6 +17,8 @@ const FLOOR_DARK: Color = Color::Indexed(234);
 const FLOOR_LIGHT: Color = Color::Indexed(236);
 /// Background of the local player's cell while an input would be on the beat.
 pub const HIT_WINDOW_PLAYER_BG: Color = Color::Indexed(28);
+/// Same, brighter on the first beat of each bar (the strong beat).
+const DOWNBEAT_PLAYER_BG: Color = Color::Indexed(40);
 const FEEDBACK_DURATION: Duration = Duration::from_millis(800);
 pub const ARENA_TITLE: &str = " BOMBOMBYX ";
 
@@ -28,8 +31,31 @@ pub fn floor_color(x: usize, y: usize, beat: u64) -> Color {
     }
 }
 
-/// Border lights up (thick, green) while the hit window is open.
-pub fn arena_border(window_open: bool) -> (Style, BorderType) {
+/// Glow of the local player's cell during the hit window.
+pub fn player_glow(beat: u64) -> Color {
+    if beat % BEATS_PER_BAR == 0 {
+        DOWNBEAT_PLAYER_BG
+    } else {
+        HIT_WINDOW_PLAYER_BG
+    }
+}
+
+/// Resting border color, heating up with the local player's combo.
+pub fn combo_color(combo: u32) -> Color {
+    if combo >= FEVER_COMBO {
+        Color::Magenta
+    } else if combo >= COMBO_STEP {
+        Color::Rgb(255, 140, 0)
+    } else if combo >= COMBO_STEP / 2 {
+        Color::Yellow
+    } else {
+        Color::DarkGray
+    }
+}
+
+/// Border lights up (thick, green) while the hit window is open; between
+/// beats it shows the combo level.
+pub fn arena_border(window_open: bool, combo: u32) -> (Style, BorderType) {
     if window_open {
         (
             Style::default()
@@ -38,7 +64,7 @@ pub fn arena_border(window_open: bool) -> (Style, BorderType) {
             BorderType::Thick,
         )
     } else {
-        (Style::default().fg(Color::DarkGray), BorderType::Plain)
+        (Style::default().fg(combo_color(combo)), BorderType::Plain)
     }
 }
 
@@ -110,6 +136,24 @@ mod tests {
 
         assert_ne!(before, after);
         assert_eq!(before, floor_color(3, 4, 12));
+    }
+
+    #[test]
+    fn border_heats_up_with_the_combo() {
+        let colors: Vec<Color> = [0, COMBO_STEP / 2, COMBO_STEP, FEVER_COMBO]
+            .into_iter()
+            .map(combo_color)
+            .collect();
+
+        assert_eq!(colors[0], Color::DarkGray);
+        assert_eq!(colors[3], Color::Magenta);
+        assert!(colors.windows(2).all(|pair| pair[0] != pair[1]));
+    }
+
+    #[test]
+    fn player_glow_is_brighter_on_the_downbeat() {
+        assert_ne!(player_glow(0), player_glow(1));
+        assert_eq!(player_glow(BEATS_PER_BAR), player_glow(0));
     }
 
     #[test]
