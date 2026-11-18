@@ -1,6 +1,10 @@
+mod feedback;
 mod game;
-mod inputs;
+pub(crate) mod inputs;
 mod local_server;
+mod sound;
+
+pub use feedback::{HitKind, LocalHit};
 
 use crate::local::settings::ClientSettings;
 use crate::screens::{lobby::LobbyScreen, main_menu::MainMenuScreen};
@@ -59,7 +63,8 @@ pub struct App {
     pub settings_cursor: usize,
     pub editing_name: bool,
 
-    pub last_local_action: Option<(u64, common::game::GameAction)>,
+    /// Last action predicted locally online: (target beat, action, when).
+    pub last_local_action: Option<(u64, common::game::GameAction, Instant)>,
 
     pub network: crate::network::NetworkContext,
 
@@ -79,6 +84,12 @@ pub struct App {
     pub victory_start_time: Option<Instant>,
     pub solo_paused_at: Option<Instant>,
     pub bot_rng: common::game::spawns::GameRng,
+    /// Server address being typed in the settings menu (`None` = not editing).
+    pub server_addr_draft: Option<String>,
+    /// Last beat the metronome handled, to ring once per beat.
+    pub last_sound_beat: u64,
+    /// Local judgement of the last input, for on-arena feedback.
+    pub last_hit: Option<LocalHit>,
 }
 
 impl App {
@@ -126,6 +137,9 @@ impl App {
             victory_start_time: None,
             solo_paused_at: None,
             bot_rng: common::game::spawns::GameRng::from_time(),
+            server_addr_draft: None,
+            last_sound_beat: 0,
+            last_hit: None,
         }
     }
 
@@ -138,10 +152,8 @@ impl App {
         let mut lag = Duration::ZERO;
         let mut prev_state = self.state.clone();
 
-        let udp_socket = std::net::UdpSocket::bind("0.0.0.0:27315").ok();
-        if let Some(ref s) = udp_socket {
-            let _ = s.set_nonblocking(true);
-        }
+        let udp_socket =
+            crate::network::lan::bind_lan_listener(crate::network::lan::LAN_DISCOVERY_PORT);
 
         while self.game_run {
             let current_time = Instant::now();
@@ -180,8 +192,18 @@ impl App {
                 } else {
                     if let Some(ref mut ctx) = self.game_ctx {
                         ctx.rhythm.tick_logic();
+                        // Also catches beats reached through a clock realignment.
+                        let beat = ctx.rhythm.beat_count;
+                        let flushed = ctx.flush_buffered_actions(beat);
+                        // Predicted from now on, until the server confirms it.
+                        if let Some((_, buffered)) =
+                            flushed.iter().find(|(id, _)| *id == self.current_player_id)
+                        {
+                            self.last_local_action = Some((beat, buffered.action, Instant::now()));
+                        }
                     }
                 }
+                self.ring_beat_sound();
             }
             self.handle_inputs(tui)?;
             if self.state == AppState::InGame && !self.network.is_multiplayer {

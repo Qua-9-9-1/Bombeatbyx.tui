@@ -1,3 +1,4 @@
+mod cursor_backend;
 mod local;
 mod network;
 mod screens;

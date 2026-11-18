@@ -19,6 +19,8 @@ pub enum ClientMessage {
     CreateRoom {
         is_public: bool,
         is_lan: bool,
+        name: String,
+        skin: String,
     },
     JoinRoom {
         code: String,
@@ -56,7 +58,10 @@ pub enum ServerMessage {
     GameStateUpdate(GameState),
     GameEnded,
     ConnectionFailed(String),
-    Ping,
+    /// Heartbeat; carries the round-trip time the server measured for this client.
+    Ping {
+        rtt_ms: u32,
+    },
     GameStopped {
         players: Vec<crate::game::models::Player>,
         settings: RoomSettings,

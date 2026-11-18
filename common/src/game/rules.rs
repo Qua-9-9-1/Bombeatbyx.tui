@@ -15,6 +15,16 @@ pub const BONUS_PICKUP_POINTS: u32 = 25;
 pub const MAX_LIVES: u8 = 9;
 pub const DASH_DISTANCE: u32 = 3;
 
+/// Hit windows, as a fraction of the beat interval on each side of the beat.
+/// One action per beat and the miss penalty keep wide windows spam-proof.
+pub const PERFECT_WINDOW: f64 = 0.06;
+pub const GREAT_WINDOW: f64 = 0.12;
+pub const OK_WINDOW: f64 = 0.20;
+
+/// Two presses closer than this trigger the anti-spam lockout.
+pub const SPAM_MIN_INTERVAL: std::time::Duration = std::time::Duration::from_millis(100);
+pub const SPAM_LOCKOUT: std::time::Duration = std::time::Duration::from_millis(300);
+
 /// Every `COMBO_STEP` consecutive on-beat actions raise the score multiplier by one.
 pub const COMBO_STEP: u32 = 8;
 pub const MAX_COMBO_MULTIPLIER: u32 = 4;
@@ -24,3 +34,11 @@ pub const FEVER_BONUS_RANGE: usize = 1;
 pub const BOMB_FUSE_BEATS: u8 = 4;
 pub const SHIELD_DURATION_BEATS: u64 = 3;
 pub const RESPAWN_PROTECTION_BEATS: u64 = 3;
+
+/// Room settings bounds, enforced by the lobby UI and re-checked by the server.
+pub const MAP_SIZE_RANGE: std::ops::RangeInclusive<usize> = 7..=29;
+pub const BPM_RANGE: std::ops::RangeInclusive<f64> = 40.0..=220.0;
+pub const BONUS_EVERY_RANGE: std::ops::RangeInclusive<u32> = 1..=60;
+pub const LIVES_RANGE: std::ops::RangeInclusive<u8> = 1..=10;
+pub const TARGET_SCORE_RANGE: std::ops::RangeInclusive<u32> = 1000..=20000;
+pub const TIME_LIMIT_RANGE: std::ops::RangeInclusive<u32> = 1..=20;

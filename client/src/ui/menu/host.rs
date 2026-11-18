@@ -5,11 +5,11 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Padding, Paragraph, Widget, Wrap},
 };
 
 pub fn draw_host_modal(buffer: &mut Buffer, tui_area: Rect, app: &App) {
-    let modal_rect = center_rect(tui_area, 60, 16);
+    let modal_rect = center_rect(tui_area, 72, 17);
     let ascii = app.profile.ascii_mode;
 
     let title = if ascii {
@@ -80,23 +80,28 @@ pub fn draw_host_modal(buffer: &mut Buffer, tui_area: Rect, app: &App) {
 
     lines.push(Line::from(""));
 
+    let server_desc;
     let desc = match app.host_cursor {
         0 => {
             if app.host_mode == 0 {
-                "Online: Depends on the server. Not recommended if there are server issues."
+                server_desc = format!(
+                    "Online: the room lives on the server set in Settings > Server ({}). A server must be running there.",
+                    app.profile.server_addr
+                );
+                server_desc.as_str()
             } else {
-                "LAN: Depends on the host's machine. Not recommended if PC is slow or connection is bad."
+                "LAN: your machine hosts the room for players on the same local network."
             }
         }
         1 => {
             if app.host_visibility == 0 {
-                "Public: The room will appear in the public rooms list."
+                "Public: the room appears in the room list."
             } else {
-                "Private: The room will be hidden. Others will have to enter the code."
+                "Private: the room is hidden. Others join with its code."
             }
         }
-        2 => "Create Room: Starts the room with the configured settings.",
-        _ => "Cancel: Return to the main menu.",
+        2 => "Create Room: starts the room with these settings.",
+        _ => "Cancel: back to the main menu.",
     };
 
     lines.push(Line::from(Span::styled(
@@ -105,12 +110,13 @@ pub fn draw_host_modal(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     )));
     lines.push(Line::from(""));
     lines.push(Line::from(Span::styled(
-        "Use Z/S (Up/Down) to navigate, Q/D (Left/Right) to adjust, Enter to select",
+        "Z/S navigate   Q/D adjust   Enter select   Esc back",
         Style::default().fg(Color::DarkGray),
     )));
 
     Paragraph::new(lines)
-        .block(block)
+        .block(block.padding(Padding::horizontal(1)))
         .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true })
         .render(modal_rect, buffer);
 }

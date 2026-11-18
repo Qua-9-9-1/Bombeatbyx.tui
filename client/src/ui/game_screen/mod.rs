@@ -1,3 +1,4 @@
+pub mod beat_fx;
 pub mod helpers;
 pub mod map;
 pub mod sidebar;

@@ -13,16 +13,7 @@ pub async fn handle_transfer_host(
         if let Some(room) = s.rooms.get_mut(code) {
             let is_host = room.host_id == Some(*player_id);
             if is_host && room.peers.contains_key(&target_id) {
-                room.host_id = Some(target_id);
-                let target_name = room
-                    .peers
-                    .get(&target_id)
-                    .map(|p| p.name.clone())
-                    .unwrap_or_default();
-                room.broadcast(ServerMessage::HostTransferred {
-                    new_host_id: target_id,
-                    new_host_name: target_name,
-                });
+                room.set_host(target_id);
                 let players = room.get_lobby_players();
                 let settings = room.room_settings.clone();
                 room.broadcast(ServerMessage::LobbyUpdate { players, settings });

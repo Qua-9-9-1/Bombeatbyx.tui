@@ -3,6 +3,9 @@ use crate::game::actions::GameAction;
 use crate::game::models::{Cell, SHIELD_DURATION_BEATS, SecondItem};
 
 const MAX_COMBO: u32 = 9999;
+const EMOTE_DURATION: std::time::Duration = std::time::Duration::from_millis(1500);
+/// Minimum delay between two emotes of the same player.
+const EMOTE_COOLDOWN: std::time::Duration = std::time::Duration::from_millis(500);
 use crate::game::rhythm::BeatAccuracy;
 
 impl GameState {
@@ -46,6 +49,11 @@ impl GameState {
 
             let success =
                 self.apply_player_action(player_id, action, accuracy.clone(), current_beat);
+            // An early press targets the next beat but lands before its bomb
+            // tick: one extra tick keeps the fuse at the same number of beats.
+            if success && action == GameAction::PlaceBomb && current_beat > self.current_beat {
+                self.add_fuse_tick_under(player_id);
+            }
             // An on-beat action keeps the groove even if it fails (e.g. bumping
             // a wall), but it consumes the beat: one action per beat.
             if let Some(p) = self.players.iter_mut().find(|p| p.id == player_id) {
@@ -59,6 +67,34 @@ impl GameState {
                     p.score = p.score.saturating_add(points);
                 }
             }
+        }
+    }
+
+    /// Runs an input buffered after an off-beat press. It happens on the beat,
+    /// but earns no rhythm points and breaks the combo.
+    pub fn handle_buffered_action(&mut self, player_id: u32, action: GameAction, beat: u64) {
+        if self.countdown.is_some() || self.game_over_countdown.is_some() {
+            return;
+        }
+        let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) else {
+            return;
+        };
+        if !player.is_alive || player.last_acted_beat == Some(beat) {
+            return;
+        }
+        player.combo = 0;
+        player.last_acted_beat = Some(beat);
+        player.last_accuracy = BeatAccuracy::Miss;
+        self.apply_player_action(player_id, action, BeatAccuracy::Miss, beat);
+    }
+
+    fn add_fuse_tick_under(&mut self, player_id: u32) {
+        let Some(player) = self.players.iter().find(|p| p.id == player_id) else {
+            return;
+        };
+        let idx = (player.sub_y as usize) * self.width + (player.sub_x / 2) as usize;
+        if let Some(Cell::Bomb { ticks_left, .. }) = self.grid.get_mut(idx) {
+            *ticks_left = ticks_left.saturating_add(1);
         }
     }
 
@@ -152,6 +188,15 @@ impl GameState {
 
     pub fn trigger_emote(&mut self, player_id: u32, index: u8) {
         if let Some(player) = self.players.iter_mut().find(|p| p.id == player_id) {
+            // Emotes ignore the beat, so they get their own anti-flood cooldown
+            // (each one changes the state and triggers a broadcast).
+            let now = std::time::Instant::now();
+            let on_cooldown = player
+                .emote_until
+                .is_some_and(|until| until > now + EMOTE_DURATION - EMOTE_COOLDOWN);
+            if player.is_spectator || on_cooldown {
+                return;
+            }
             let emote = match index {
                 1 => "👋",
                 2 => "✌️",
@@ -160,8 +205,7 @@ impl GameState {
                 _ => return,
             };
             player.active_emote = Some(emote.to_string());
-            player.emote_until =
-                Some(std::time::Instant::now() + std::time::Duration::from_millis(1500));
+            player.emote_until = Some(now + EMOTE_DURATION);
         }
     }
 }

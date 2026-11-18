@@ -1,12 +1,11 @@
 use axum::{Router, routing::get};
 use std::sync::Arc;
 
+mod game_loop;
 mod state;
 mod websockets;
 
 use crate::state::ServerState;
-use crate::websockets::rooms::stop_game_in_room;
-use common::messages::ServerMessage;
 
 #[tokio::main]
 async fn main() {
@@ -17,48 +16,7 @@ async fn main() {
         .route("/", get(|| async { "Bombeatbyx TUI Server is running!" }))
         .with_state(state.clone());
 
-    let loop_state = state.clone();
-    tokio::spawn(async move {
-        let mut interval = tokio::time::interval(std::time::Duration::from_millis(16));
-        loop {
-            interval.tick().await;
-
-            let mut updates = Vec::new();
-            {
-                let mut s = loop_state.lock().await;
-                for room in s.rooms.values_mut() {
-                    if room.in_game {
-                        let mut victory_state = None;
-
-                        if let Some(ref mut ctx) = room.game_ctx {
-                            ctx.tick_game_logic();
-                            if ctx.state.update_match_end() {
-                                victory_state = Some(ctx.state.clone());
-                            }
-                        }
-
-                        if victory_state.is_some() {
-                            stop_game_in_room(room, victory_state);
-                            continue;
-                        }
-
-                        if let Some(ref ctx) = room.game_ctx {
-                            updates.push((room.code.clone(), ctx.state.clone()));
-                        }
-                    }
-                }
-            }
-
-            if !updates.is_empty() {
-                let s = loop_state.lock().await;
-                for (code, state) in updates {
-                    if let Some(room) = s.rooms.get(&code) {
-                        room.broadcast(ServerMessage::GameStateUpdate(state));
-                    }
-                }
-            }
-        }
-    });
+    tokio::spawn(game_loop::run(state.clone()));
 
     let args: Vec<String> = std::env::args().collect();
     let mut port = 27300;

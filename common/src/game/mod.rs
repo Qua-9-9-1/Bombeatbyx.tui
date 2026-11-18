@@ -3,6 +3,7 @@ pub mod ai;
 pub mod bombs;
 pub mod bonuses;
 pub mod context;
+pub mod input_buffer;
 pub mod models;
 pub mod physics;
 pub mod rhythm;

@@ -5,7 +5,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Widget},
+    widgets::{Block, Borders, Paragraph, Widget, Wrap},
 };
 
 pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
@@ -102,14 +102,9 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
     }
 
     if let Some(ref err) = app.network.network_error {
-        let max_len = 70;
-        let display_err = if err.len() > max_len {
-            format!("{}…", &err[..max_len])
-        } else {
-            err.clone()
-        };
+        // Wrapped by the paragraph below instead of being cut.
         lines.push(Line::from(Span::styled(
-            display_err,
+            err.clone(),
             Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
         )));
         lines.push(Line::from(""));
@@ -140,6 +135,9 @@ pub fn draw_join_room_menu(buffer: &mut Buffer, tui_area: Rect, app: &App) {
             .alignment(Alignment::Center)
             .render(overlay_rect, buffer);
     } else {
-        Paragraph::new(lines).block(block).render(menu_rect, buffer);
+        Paragraph::new(lines)
+            .block(block)
+            .wrap(Wrap { trim: false })
+            .render(menu_rect, buffer);
     }
 }

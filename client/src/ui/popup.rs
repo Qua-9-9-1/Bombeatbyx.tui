@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Alignment, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Clear, Paragraph, Widget},
+    widgets::{Block, Borders, Clear, Padding, Paragraph, Widget, Wrap},
 };
 
 pub fn draw_confirmation_popup(
@@ -76,8 +76,11 @@ pub fn draw_notification_popup(
     app: &App,
     notif: &NotificationPopup,
 ) {
-    let popup_w = 46;
-    let popup_h = 7;
+    let popup_w = NOTIFICATION_WIDTH.min(tui_area.width);
+    let text_w = popup_w.saturating_sub(4).max(1) as usize;
+    let message_lines = wrapped_line_count(&notif.message, text_w) as u16;
+    // Borders (2) + blank line + message + blank line + dismiss hint.
+    let popup_h = (message_lines + 5).min(tui_area.height);
     let popup_x = tui_area.x + (tui_area.width.saturating_sub(popup_w)) / 2;
     let popup_y = tui_area.y + (tui_area.height.saturating_sub(popup_h)) / 2;
     let popup_rect = Rect::new(popup_x, popup_y, popup_w, popup_h);
@@ -110,8 +113,48 @@ pub fn draw_notification_popup(
 
     Clear.render(popup_rect, buffer);
     Paragraph::new(lines)
-        .block(block)
+        .block(block.padding(Padding::horizontal(1)))
         .style(Style::default().bg(Color::Black).fg(Color::Cyan))
         .alignment(Alignment::Center)
+        .wrap(Wrap { trim: true })
         .render(popup_rect, buffer);
+}
+
+const NOTIFICATION_WIDTH: u16 = 64;
+
+/// Lines needed to word-wrap `text` at `width` columns (same rule as `Wrap`).
+pub fn wrapped_line_count(text: &str, width: usize) -> usize {
+    let mut lines = 1;
+    let mut current = 0;
+    for word in text.split_whitespace() {
+        let len = word.chars().count();
+        let needed = if current == 0 { len } else { current + 1 + len };
+        if needed <= width {
+            current = needed;
+        } else {
+            lines += 1 + (len.saturating_sub(1)) / width;
+            current = len % width;
+        }
+    }
+    lines
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn wrapped_line_count_breaks_on_words() {
+        // "No server is" | "running" | "here, really"
+        let text = "No server is running here, really";
+
+        let count = wrapped_line_count(text, 12);
+
+        assert_eq!(count, 3);
+    }
+
+    #[test]
+    fn wrapped_line_count_single_line_when_it_fits() {
+        assert_eq!(wrapped_line_count("short", 20), 1);
+    }
 }

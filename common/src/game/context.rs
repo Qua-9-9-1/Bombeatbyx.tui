@@ -1,13 +1,23 @@
 use super::actions::GameAction;
+use super::input_buffer::BufferedAction;
 use super::models::{Player, RoomSettings};
 use super::rhythm::{BeatAccuracy, RhythmEngine};
 use super::state::GameState;
+use std::collections::HashMap;
+use std::time::{Duration, Instant};
+
+/// Upper bound of the latency compensation applied to a player's input.
+pub const MAX_LATENCY_COMPENSATION: Duration = Duration::from_millis(150);
+/// Latest point of a beat for the idle-combo check (before the next hit window).
+const IDLE_CHECK_MAX_PROGRESS: f64 = 0.45;
 
 pub struct GameContext {
     pub state: GameState,
     pub rhythm: RhythmEngine,
     pub last_closed_window_beat: Option<u64>,
     pub start_time: std::time::Instant,
+    /// One pending off-beat input per player (see `input_buffer`).
+    pub buffered_actions: HashMap<u32, BufferedAction>,
 }
 
 impl GameContext {
@@ -17,6 +27,7 @@ impl GameContext {
             rhythm: RhythmEngine::new(bpm),
             last_closed_window_beat: None,
             start_time: std::time::Instant::now(),
+            buffered_actions: HashMap::new(),
         }
     }
 
@@ -26,8 +37,15 @@ impl GameContext {
         ctx
     }
 
+    /// Beat progress after which an unused beat counts as idle. It leaves room
+    /// for latency-compensated inputs that arrive after the hit window closed,
+    /// and stays before the next beat's window (which opens at 0.8).
+    fn idle_check_progress(&self) -> f64 {
+        let margin = MAX_LATENCY_COMPENSATION.as_secs_f64() / self.rhythm.beat_interval.as_secs_f64();
+        (crate::game::rules::OK_WINDOW + margin).min(IDLE_CHECK_MAX_PROGRESS)
+    }
+
     pub fn tick_game_logic(&mut self) -> bool {
-        self.state.tick_respawns();
         self.state.tick_emotes();
         if self.state.countdown.is_none() && self.state.game_over_countdown.is_none() {
             self.state.elapsed_time_secs = self.start_time.elapsed().as_secs() as u32;
@@ -39,10 +57,12 @@ impl GameContext {
 
         let current_beat = self.rhythm.beat_count;
         self.state.current_beat = current_beat;
+        // After `current_beat` is updated, so respawn protection counts from now.
+        self.state.tick_respawns();
         let progress = self.rhythm.progress();
         let is_playing = self.state.countdown.is_none() && self.state.game_over_countdown.is_none();
 
-        if progress > 0.15 && progress <= 0.5 {
+        if progress > self.idle_check_progress() && progress <= 0.5 {
             if self.last_closed_window_beat != Some(current_beat) {
                 for player in &mut self.state.players {
                     if player.last_acted_beat != Some(current_beat) {
@@ -74,6 +94,8 @@ impl GameContext {
             if is_playing {
                 self.state.tick_beat(current_beat);
                 self.state.tick_bombs_and_explosions();
+                // After the bomb tick, so a buffered bomb keeps its full fuse.
+                self.flush_buffered_actions(current_beat);
                 self.state.tick_sudden_death(current_beat);
             }
         }
@@ -105,14 +127,33 @@ impl GameContext {
     }
 
     pub fn process_player_action(&mut self, player_id: u32, action: GameAction) {
-        let accuracy = self.rhythm.evaluate_accuracy();
-        let progress = self.rhythm.progress();
-        let target_beat = if progress > 0.5 {
-            self.rhythm.beat_count + 1
-        } else {
-            self.rhythm.beat_count
-        };
+        self.process_player_action_with_latency(player_id, action, Duration::ZERO);
+    }
 
+    /// Judges the action at the moment the player pressed the key: reception
+    /// time minus the one-way network delay (capped so it cannot be abused).
+    pub fn process_player_action_with_latency(
+        &mut self,
+        player_id: u32,
+        action: GameAction,
+        one_way_latency: Duration,
+    ) {
+        let compensation = one_way_latency.min(MAX_LATENCY_COMPENSATION);
+        let now = Instant::now();
+        let pressed_at = now.checked_sub(compensation).unwrap_or(now);
+        let (target_beat, accuracy) = self.rhythm.timing_at(pressed_at);
+        let is_emote = matches!(action, GameAction::Emote(_));
+
+        if !is_emote {
+            if accuracy == BeatAccuracy::Miss {
+                self.buffer_action(player_id, action);
+                return;
+            }
+            // The slot already holds the action for this beat: one input per beat.
+            if self.has_buffered_action(player_id) {
+                return;
+            }
+        }
         self.state
             .handle_action(player_id, action, accuracy, target_beat);
     }
@@ -130,6 +171,45 @@ mod tests {
         context.tick_game_logic();
 
         assert!(context.state.elapsed_time_secs >= 5);
+    }
+
+    #[test]
+    fn process_player_action_with_latency_judges_input_at_press_time() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        context.state.players = vec![crate::game::models::Player::new(1, "P1", "🤖", 3)];
+        let interval = context.rhythm.beat_interval;
+        context.rhythm.beat_count = 8;
+        // Received 100 ms after the beat, but pressed 80 ms earlier (latency).
+        context.rhythm.last_beat_time = Instant::now() - interval.mul_f64(0.10);
+        context.rhythm.next_beat_time = context.rhythm.last_beat_time + interval;
+
+        context.process_player_action_with_latency(
+            1,
+            GameAction::MoveDown,
+            Duration::from_millis(80),
+        );
+
+        assert_eq!(context.state.players[0].last_accuracy, BeatAccuracy::Perfect);
+    }
+
+    #[test]
+    fn process_player_action_with_latency_caps_compensation() {
+        let mut context = GameContext::new(5, 5, 60.0);
+        context.state.players = vec![crate::game::models::Player::new(1, "P1", "🤖", 3)];
+        let interval = context.rhythm.beat_interval;
+        context.rhythm.beat_count = 8;
+        context.rhythm.last_beat_time = Instant::now() - interval.mul_f64(0.40);
+        context.rhythm.next_beat_time = context.rhythm.last_beat_time + interval;
+
+        context.process_player_action_with_latency(
+            1,
+            GameAction::MoveDown,
+            Duration::from_millis(390),
+        );
+
+        // Judged off-beat: the input waits for the next beat instead of running now.
+        assert!(context.has_buffered_action(1));
+        assert_eq!(context.state.players[0].sub_y, 0);
     }
 
     #[test]

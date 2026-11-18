@@ -3,16 +3,29 @@ use crossterm::{
     execute,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
 };
+use crate::cursor_backend::CursorStateBackend;
 use ratatui::prelude::*;
 use std::io::{self, Stdout};
 
+/// Rings the terminal bell (BEL). The host terminal plays the sound,
+/// so it also works through SSH or a Docker container.
+pub fn ring_bell() -> io::Result<()> {
+    use std::io::Write;
+    let mut out = io::stdout();
+    out.write_all(b"\x07")?;
+    out.flush()
+}
+
+type GameBackend = CursorStateBackend<CrosstermBackend<Stdout>>;
+
 pub struct Tui {
-    terminal: Terminal<CrosstermBackend<Stdout>>,
+    terminal: Terminal<GameBackend>,
 }
 
 impl Tui {
     pub fn new() -> io::Result<Self> {
-        let terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+        let backend = CursorStateBackend::new(CrosstermBackend::new(io::stdout()));
+        let terminal = Terminal::new(backend)?;
         Ok(Self { terminal })
     }
 

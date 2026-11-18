@@ -52,7 +52,7 @@ pub fn draw_rhythm_gauge(
         GaugeSkin::Simple => format_simple_skin(progress, width),
     };
 
-    let color = if progress > 0.85 || progress < 0.15 {
+    let color = if common::game::rhythm::is_in_hit_window(progress) {
         Color::Green
     } else {
         Color::DarkGray

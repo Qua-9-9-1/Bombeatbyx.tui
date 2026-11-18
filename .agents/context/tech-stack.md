@@ -88,7 +88,7 @@ The codebase is structured as a Cargo workspace with three distinct crates:
 CLIENT                          SERVER
   |-- GetRooms ----------------> |
   |<-- RoomList --------------- |
-  |-- CreateRoom(public, lan) -> |
+  |-- CreateRoom(public, lan, name, skin) -> |
   |<-- LobbyUpdate ------------ |
   |-- JoinRoom(code, name, skin) |
   |<-- LobbyUpdate ------------ |
@@ -100,4 +100,28 @@ CLIENT                          SERVER
   |<-- StateUpdate(GameState) - |
   |<-- GameStopped(victory) --- |
   |-- LeaveLobby ------------> |
+  |<-- Ping { rtt_ms } -------- |  (every 3 s, carries the measured RTT)
+  |-- Pong -------------------> |
 ```
+
+## 4. Network Rules
+
+| Concern | Rule |
+| :--- | :--- |
+| **Server address** | Default `127.0.0.1:27300` (the server's default port), editable in Settings. Old `:3000` configs are migrated on load. |
+| **Settings trust** | `UpdateSettings` always goes through `RoomSettings::sanitized()`: an invalid size or BPM would panic the server. |
+| **Rename** | `JoinRoom` from a peer already in a room is a profile update: only its own room, invalid values ignored, never a disconnect. |
+| **Heartbeat** | Server pings every 3 s and drops a peer after 3 unanswered pings. The client drops the link after 12 s of silence and gives up connecting after 5 s. |
+| **Latency** | RTT is smoothed (EWMA) per peer in `Room.latencies`. Actions are judged at `reception - RTT/2`, capped by `MAX_LATENCY_COMPENSATION` (150 ms). |
+| **Rhythm sync** | On the first snapshot of each beat, the client calls `RhythmEngine::align(beat, RTT/2 + half tick, 25 ms tolerance)`. |
+| **Prediction** | The client applies its own action immediately and keeps it over server snapshots only for `RTT + 150 ms` (`client/src/network/sync.rs`). |
+| **Broadcast** | `server/src/game_loop.rs`: rooms are ticked and their states cloned under the lock; the JSON fingerprint used to skip unchanged states is computed outside the lock. `GameStateUpdate` is sent only when it changed. |
+| **Kicked sockets** | A peer no longer in its room (kick/ban) has its socket closed by the server at the next ping (3 s), without relying on the client. |
+| **Host change** | Always via `Room::set_host`, which updates the running game and broadcasts `HostTransferred`. |
+| **LAN hosting** | The client looks for the `server` binary next to its own executable first (release zip layout), then in `target/`. |
+| **Abuse limits (server)** | Max `MAX_CONNECTIONS_PER_IP` (16) sockets per IP, 16 KiB per client message/frame, 60 messages/s per connection (extra dropped), 1000 rooms. `CreateRoom` is ignored while already in a room (it used to leave ghost peers). |
+| **Outbox** | Each peer has a bounded queue (`PeerSender`, `OUTBOX_CAPACITY` 512, `try_send`). A saturated queue (client not reading) closes the connection at the next ping. Never use an unbounded channel toward a client. |
+| **Pong** | Only a Pong answering an outstanding Ping resets the timeout and updates the RTT. |
+| **Room codes** | Generated from `RandomState` (OS randomness): private codes are secrets, never time-seeded. |
+| **Emotes** | Not beat-gated, so they have their own 500 ms cooldown and are refused to spectators (each emote triggers a broadcast). |
+| **Client trust** | The client never trusts the server: `network/validate.rs` sanitizes settings and drops states failing `GameState::is_well_formed()`. LAN datagrams are parsed strictly (code, name, player count, port), at most 32 per frame and 32 listed rooms. |

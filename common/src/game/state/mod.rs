@@ -79,6 +79,15 @@ impl GameState {
         self.grid[(y as usize) * self.width + (x as usize)]
     }
 
+    /// `true` when the state can be rendered and simulated safely. Clients use it
+    /// to reject malformed snapshots from a buggy or malicious server.
+    pub fn is_well_formed(&self) -> bool {
+        let sizes = crate::game::rules::MAP_SIZE_RANGE;
+        sizes.contains(&self.width)
+            && sizes.contains(&self.height)
+            && self.grid.len() == self.width * self.height
+    }
+
     pub fn tick_beat(&mut self, beat_count: u64) {
         if self.bonus_every > 0 && beat_count > 0 && beat_count % (self.bonus_every as u64) == 0 {
             self.spawn_random_bonus();
@@ -89,6 +98,19 @@ impl GameState {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn is_well_formed_rejects_grid_size_mismatch_and_out_of_range_maps() {
+        let valid = GameState::new(9, 9);
+        let mut short_grid = GameState::new(9, 9);
+        short_grid.grid.pop();
+        let mut huge = GameState::new(9, 9);
+        huge.width = 5000;
+
+        assert!(valid.is_well_formed());
+        assert!(!short_grid.is_well_formed());
+        assert!(!huge.is_well_formed());
+    }
 
     #[test]
     fn new_game_state_generates_boundary_walls() {

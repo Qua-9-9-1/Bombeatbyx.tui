@@ -26,6 +26,8 @@ Candidate features, ordered by expected fun per effort. Keep the core rule in mi
 * **Map presets:** open arena, maze, cross; plus a brick density setting in the lobby.
 * **Replays / ghosts:** the simulation is deterministic given a seed and the inputs, so matches can be recorded.
 
-## 5. Technical Prerequisites
-* **Server-side settings validation:** clamp every `RoomSettings` field received in `UpdateSettings` (map size, BPM, lives, bot count).
-* **Rhythm resync:** clients currently realign `beat_count` from `last_acted_beat`; using `GameState.current_beat` would be more robust.
+## 5. Network Follow-ups
+* **End-to-end network test:** an in-process server + `tokio-tungstenite` client test covering create, join, ready, start, action and disconnect.
+* **Private LAN rooms:** they are not broadcast, so they can only be joined by setting the host IP as server address.
+* **RTT manipulation (known limit, not fixable server-side):** a client can delay its Pongs to always get the full 150 ms latency compensation; the server cannot tell a slow network from a cheater. Possible mitigations: lower cap, or compensation from the minimum of recent samples (penalizes honest jittery players).
+* **Game loop cost:** states are still serialized every 16 ms (outside the lock) to detect changes; a dirty flag set by the simulation would avoid it.

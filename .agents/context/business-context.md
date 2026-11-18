@@ -19,12 +19,15 @@ All tuning values live in `common/src/game/rules.rs` (re-exported by `models`). 
 
 ### 2.1 Rhythm Synchronization (Critical Rule)
 * **All player actions** (movement, bomb drop, item use) are **gated by the active BPM beat**: one action per beat (`last_acted_beat`), plus a 100 ms anti-spam lockout.
-* `BeatAccuracy` = `Perfect` / `Great` / `Ok` / `Miss` / `Waiting`, evaluated from the distance to the nearest beat. A `Miss` consumes the beat, does nothing and resets the combo.
+* `BeatAccuracy` = `Perfect` / `Great` / `Ok` / `Miss` / `Waiting`, evaluated from the distance to the nearest beat (`PERFECT_WINDOW` / `GREAT_WINDOW` / `OK_WINDOW` in `rules.rs`, fractions of the beat on each side). A player `Miss` is buffered (see below) and resets the combo.
+* **Readability rule:** players must be able to keep the rhythm while looking at the arena. Beat cues live on the map (`client/src/ui/game_screen/beat_fx.rs`): border lit during the hit window, local player cell glowing, floor checkerboard swapping each beat, 4-beat bar counter, and local feedback (`App.last_hit`: rating + EARLY/LATE, or ONE ACTION PER BEAT) in the arena title. Never move essential timing info away from the map.
+* **Input buffer** (`common/src/game/input_buffer.rs`): a player input judged `Miss` is not discarded. It goes into a single per-player slot (`GameContext.buffered_actions`) and runs on the next beat through `GameState::handle_buffered_action` (no points, combo reset). While the slot is full, every other input is ignored (first press wins). Only human inputs go through `GameContext::process_player_action*`; bots call `handle_action` directly, where a `Miss` still just consumes the beat.
 * **Combo** (`Player.combo`): +1 for each `Perfect`/`Great` action (`Ok` keeps it). An on-beat action that fails (bumping a wall) still keeps the groove but consumes the beat.
 * **Idle reset (NecroDancer rule):** letting a beat pass without acting resets the combo (`GameState::reset_idle_combos`, called when the beat window closes).
 * **Multiplier:** rhythm points are multiplied by `1 + combo / COMBO_STEP` (max `MAX_COMBO_MULTIPLIER`).
 * **Fever:** from `FEVER_COMBO`, newly placed bombs get `+FEVER_BONUS_RANGE` range.
 * Beat timing is authoritative on the server; `GameState.current_beat` is broadcast so clients render beat-based effects (shields) correctly.
+* **Metronome:** the client rings the terminal bell (BEL) on each beat (`ClientSettings.beat_sound`: Off / EveryBeat / EveryBar, `client/src/local/app/sound.rs`). Beats reached more than 40 ms late (online realignment) stay silent. No audio library: BEL keeps it working over SSH and Docker. `assets/beat-click.wav` is a short click players can set as their terminal bell sound.
 
 ### 2.2 Bomberman-Style Arena
 * Walls (border + even/even pillars), **bricks** (generated at `BRICK_DENSITY_PERCENT`, never within `SPAWN_SAFE_RADIUS` of a spawn) and empty cells.

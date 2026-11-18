@@ -1,4 +1,6 @@
+use super::beat_fx;
 use super::helpers::{get_emote_symbol, get_player_symbol};
+use common::game::rhythm::is_in_hit_window;
 use crate::local::app::{App, CELL_H, CELL_W};
 use common::game::Cell;
 use ratatui::{
@@ -10,15 +12,15 @@ use ratatui::{
 
 pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext, rect: Rect) {
     let ascii = _app.profile.ascii_mode;
-    let title = if ascii {
-        " [ BOMBOMBYX ] "
-    } else {
-        " BOMBOMBYX "
-    };
+    let beat = ctx.rhythm.beat_count;
+    let window_open = is_in_hit_window(ctx.rhythm.progress());
+    let (border_style, border_type) = beat_fx::arena_border(window_open);
     let map_box = Block::default()
-        .title(title)
-        .title_alignment(Alignment::Center)
-        .borders(Borders::ALL);
+        .title_top(beat_fx::feedback_title(_app).alignment(Alignment::Center))
+        .title_bottom(beat_fx::bar_title(beat, window_open, ascii).alignment(Alignment::Center))
+        .borders(Borders::ALL)
+        .border_type(border_type)
+        .border_style(border_style);
     map_box.render(rect, buffer);
 
     let arena_w = ctx.state.width as u16 * CELL_W;
@@ -66,6 +68,7 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
                 play_zone_y,
                 player_is_here && is_bomb,
                 ascii,
+                beat,
             );
         }
     }
@@ -90,6 +93,12 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
             }
         }
 
+        let floor = beat_fx::floor_color(p_grid_x, p_grid_y, beat);
+        let bg = if player.id == _app.current_player_id && window_open {
+            beat_fx::HIT_WINDOW_PLAYER_BG
+        } else {
+            floor
+        };
         draw_player(
             buffer,
             player,
@@ -97,6 +106,7 @@ pub fn draw_map(buffer: &mut Buffer, _app: &App, ctx: &common::game::GameContext
             play_zone_y,
             ascii,
             ctx.state.current_beat,
+            bg,
         );
     }
 }
@@ -110,13 +120,14 @@ fn draw_cell(
     play_zone_y: u16,
     player_under_bomb: bool,
     ascii: bool,
+    beat: u64,
 ) {
     let elapsed = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap_or(std::time::Duration::ZERO);
 
     let (symbol, fg_color, bg_color) = match cell {
-        Cell::Empty => ("  ".to_string(), Color::Reset, Color::Indexed(234)),
+        Cell::Empty => ("  ".to_string(), Color::Reset, beat_fx::floor_color(x, y, beat)),
         Cell::Wall => {
             let sym = if ascii { "##" } else { "██" };
             (sym.to_string(), Color::Indexed(248), Color::Indexed(243))
@@ -196,8 +207,9 @@ fn draw_player(
     play_zone_y: u16,
     ascii: bool,
     current_beat: u64,
+    bg_color: Color,
 ) {
-    let bg = Style::default().bg(Color::Indexed(234));
+    let bg = Style::default().bg(bg_color);
     let fg = get_color_for_id(player.id);
 
     if player.is_alive {

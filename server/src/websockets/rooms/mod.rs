@@ -3,7 +3,7 @@ pub mod handlers;
 use crate::state::{Room, SharedState};
 use common::game::{GameContext, GameState};
 use common::messages::{ClientMessage, ServerMessage};
-use tokio::sync::mpsc::UnboundedSender;
+use crate::state::PeerSender;
 
 use handlers::*;
 
@@ -12,14 +12,23 @@ pub async fn process_client_message(
     my_player_id: &mut Option<u32>,
     my_name: &mut String,
     my_skin: &mut String,
-    tx: UnboundedSender<ServerMessage>,
+    tx: PeerSender,
     client_msg: ClientMessage,
     state: &SharedState,
     client_ip: std::net::IpAddr,
 ) -> Result<(), ()> {
     match client_msg {
         ClientMessage::GetRooms => handle_get_rooms(&tx, state).await?,
-        ClientMessage::CreateRoom { is_public, is_lan } => {
+        // Creating a second room would leave a ghost peer behind in the first one.
+        ClientMessage::CreateRoom { .. } if my_room_code.is_some() => {}
+        ClientMessage::CreateRoom {
+            is_public,
+            is_lan,
+            name,
+            skin,
+        } => {
+            *my_name = name;
+            *my_skin = skin;
             handle_create_room(
                 my_room_code,
                 my_player_id,
@@ -85,6 +94,7 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
     let mut remove_room = false;
     if let Some(room) = s.rooms.get_mut(code) {
         room.peers.remove(&player_id);
+        room.latencies.remove(&player_id);
 
         if let Some(ref mut ctx) = room.game_ctx {
             ctx.state.players.retain(|p| p.id != player_id);
@@ -94,7 +104,9 @@ pub async fn disconnect_peer(code: &str, player_id: u32, state: &SharedState) {
             remove_room = true;
         } else {
             if room.host_id == Some(player_id) {
-                room.host_id = room.peers.keys().min().copied();
+                if let Some(new_host_id) = room.peers.keys().min().copied() {
+                    room.set_host(new_host_id);
+                }
             }
             if room.in_game {
                 let active_players = room.peers.values().filter(|p| !p.is_spectator).count();

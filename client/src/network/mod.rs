@@ -3,8 +3,11 @@ use std::time::Instant;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 pub mod connection;
+pub mod lan;
 pub mod messages;
+pub mod sync;
 pub mod tick;
+pub mod validate;
 
 pub struct NetworkContext {
     pub is_multiplayer: bool,
@@ -17,6 +20,8 @@ pub struct NetworkContext {
     pub show_private_join_prompt: bool,
     pub private_room_code_input: String,
     pub local_server_port: Option<u16>,
+    /// Round-trip time measured by the server (sent in every Ping).
+    pub rtt: std::time::Duration,
 }
 
 impl NetworkContext {
@@ -32,6 +37,7 @@ impl NetworkContext {
             show_private_join_prompt: false,
             private_room_code_input: String::new(),
             local_server_port: None,
+            rtt: std::time::Duration::ZERO,
         }
     }
 }
